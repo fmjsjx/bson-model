@@ -21,8 +21,9 @@ import com.mongodb.client.model.Updates;
  * @param <E> the type of the elements in this list
  * @param <P> the type of the parent
  * 
- * @since 2.2
+ * @deprecated since 1.1
  */
+@Deprecated
 public final class SimpleListModel<E, P extends BsonModel> extends ListModel<E, P, SimpleListModel<E, P>> {
 
     private final SimpleValueType<E> valueType;
