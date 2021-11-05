@@ -49,8 +49,8 @@ public class TestModel {
             equipment.setHp(0);
             player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
             player.getItems().put(2001, 5);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
             player.getCash().getTestDateMap().put(1, today);
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
@@ -148,8 +148,8 @@ public class TestModel {
             equipment.setHp(0);
             player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
             player.getItems().put(2001, 5);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
             player.getCash().getTestDateMap().put(1, today);
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
@@ -235,8 +235,8 @@ public class TestModel {
             equipment.setHp(0);
             player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
             player.getItems().put(2001, 5);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
             player.getCash().getTestDateMap().put(1, today);
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
@@ -333,15 +333,15 @@ public class TestModel {
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
             assertEquals(4, player.getCash().getCards().size());
-            assertFalse(player.getCash().getCards().nil());
-            assertFalse(player.getCash().getCards().empty());
+            assertNotNull(player.getCash().getCards());
+            assertFalse(player.getCash().getCards().isEmpty());
             assertArrayEquals(new int[] { 1, 2, 3, 4 },
-                    player.getCash().getCards().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getCards().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(5, player.getCash().getOrderIds().size());
-            assertFalse(player.getCash().getOrderIds().nil());
-            assertFalse(player.getCash().getOrderIds().empty());
+            assertNotNull(player.getCash().getOrderIds());
+            assertFalse(player.getCash().getOrderIds().isEmpty());
             assertArrayEquals(new int[] { 0, 1, 2, 3, 4 },
-                    player.getCash().getOrderIds().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getOrderIds().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDateMap().get(1).get());
@@ -390,8 +390,8 @@ public class TestModel {
             assertEquals(10, player.getItems().get(2001).get());
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
-            assertTrue(player.getCash().getCards().nil());
-            assertTrue(player.getCash().getOrderIds().nil());
+            assertNull(player.getCash().getCards());
+            assertNull(player.getCash().getOrderIds());
             assertNull(player.getCash().getTestDate());
             assertEquals(0, player.getCash().getTestDateMap().size());
             assertEquals(1, player.getUpdateVersion());
@@ -460,15 +460,15 @@ public class TestModel {
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
             assertEquals(4, player.getCash().getCards().size());
-            assertFalse(player.getCash().getCards().nil());
-            assertFalse(player.getCash().getCards().empty());
+            assertNotNull(player.getCash().getCards());
+            assertFalse(player.getCash().getCards().isEmpty());
             assertArrayEquals(new int[] { 1, 2, 3, 4 },
-                    player.getCash().getCards().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getCards().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(5, player.getCash().getOrderIds().size());
-            assertFalse(player.getCash().getOrderIds().nil());
-            assertFalse(player.getCash().getOrderIds().empty());
+            assertNotNull(player.getCash().getOrderIds());
+            assertFalse(player.getCash().getOrderIds().isEmpty());
             assertArrayEquals(new int[] { 0, 1, 2, 3, 4 },
-                    player.getCash().getOrderIds().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getOrderIds().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDateMap().get(1).get());
@@ -521,8 +521,8 @@ public class TestModel {
             assertEquals(10, player.getItems().get(2001).get());
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
-            assertTrue(player.getCash().getCards().nil());
-            assertTrue(player.getCash().getOrderIds().nil());
+            assertNull(player.getCash().getCards());
+            assertNull(player.getCash().getOrderIds());
             assertNull(player.getCash().getTestDate());
             assertEquals(0, player.getCash().getTestDateMap().size());
             assertEquals(1, player.getUpdateVersion());
@@ -601,15 +601,15 @@ public class TestModel {
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
             assertEquals(4, player.getCash().getCards().size());
-            assertFalse(player.getCash().getCards().nil());
-            assertFalse(player.getCash().getCards().empty());
+            assertNotNull(player.getCash().getCards());
+            assertFalse(player.getCash().getCards().isEmpty());
             assertArrayEquals(new int[] { 1, 2, 3, 4 },
-                    player.getCash().getCards().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getCards().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(5, player.getCash().getOrderIds().size());
-            assertFalse(player.getCash().getOrderIds().nil());
-            assertFalse(player.getCash().getOrderIds().empty());
+            assertNotNull(player.getCash().getOrderIds());
+            assertFalse(player.getCash().getOrderIds().isEmpty());
             assertArrayEquals(new int[] { 0, 1, 2, 3, 4 },
-                    player.getCash().getOrderIds().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getOrderIds().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(today, player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(today, player.getCash().getTestDateMap().get(1).get());
@@ -685,15 +685,15 @@ public class TestModel {
             assertEquals(0, player.getCash().getStages().size());
             assertEquals("cs.stg.1", player.getCash().getStages().xpath().resolve("1").value());
             assertEquals(4, player.getCash().getCards().size());
-            assertFalse(player.getCash().getCards().nil());
-            assertFalse(player.getCash().getCards().empty());
+            assertNotNull(player.getCash().getCards());
+            assertFalse(player.getCash().getCards().isEmpty());
             assertArrayEquals(new int[] { 1, 2, 3, 4 },
-                    player.getCash().getCards().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getCards().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(5, player.getCash().getOrderIds().size());
-            assertFalse(player.getCash().getOrderIds().nil());
-            assertFalse(player.getCash().getOrderIds().empty());
+            assertNotNull(player.getCash().getOrderIds());
+            assertFalse(player.getCash().getOrderIds().isEmpty());
             assertArrayEquals(new int[] { 0, 1, 2, 3, 4 },
-                    player.getCash().getOrderIds().values().get().stream().mapToInt(Integer::intValue).toArray());
+                    player.getCash().getOrderIds().stream().mapToInt(Integer::intValue).toArray());
             assertEquals(today, player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(today, player.getCash().getTestDateMap().get(1).get());
@@ -720,8 +720,8 @@ public class TestModel {
             player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
             player.getItems().put(2001, 5);
             player.getCash().getStages().put(1, 1);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.setCreateTime(now);
             player.setUpdateTime(now);
@@ -779,7 +779,7 @@ public class TestModel {
             eq2.setHp(2);
             player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
             player.getItems().put(2001, 5);
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.getCash().getTestDateMap().put(1, now.toLocalDate());
             player.setCreateTime(now.minusDays(1));
@@ -803,8 +803,8 @@ public class TestModel {
             player.getItems().put(2002, 1);
             player.getItems().remove(2001);
             player.getCash().getStages().put(1, 1);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().clear();
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(null);
             player.getCash().setTestDate(now.toLocalDate());
             player.getCash().getTestDateMap().remove(1);
             player.getCash().getTestDateMap().put(2, now.toLocalDate());
@@ -874,7 +874,7 @@ public class TestModel {
             eq2.setHp(2);
             player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
             player.getItems().put(2001, 5);
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.setCreateTime(now);
             player.setUpdateTime(now);
@@ -897,8 +897,8 @@ public class TestModel {
             player.getItems().put(2002, 1);
             player.getItems().remove(2001);
             player.getCash().getStages().put(1, 1);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().clear();
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(null);
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.setUpdateTime(now);
             player.increaseUpdateVersion();
@@ -965,8 +965,8 @@ public class TestModel {
             eq2.setHp(2);
             player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
             player.getItems().put(2001, 5);
-            player.getCash().getCards().values(List.of(1, 2, 3, 4));
-            player.getCash().getOrderIds().values(List.of(0, 1, 2, 3, 4));
+            player.getCash().setCards(List.of(1, 2, 3, 4));
+            player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.setCreateTime(now);
             player.setUpdateTime(now);
@@ -987,8 +987,8 @@ public class TestModel {
 
             player.getItems().put(2002, 1);
             player.getItems().remove(2001);
-            player.getCash().getCards().clear();
-            player.getCash().getOrderIds().clear();
+            player.getCash().setCards(null);
+            player.getCash().setOrderIds(null);
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.setUpdateTime(now);
             player.increaseUpdateVersion();

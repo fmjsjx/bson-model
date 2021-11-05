@@ -106,6 +106,9 @@ public final class SimpleValueTypes {
 
         @Override
         public LocalDateTime cast(Object obj) {
+            if (obj == null) {
+                return null;
+            }
             if (obj instanceof Date) {
                 return DateTimeUtil.local((Date) obj);
             }
@@ -184,6 +187,9 @@ public final class SimpleValueTypes {
 
         @Override
         public LocalDate cast(Object obj) {
+            if (obj == null) {
+                return null;
+            }
             if (obj instanceof Number) {
                 return DateTimeUtil.toDate(((Number) obj).intValue());
             }
