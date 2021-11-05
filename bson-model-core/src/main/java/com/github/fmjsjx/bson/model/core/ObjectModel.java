@@ -12,8 +12,6 @@ import com.mongodb.client.model.Updates;
  * The abstract object implementation of BSON Model.
  * 
  * @param <Self> the type of the implementation class
- * 
- * @since 2.0
  */
 public abstract class ObjectModel<Self extends ObjectModel<Self>> extends AbstractBsonModel {
 

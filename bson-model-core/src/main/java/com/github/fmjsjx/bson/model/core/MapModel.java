@@ -23,7 +23,6 @@ import com.mongodb.client.model.Updates;
  * @param <V>      the type of mapped values
  * @param <Parent> the type of the parent
  * @param <Self>   the type of the implementation class
- * @since 2.0
  */
 @JsonSerialize(using = MapModelSerializer.class)
 public abstract class MapModel<K, V, Parent extends BsonModel, Self extends MapModel<K, V, Parent, ?>>
@@ -139,7 +138,6 @@ public abstract class MapModel<K, V, Parent extends BsonModel, Self extends MapM
      * Removes all of the mappings from this map.
      * 
      * @return this map
-     * @since 2.1
      */
     public abstract Self clear();
 

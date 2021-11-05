@@ -23,8 +23,6 @@ import com.mongodb.Function;
  * Constants of {@link SimpleValueType}.
  * 
  * @see SimpleValueType
- * 
- * @since 2.2
  */
 public final class SimpleValueTypes {
 
@@ -60,8 +58,6 @@ public final class SimpleValueTypes {
 
     /**
      * Type LocalDateTime.
-     * 
-     * @since 2.3
      */
     public static final SimpleValueType<LocalDateTime> DATETIME = new SimpleValueType<>() {
 
@@ -136,8 +132,6 @@ public final class SimpleValueTypes {
 
     /**
      * Type LocalDate.
-     * 
-     * @since 2.3
      */
     public static final SimpleValueType<LocalDate> DATE = new SimpleValueType<>() {
 

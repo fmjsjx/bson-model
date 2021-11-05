@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 /**
  * The {@link JsonSerializer} for {@link ListModel}s.
- * 
- * @since 2.2
  */
 public class ListModelSerializer extends JsonSerializer<ListModel<?, ?, ?>> {
 

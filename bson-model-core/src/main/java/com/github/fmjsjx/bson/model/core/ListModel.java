@@ -17,8 +17,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * @param <E>      the type of elements in this list
  * @param <Parent> the type of the parent
  * @param <Self>   the type of the implementation class
- * 
- * @since 2.2
  */
 @JsonSerialize(using = ListModelSerializer.class)
 public abstract class ListModel<E, Parent extends BsonModel, Self extends ListModel<E, Parent, ?>>

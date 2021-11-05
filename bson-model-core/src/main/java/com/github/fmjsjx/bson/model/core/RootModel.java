@@ -9,8 +9,6 @@ import org.bson.conversions.Bson;
  * The abstract root implementation of Object BSON Model.
  * 
  * @param <Self> the type of the implementation class
- * 
- * @since 2.0
  */
 public abstract class RootModel<Self extends RootModel<Self>> extends ObjectModel<Self> {
 

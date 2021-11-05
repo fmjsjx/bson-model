@@ -11,8 +11,6 @@ import com.jsoniter.any.Any;
  * @param <V> the type of value
  * 
  * @see SimpleValueTypes
- * 
- * @since 2.2
  */
 public interface SimpleValueType<V> {
 
@@ -36,7 +34,6 @@ public interface SimpleValueType<V> {
      * 
      * @param value the value as {@code Any}
      * @return the value in java type
-     * @since 2.4
      */
     V parse(Any value);
 
@@ -45,7 +42,6 @@ public interface SimpleValueType<V> {
      * 
      * @param value the value as {@code JsonNode}
      * @return the value in java type
-     * @since 2.4
      */
     V parse(JsonNode value);
 
@@ -73,8 +69,6 @@ public interface SimpleValueType<V> {
      * 
      * @param value the value
      * @return the converted value
-     * 
-     * @since 2.3
      */
     default Object toStorage(V value) {
         return value;
@@ -85,7 +79,6 @@ public interface SimpleValueType<V> {
      * 
      * @param value the value
      * @return the converted value
-     * @since 2.4
      */
     default Object toData(V value) {
         return value;
