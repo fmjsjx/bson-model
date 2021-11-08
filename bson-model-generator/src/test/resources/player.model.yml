@@ -26,6 +26,10 @@ objects:
     bname: cs
     type: object
     model: CashInfo
+  - name: gifts
+    bname: gfs
+    type: list
+    value: GiftInfo
   - name: updateVersion
     bname: _uv
     type: int
@@ -151,4 +155,16 @@ objects:
     type: simple-map
     key: int
     value: date
+    json-ignore: true
+- name: GiftInfo
+  type: list-value
+  fields:
+  - name: id
+    type: int
+  - name: price
+    bname: prc
+    type: int
+  - name: createTime
+    bname: ct
+    type: datetime
     json-ignore: true

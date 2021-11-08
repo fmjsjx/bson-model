@@ -136,6 +136,15 @@ public abstract class ListModel<E, Parent extends BsonModel, Self extends ListMo
         return list.size();
     }
 
+    /**
+     * Removes all of the values from this list.
+     * 
+     * @return this list
+     * 
+     * @since 1.1
+     */
+    public abstract Self clear();
+
     @Override
     public boolean empty() {
         var list = this.list;
@@ -158,8 +167,8 @@ public abstract class ListModel<E, Parent extends BsonModel, Self extends ListMo
     public String toString() {
         return getClass().getSimpleName() + "(" + list + ")";
     }
-    
+
     @Override
     public abstract List<?> toData();
-    
+
 }

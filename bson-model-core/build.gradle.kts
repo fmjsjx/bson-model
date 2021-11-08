@@ -13,6 +13,7 @@ dependencies {
 
     implementation("org.slf4j:slf4j-api")
 
+    api("com.github.fmjsjx:libcommon-collection")
     api("com.github.fmjsjx:libcommon-util")
     api("com.github.fmjsjx:libcommon-json-jackson2")
     api("com.github.fmjsjx:libcommon-json-jsoniter")

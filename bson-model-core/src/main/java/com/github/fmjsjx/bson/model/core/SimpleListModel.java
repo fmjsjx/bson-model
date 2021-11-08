@@ -16,7 +16,7 @@ import com.jsoniter.any.Any;
 import com.mongodb.client.model.Updates;
 
 /**
- * The simple implementation of map model.
+ * The simple implementation of list model.
  *
  * @param <E> the type of the elements in this list
  * @param <P> the type of the parent
@@ -132,6 +132,7 @@ public final class SimpleListModel<E, P extends BsonModel> extends ListModel<E, 
         return this;
     }
 
+    @Override
     public SimpleListModel<E, P> clear() {
         if (super.list != null) {
             super.list = null;

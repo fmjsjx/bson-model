@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -25,10 +27,12 @@ import org.junit.jupiter.api.Test;
 
 import com.github.fmjsjx.bson.model.core.BsonUtil;
 import com.github.fmjsjx.bson.model.generator.model.Equipment;
+import com.github.fmjsjx.bson.model.generator.model.GiftInfo;
 import com.github.fmjsjx.bson.model.generator.model.Player;
 import com.github.fmjsjx.libcommon.json.Jackson2Library;
 import com.github.fmjsjx.libcommon.json.JsoniterLibrary;
 import com.github.fmjsjx.libcommon.util.DateTimeUtil;
+import com.jsoniter.ValueType;
 import com.mongodb.client.model.Updates;
 
 public class TestModel {
@@ -56,6 +60,16 @@ public class TestModel {
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
             player.getCash().getTestDateMap().put(1, today);
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
 
@@ -66,7 +80,7 @@ public class TestModel {
 
             var bson = player.toBson();
             assertNotNull(bson);
-            assertEquals(8, bson.size());
+            assertEquals(9, bson.size());
             assertEquals(123, bson.getInt32("_id").intValue());
             assertEquals(4, bson.getDocument("wt").size());
             assertEquals(5000, bson.getDocument("wt").getInt64("ct").intValue());
@@ -111,15 +125,25 @@ public class TestModel {
             assertEquals(1, bson.getDocument("cs").getDocument("tdm").size());
             assertEquals(DateTimeUtil.toNumber(today),
                     bson.getDocument("cs").getDocument("tdm").getInt32("1").getValue());
+            assertEquals(2, bson.getArray("gfs").size());
+            assertEquals(1, bson.getArray("gfs").get(0).asDocument().getInt32("id").getValue());
+            assertEquals(100, bson.getArray("gfs").get(0).asDocument().getInt32("prc").getValue());
+            assertEquals(DateTimeUtil.toEpochMilli(now.minusDays(1)),
+                    bson.getArray("gfs").get(0).asDocument().getDateTime("ct").getValue());
+            assertEquals(2, bson.getArray("gfs").get(1).asDocument().getInt32("id").getValue());
+            assertEquals(200, bson.getArray("gfs").get(1).asDocument().getInt32("prc").getValue());
+            assertEquals(DateTimeUtil.toEpochMilli(now),
+                    bson.getArray("gfs").get(1).asDocument().getDateTime("ct").getValue());
             var zone = ZoneId.systemDefault();
             assertEquals(now, LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.getDateTime("_ct").getValue()), zone));
             assertEquals(now, LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.getDateTime("_ut").getValue()), zone));
 
             player.getCash().setTestDate(today);
+            player.getGifts().remove(0);
 
             bson = player.toBson();
             assertNotNull(bson);
-            assertEquals(8, bson.size());
+            assertEquals(9, bson.size());
             assertEquals(7, bson.getDocument("cs").size());
             assertEquals(0, bson.getDocument("cs").getDocument("stg").size());
             assertEquals(4, bson.getDocument("cs").getArray("cs").size());
@@ -137,6 +161,7 @@ public class TestModel {
             assertEquals(DateTimeUtil.toNumber(today),
                     bson.getDocument("cs").getDocument("tdm").getInt32("1").getValue());
             assertEquals(DateTimeUtil.toNumber(today), bson.getDocument("cs").getInt32("tsd").getValue());
+            assertEquals(BsonNull.VALUE, bson.getArray("gfs").get(0));
             assertEquals(now, LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.getDateTime("_ct").getValue()), zone));
             assertEquals(now, LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.getDateTime("_ut").getValue()), zone));
         } catch (Exception e) {
@@ -167,12 +192,22 @@ public class TestModel {
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
             player.getCash().getTestDateMap().put(1, today);
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
 
             var doc = player.toDocument();
             assertNotNull(doc);
-            assertEquals(8, doc.size());
+            assertEquals(9, doc.size());
             assertEquals(123, BsonUtil.intValue(doc, "_id").getAsInt());
             assertEquals(4, BsonUtil.documentValue(doc, "wt").get().size());
             assertEquals(5000, BsonUtil.embeddedInt(doc, "wt", "ct").getAsInt());
@@ -212,14 +247,23 @@ public class TestModel {
             assertEquals(now.minusDays(1), BsonUtil.embeddedDateTime(doc, "cs", "ots", 0).get());
             assertEquals(now, BsonUtil.embeddedDateTime(doc, "cs", "ots", 1).get());
             assertEquals(DateTimeUtil.toNumber(today), BsonUtil.embeddedInt(doc, "cs", "tdm", "1").getAsInt());
+            assertEquals(2, BsonUtil.embeddedList(doc, "gfs").get().size());
+            assertEquals(1, BsonUtil.embeddedInt(doc, "gfs", 0, "id").getAsInt());
+            assertEquals(100, BsonUtil.embeddedInt(doc, "gfs", 0, "prc").getAsInt());
+            assertEquals(now.minusDays(1), BsonUtil.embeddedDateTime(doc, "gfs", 0, "ct").get());
+            assertEquals(2, BsonUtil.embeddedInt(doc, "gfs", 1, "id").getAsInt());
+            assertEquals(200, BsonUtil.embeddedInt(doc, "gfs", 1, "prc").getAsInt());
+            assertEquals(now, BsonUtil.embeddedDateTime(doc, "gfs", 1, "ct").get());
             var zone = ZoneId.systemDefault();
             assertEquals(now, LocalDateTime.ofInstant(doc.getDate("_ct").toInstant(), zone));
             assertEquals(now, LocalDateTime.ofInstant(doc.getDate("_ut").toInstant(), zone));
 
             player.getCash().setTestDate(today);
+            player.getGifts().remove(0);
+
             doc = player.toDocument();
             assertNotNull(doc);
-            assertEquals(8, doc.size());
+            assertEquals(9, doc.size());
             assertEquals(7, BsonUtil.embeddedDocument(doc, "cs").get().size());
             assertEquals(0, BsonUtil.embeddedDocument(doc, "cs", "stg").get().size());
             assertEquals(4, BsonUtil.embeddedList(doc, "cs", "cs").get().size());
@@ -235,6 +279,7 @@ public class TestModel {
             assertEquals(4, BsonUtil.embeddedInt(doc, "cs", "ois", 4).getAsInt());
             assertEquals(DateTimeUtil.toNumber(today), BsonUtil.embeddedInt(doc, "cs", "tdm", "1").getAsInt());
             assertEquals(DateTimeUtil.toNumber(today), BsonUtil.embeddedInt(doc, "cs", "tsd").getAsInt());
+            assertNull(BsonUtil.embedded(doc, "gts", 0).orElse(null));
         } catch (Exception e) {
             fail(e);
         }
@@ -263,11 +308,21 @@ public class TestModel {
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
             player.getCash().getTestDateMap().put(1, today);
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
 
             var data = player.toData();
-            assertEquals(8, data.size());
+            assertEquals(9, data.size());
             var json = Jackson2Library.getInstance().dumpsToString(data);
             var map = new LinkedHashMap<String, Object>();
             map.put("_id", 123);
@@ -299,6 +354,18 @@ public class TestModel {
             var tdm = new LinkedHashMap<String, Object>();
             cs.put("tdm", tdm);
             tdm.put("1", DateTimeUtil.toNumber(today));
+            var gfs = new ArrayList<>();
+            map.put("gfs", gfs);
+            var gm0 = new LinkedHashMap<>();
+            gm0.put("id", 1);
+            gm0.put("prc", 100);
+            gm0.put("ct", DateTimeUtil.toEpochMilli(now.minusDays(1)));
+            var gm1 = new LinkedHashMap<>();
+            gm1.put("id", 2);
+            gm1.put("prc", 200);
+            gm1.put("ct", DateTimeUtil.toEpochMilli(now));
+            gfs.add(gm0);
+            gfs.add(gm1);
             map.put("_uv", 0);
             map.put("_ct", DateTimeUtil.toEpochMilli(now));
             map.put("_ut", DateTimeUtil.toEpochMilli(now));
@@ -335,6 +402,11 @@ public class TestModel {
                                     .append("tsd", 20210712) // testDate
                                     .append("tdm", new Document("1", 20210712)) // testDateMap
                     ) // cash end
+                    .append("gfs", // gifts
+                            new ArrayList<>(Arrays.asList(null, // 0
+                                    new Document("id", 2).append("prc", 200).append("ct",
+                                            DateTimeUtil.toLegacyDate(now)) // 1
+                            ))) // gifts end
                     .append("_uv", 1) // update version
                     .append("_ct", date) // create time
                     .append("_ut", date); // update time
@@ -385,6 +457,13 @@ public class TestModel {
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDateMap().get(1).get());
+            assertFalse(player.getGifts().nil());
+            assertEquals(2, player.getGifts().size());
+            assertTrue(player.getGifts().value(0).isEmpty());
+            assertTrue(player.getGifts().value(1).isPresent());
+            assertEquals(2, player.getGifts().value(1).get().getId());
+            assertEquals(200, player.getGifts().value(1).get().getPrice());
+            assertEquals(now, player.getGifts().value(1).get().getCreateTime());
             assertEquals(1, player.getUpdateVersion());
 
             var zone = ZoneId.systemDefault();
@@ -436,6 +515,7 @@ public class TestModel {
             assertNull(player.getCash().getOrderDates());
             assertNull(player.getCash().getOrderTimes());
             assertEquals(0, player.getCash().getTestDateMap().size());
+            assertTrue(player.getGifts().nil());
             assertEquals(1, player.getUpdateVersion());
 
             assertEquals(date, Date.from(player.getCreateTime().atZone(zone).toInstant()));
@@ -471,16 +551,21 @@ public class TestModel {
                                             new BsonArray(List.of(new BsonInt32(0), new BsonInt32(1), new BsonInt32(2),
                                                     new BsonInt32(3), new BsonInt32(4))))
                                     .append("ods", // orderDates
-                                            new BsonArray(
-                                                    List.of(new BsonInt32(DateTimeUtil.toNumber(today.minusDays(1))),
-                                                            new BsonInt32(DateTimeUtil.toNumber(today)))))
+                                            new BsonArray(List.of(
+                                                    new BsonInt32(DateTimeUtil.toNumber(today.minusDays(1))),
+                                                    new BsonInt32(DateTimeUtil.toNumber(today)))))
                                     .append("ots", // orderTimes
-                                            new BsonArray(
-                                                    List.of(new BsonDateTime(DateTimeUtil.toEpochMilli(now.minusDays(1))),
-                                                            new BsonDateTime(DateTimeUtil.toEpochMilli(now)))))
+                                            new BsonArray(List.of(
+                                                    new BsonDateTime(DateTimeUtil.toEpochMilli(now.minusDays(1))),
+                                                    new BsonDateTime(DateTimeUtil.toEpochMilli(now)))))
                                     .append("tsd", new BsonInt32(20210712)) // testDate
                                     .append("tdm", new BsonDocument("1", new BsonInt32(20210712))) // testDateMap
                     ) // cash end
+                    .append("gfs", // gifts
+                            new BsonArray(List.of(BsonNull.VALUE, // 0
+                                    new BsonDocument("id", new BsonInt32(2)).append("prc", new BsonInt32(200))
+                                            .append("ct", new BsonDateTime(DateTimeUtil.toEpochMilli(now))) // 1
+                            ))) // gifts end
                     .append("_uv", new BsonInt32(1)) // update version
                     .append("_ct", new BsonDateTime(date.getTime())) // create time
                     .append("_ut", new BsonDateTime(date.getTime())); // update time
@@ -532,6 +617,13 @@ public class TestModel {
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(LocalDate.of(2021, 7, 12), player.getCash().getTestDateMap().get(1).get());
+            assertFalse(player.getGifts().nil());
+            assertEquals(2, player.getGifts().size());
+            assertTrue(player.getGifts().value(0).isEmpty());
+            assertTrue(player.getGifts().value(1).isPresent());
+            assertEquals(2, player.getGifts().value(1).get().getId());
+            assertEquals(200, player.getGifts().value(1).get().getPrice());
+            assertEquals(now, player.getGifts().value(1).get().getCreateTime());
             assertEquals(1, player.getUpdateVersion());
             assertEquals(1, player.getUpdateVersion());
 
@@ -587,6 +679,7 @@ public class TestModel {
             assertNull(player.getCash().getOrderTimes());
             assertNull(player.getCash().getTestDate());
             assertEquals(0, player.getCash().getTestDateMap().size());
+            assertTrue(player.getGifts().nil());
             assertEquals(1, player.getUpdateVersion());
 
             assertEquals(date, Date.from(player.getCreateTime().atZone(zone).toInstant()));
@@ -632,6 +725,14 @@ public class TestModel {
         cs.put("tsd", DateTimeUtil.toNumber(today));
         var tdm = new LinkedHashMap<String, Object>();
         cs.put("tdm", tdm);
+        var gfs = new ArrayList<>();
+        map.put("gfs", gfs);
+        var gm1 = new LinkedHashMap<>();
+        gm1.put("id", 2);
+        gm1.put("prc", 200);
+        gm1.put("ct", DateTimeUtil.toEpochMilli(now));
+        gfs.add(null);
+        gfs.add(gm1);
         tdm.put("1", DateTimeUtil.toNumber(today));
         map.put("_uv", 1);
         map.put("_ct", DateTimeUtil.toEpochMilli(now));
@@ -686,6 +787,13 @@ public class TestModel {
             assertEquals(today, player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(today, player.getCash().getTestDateMap().get(1).get());
+            assertFalse(player.getGifts().nil());
+            assertEquals(2, player.getGifts().size());
+            assertTrue(player.getGifts().value(0).isEmpty());
+            assertTrue(player.getGifts().value(1).isPresent());
+            assertEquals(2, player.getGifts().value(1).get().getId());
+            assertEquals(200, player.getGifts().value(1).get().getPrice());
+            assertEquals(now, player.getGifts().value(1).get().getCreateTime());
             assertEquals(1, player.getUpdateVersion());
         } catch (Exception e) {
             fail(e);
@@ -726,6 +834,14 @@ public class TestModel {
         cs.put("tsd", DateTimeUtil.toNumber(today));
         var tdm = new LinkedHashMap<String, Object>();
         cs.put("tdm", tdm);
+        var gfs = new ArrayList<>();
+        map.put("gfs", gfs);
+        var gm1 = new LinkedHashMap<>();
+        gm1.put("id", 2);
+        gm1.put("prc", 200);
+        gm1.put("ct", DateTimeUtil.toEpochMilli(now));
+        gfs.add(null);
+        gfs.add(gm1);
         tdm.put("1", DateTimeUtil.toNumber(today));
         map.put("_uv", 1);
         map.put("_ct", DateTimeUtil.toEpochMilli(now));
@@ -780,6 +896,13 @@ public class TestModel {
             assertEquals(today, player.getCash().getTestDate());
             assertEquals(1, player.getCash().getTestDateMap().size());
             assertEquals(today, player.getCash().getTestDateMap().get(1).get());
+            assertFalse(player.getGifts().nil());
+            assertEquals(2, player.getGifts().size());
+            assertTrue(player.getGifts().value(0).isEmpty());
+            assertTrue(player.getGifts().value(1).isPresent());
+            assertEquals(2, player.getGifts().value(1).get().getId());
+            assertEquals(200, player.getGifts().value(1).get().getPrice());
+            assertEquals(now, player.getGifts().value(1).get().getCreateTime());
             assertEquals(1, player.getUpdateVersion());
         } catch (Exception e) {
             fail(e);
@@ -809,11 +932,17 @@ public class TestModel {
             var today = now.toLocalDate();
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(null);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
             var json = Jackson2Library.getInstance().dumpsToString(player);
             var any = JsoniterLibrary.getInstance().loads(json);
-            assertEquals(5, any.asMap().size());
+            assertEquals(6, any.asMap().size());
             assertEquals(123, any.toInt("uid"));
             assertEquals(4, any.get("wallet").asMap().size());
             assertEquals(5000, any.toInt("wallet", "coinTotal"));
@@ -838,6 +967,10 @@ public class TestModel {
             assertEquals(2, any.toInt("cash", "cards", 1));
             assertEquals(3, any.toInt("cash", "cards", 2));
             assertEquals(4, any.toInt("cash", "cards", 3));
+            assertEquals(2, any.get("gifts").asList().size());
+            assertEquals(ValueType.NULL, any.get("gifts", 0).valueType());
+            assertEquals(2, any.toInt("gifts", 1, "id"));
+            assertEquals(200, any.toInt("gifts", 1, "price"));
         } catch (Exception e) {
             fail(e);
         }
@@ -871,6 +1004,16 @@ public class TestModel {
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
             player.getCash().getTestDateMap().put(1, now.toLocalDate());
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now.minusDays(1));
             player.setUpdateTime(now.minusSeconds(10));
 
@@ -900,6 +1043,13 @@ public class TestModel {
             player.getCash().getTestDateMap().remove(1);
             player.getCash().getTestDateMap().put(2, now.toLocalDate());
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+            player.getGifts().remove(0);
+            player.getGifts().value(1).get().setPrice(300);
+            var g3 = new GiftInfo();
+            g3.setId(3);
+            g3.setPrice(500);
+            g3.setCreateTime(now);
+            player.getGifts().append(g3);
             player.setUpdateTime(now);
             player.increaseUpdateVersion();
 
@@ -907,8 +1057,8 @@ public class TestModel {
             var updates = new ArrayList<Bson>();
             var n = player.appendUpdates(updates);
             assertTrue(n > 0);
-            assertEquals(18, n);
-            assertEquals(18, updates.size());
+            assertEquals(21, n);
+            assertEquals(21, updates.size());
             assertEquals(Updates.set("wt.ct", 5200L), updates.get(0));
             assertEquals(Updates.set("wt.cu", 300L), updates.get(1));
             assertEquals(Updates.set("wt.ad", 1), updates.get(2));
@@ -929,10 +1079,14 @@ public class TestModel {
             assertEquals(Updates.set("cs.tsd", DateTimeUtil.toNumber(now.toLocalDate())), updates.get(13));
             assertEquals(Updates.set("cs.tdm.2", DateTimeUtil.toNumber(now.toLocalDate())), updates.get(14));
             assertEquals(Updates.unset("cs.tdm.1"), updates.get(15));
-            assertEquals(Updates.set("_uv", 1), updates.get(16));
+            assertEquals(Updates.unset("gfs.0"), updates.get(16));
+            assertEquals(Updates.set("gfs.1.prc", 300), updates.get(17));
+            assertEquals(Updates.set("gfs.2", new BsonDocument("id", new BsonInt32(3)).append("prc", new BsonInt32(500))
+                    .append("ct", new BsonDateTime(DateTimeUtil.toEpochMilli(now)))), updates.get(18));
+            assertEquals(Updates.set("_uv", 1), updates.get(19));
             var zone = ZoneId.systemDefault();
             var _ut = new BsonDateTime(now.atZone(zone).toInstant().toEpochMilli());
-            assertEquals(Updates.set("_ut", _ut), updates.get(17));
+            assertEquals(Updates.set("_ut", _ut), updates.get(20));
 
             player.reset();
             assertFalse(player.updated());
@@ -972,6 +1126,16 @@ public class TestModel {
             var today = now.toLocalDate();
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
 
@@ -998,6 +1162,13 @@ public class TestModel {
             player.getCash().setOrderDates(null);
             player.getCash().setOrderTimes(null);
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+            player.getGifts().remove(0);
+            player.getGifts().value(1).get().setPrice(300);
+            var g3 = new GiftInfo();
+            g3.setId(3);
+            g3.setPrice(500);
+            g3.setCreateTime(now);
+            player.getGifts().append(g3);
             player.setUpdateTime(now);
             player.increaseUpdateVersion();
 
@@ -1006,7 +1177,7 @@ public class TestModel {
             assertNotNull(update);
             var json = Jackson2Library.getInstance().dumpsToString(update);
             var any = JsoniterLibrary.getInstance().loads(json);
-            assertEquals(4, any.asMap().size());
+            assertEquals(5, any.asMap().size());
             assertEquals(3, any.get("wallet").asMap().size());
             assertEquals(2, any.get("equipments").asMap().size());
             assertEquals(5, any.get("equipments", "12345678-1234-5678-9abc-123456789abc").asMap().size());
@@ -1036,6 +1207,9 @@ public class TestModel {
             assertEquals(2, any.toInt("cash", "cards", 1));
             assertEquals(3, any.toInt("cash", "cards", 2));
             assertEquals(4, any.toInt("cash", "cards", 3));
+            assertEquals(300, any.toInt("gifts", "1", "price"));
+            assertEquals(3, any.toInt("gifts", "2", "id"));
+            assertEquals(500, any.toInt("gifts", "2", "price"));
         } catch (Exception e) {
             fail(e);
         }
@@ -1069,6 +1243,16 @@ public class TestModel {
             var today = now.toLocalDate();
             player.getCash().setOrderDates(List.of(today.minusDays(1), today));
             player.getCash().setOrderTimes(List.of(now.minusDays(1), now));
+            var g1 = new GiftInfo();
+            g1.setId(1);
+            g1.setPrice(100);
+            g1.setCreateTime(now.minusDays(1));
+            player.getGifts().append(g1);
+            var g2 = new GiftInfo();
+            g2.setId(2);
+            g2.setPrice(200);
+            g2.setCreateTime(now);
+            player.getGifts().append(g2);
             player.setCreateTime(now);
             player.setUpdateTime(now);
 
@@ -1093,6 +1277,13 @@ public class TestModel {
             player.getCash().setOrderDates(null);
             player.getCash().setOrderTimes(null);
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+            player.getGifts().value(0).get().setPrice(300);
+            player.getGifts().remove(1);
+            var g3 = new GiftInfo();
+            g3.setId(3);
+            g3.setPrice(500);
+            g3.setCreateTime(now);
+            player.getGifts().append(g3);
             player.setUpdateTime(now);
             player.increaseUpdateVersion();
 
@@ -1100,13 +1291,14 @@ public class TestModel {
             assertNotNull(delete);
             var json = Jackson2Library.getInstance().dumpsToString(delete);
             var any = JsoniterLibrary.getInstance().loads(json);
-            assertEquals(3, any.asMap().size());
+            assertEquals(4, any.asMap().size());
             assertEquals(1, any.get("equipments").asMap().size());
             assertEquals(1, any.get("items").asMap().size());
             assertEquals(1, any.get("cash").asMap().size());
             assertEquals(1, any.toInt("equipments", "11111111-2222-3333-4444-555555555555"));
             assertEquals(1, any.toInt("items", "2001"));
             assertEquals(1, any.toInt("cash", "cards"));
+            assertEquals(1, any.toInt("gifts", "1"));
         } catch (Exception e) {
             fail(e);
         }

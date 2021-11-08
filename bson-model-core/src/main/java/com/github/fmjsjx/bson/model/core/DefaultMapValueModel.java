@@ -9,12 +9,18 @@ import org.bson.BsonDocument;
  * @param <Self> the type of implementation
  * 
  * @see DefaultMapModel
+ * @see ObjectModel
  */
 public abstract class DefaultMapValueModel<K, Self extends DefaultMapValueModel<K, Self>> extends ObjectModel<Self> {
 
     protected K key;
     protected DefaultMapModel<K, Self, ?> parent;
 
+    /**
+     * Returns the key.
+     * 
+     * @return the key
+     */
     public K key() {
         return key;
     }
@@ -43,6 +49,12 @@ public abstract class DefaultMapValueModel<K, Self extends DefaultMapValueModel<
         return key(null).parent(null);
     }
 
+    /**
+     * Returns if this DefaultMapValueModel is bound or not.
+     * 
+     * @return {@code true} if this DefaultMapValueModel is already bound,
+     *         {@code false} otherwise
+     */
     public boolean bound() {
         return key != null && parent != null;
     }
