@@ -132,6 +132,16 @@ objects:
     type: simple-list
     value: int
     json-ignore: true
+  - name: orderDates
+    bname: ods
+    type: simple-list
+    value: date
+    json-ignore: true
+  - name: orderTimes
+    bname: ots
+    type: simple-list
+    value: datetime
+    json-ignore: true
   - name: testDate
     bname: tsd
     type: date

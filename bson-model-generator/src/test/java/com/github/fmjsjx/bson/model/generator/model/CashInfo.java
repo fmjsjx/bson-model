@@ -1,6 +1,7 @@
 package com.github.fmjsjx.bson.model.generator.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +32,8 @@ public class CashInfo extends ObjectModel<CashInfo> {
     public static final String BNAME_STAGES = "stg";
     public static final String BNAME_CARDS = "cs";
     public static final String BNAME_ORDER_IDS = "ois";
+    public static final String BNAME_ORDER_DATES = "ods";
+    public static final String BNAME_ORDER_TIMES = "ots";
     public static final String BNAME_TEST_DATE = "tsd";
     public static final String BNAME_TEST_DATE_MAP = "tdm";
 
@@ -42,6 +45,10 @@ public class CashInfo extends ObjectModel<CashInfo> {
     private List<Integer> cards;
     @JsonIgnore
     private List<Integer> orderIds;
+    @JsonIgnore
+    private List<LocalDate> orderDates;
+    @JsonIgnore
+    private List<LocalDateTime> orderTimes;
     @JsonIgnore
     private LocalDate testDate;
     @JsonIgnore
@@ -83,6 +90,34 @@ public class CashInfo extends ObjectModel<CashInfo> {
     }
 
     @JsonIgnore
+    public List<LocalDate> getOrderDates() {
+        return orderDates;
+    }
+
+    public void setOrderDates(List<LocalDate> orderDates) {
+        if (orderDates == null) {
+            this.orderDates = null;
+        } else {
+            this.orderDates = List.copyOf(orderDates);
+        }
+        updatedFields.set(4);
+    }
+
+    @JsonIgnore
+    public List<LocalDateTime> getOrderTimes() {
+        return orderTimes;
+    }
+
+    public void setOrderTimes(List<LocalDateTime> orderTimes) {
+        if (orderTimes == null) {
+            this.orderTimes = null;
+        } else {
+            this.orderTimes = List.copyOf(orderTimes);
+        }
+        updatedFields.set(5);
+    }
+
+    @JsonIgnore
     public LocalDate getTestDate() {
         return testDate;
     }
@@ -90,7 +125,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
     public void setTestDate(LocalDate testDate) {
         if (ObjectUtil.isNotEquals(this.testDate, testDate)) {
             this.testDate = testDate;
-            updatedFields.set(4);
+            updatedFields.set(6);
         }
     }
 
@@ -133,6 +168,18 @@ public class CashInfo extends ObjectModel<CashInfo> {
             orderIds.stream().map(SimpleValueTypes.INTEGER::toBson).forEach(orderIdsArray::add);
             bson.append("ois", orderIdsArray);
         }
+        var orderDates = this.orderDates;
+        if (orderDates != null) {
+            var orderDatesArray = new BsonArray(orderDates.size());
+            orderDates.stream().map(SimpleValueTypes.DATE::toBson).forEach(orderDatesArray::add);
+            bson.append("ods", orderDatesArray);
+        }
+        var orderTimes = this.orderTimes;
+        if (orderTimes != null) {
+            var orderTimesArray = new BsonArray(orderTimes.size());
+            orderTimes.stream().map(SimpleValueTypes.DATETIME::toBson).forEach(orderTimesArray::add);
+            bson.append("ots", orderTimesArray);
+        }
         if (testDate != null) {
             bson.append("tsd", new BsonInt32(DateTimeUtil.toNumber(testDate)));
         }
@@ -156,6 +203,18 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             doc.append("ois", null);
         }
+        var orderDates = this.orderDates;
+        if (orderDates != null) {
+            doc.append("ods", orderDates.stream().map(SimpleValueTypes.DATE::toStorage).collect(Collectors.toList()));
+        } else {
+            doc.append("ods", null);
+        }
+        var orderTimes = this.orderTimes;
+        if (orderTimes != null) {
+            doc.append("ots", orderTimes.stream().map(SimpleValueTypes.DATETIME::toStorage).collect(Collectors.toList()));
+        } else {
+            doc.append("ots", null);
+        }
         if (testDate != null) {
             doc.append("tsd", DateTimeUtil.toNumber(testDate));
         }
@@ -175,6 +234,14 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (orderIds != null) {
             data.put("ois", orderIds);
         }
+        var orderDates = this.orderDates;
+        if (orderDates != null) {
+            data.put("ods", orderDates.stream().map(SimpleValueTypes.DATE::toData).collect(Collectors.toList()));
+        }
+        var orderTimes = this.orderTimes;
+        if (orderTimes != null) {
+            data.put("ots", orderTimes.stream().map(SimpleValueTypes.DATETIME::toData).collect(Collectors.toList()));
+        }
         if (testDate != null) {
             data.put("tsd", DateTimeUtil.toNumber(testDate));
         }
@@ -191,6 +258,12 @@ public class CashInfo extends ObjectModel<CashInfo> {
         orderIds = BsonUtil.listValue(src, "ois").map(orderIdsList -> {
             return orderIdsList.stream().map(SimpleValueTypes.INTEGER::cast).collect(Collectors.toUnmodifiableList());
         }).orElse(null);
+        orderDates = BsonUtil.listValue(src, "ods").map(orderDatesList -> {
+            return orderDatesList.stream().map(SimpleValueTypes.DATE::cast).collect(Collectors.toUnmodifiableList());
+        }).orElse(null);
+        orderTimes = BsonUtil.listValue(src, "ots").map(orderTimesList -> {
+            return orderTimesList.stream().map(SimpleValueTypes.DATETIME::cast).collect(Collectors.toUnmodifiableList());
+        }).orElse(null);
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.documentValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
@@ -204,6 +277,12 @@ public class CashInfo extends ObjectModel<CashInfo> {
         }).orElse(null);
         orderIds = BsonUtil.arrayValue(src, "ois").map(orderIdsArray -> {
             return orderIdsArray.stream().map(SimpleValueTypes.INTEGER::parse).collect(Collectors.toUnmodifiableList());
+        }).orElse(null);
+        orderDates = BsonUtil.arrayValue(src, "ods").map(orderDatesArray -> {
+            return orderDatesArray.stream().map(SimpleValueTypes.DATE::parse).collect(Collectors.toUnmodifiableList());
+        }).orElse(null);
+        orderTimes = BsonUtil.arrayValue(src, "ots").map(orderTimesArray -> {
+            return orderTimesArray.stream().map(SimpleValueTypes.DATETIME::parse).collect(Collectors.toUnmodifiableList());
         }).orElse(null);
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
@@ -231,6 +310,20 @@ public class CashInfo extends ObjectModel<CashInfo> {
             }
             return List.copyOf(orderIds);
         }).orElse(null);
+        orderDates = BsonUtil.arrayValue(src, "ods").filter(orderDatesAny -> orderDatesAny.valueType() == ValueType.ARRAY).map(orderDatesAny -> {
+            var orderDates = new ArrayList<LocalDate>(orderDatesAny.size());
+            for (var orderDatesAnyElement : orderDatesAny) {
+                orderDates.add(SimpleValueTypes.DATE.parse(orderDatesAnyElement));
+            }
+            return List.copyOf(orderDates);
+        }).orElse(null);
+        orderTimes = BsonUtil.arrayValue(src, "ots").filter(orderTimesAny -> orderTimesAny.valueType() == ValueType.ARRAY).map(orderTimesAny -> {
+            var orderTimes = new ArrayList<LocalDateTime>(orderTimesAny.size());
+            for (var orderTimesAnyElement : orderTimesAny) {
+                orderTimes.add(SimpleValueTypes.DATETIME.parse(orderTimesAnyElement));
+            }
+            return List.copyOf(orderTimes);
+        }).orElse(null);
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.objectValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
@@ -257,6 +350,20 @@ public class CashInfo extends ObjectModel<CashInfo> {
             }
             return List.copyOf(orderIds);
         }).orElse(null);
+        orderDates = BsonUtil.arrayValue(src, "ods").filter(JsonNode::isArray).map(orderDatesNode -> {
+            var orderDates = new ArrayList<LocalDate>(orderDatesNode.size());
+            for (var orderDatesNodeElement : orderDatesNode) {
+                orderDates.add(SimpleValueTypes.DATE.parse(orderDatesNodeElement));
+            }
+            return List.copyOf(orderDates);
+        }).orElse(null);
+        orderTimes = BsonUtil.arrayValue(src, "ots").filter(JsonNode::isArray).map(orderTimesNode -> {
+            var orderTimes = new ArrayList<LocalDateTime>(orderTimesNode.size());
+            for (var orderTimesNodeElement : orderTimesNode) {
+                orderTimes.add(SimpleValueTypes.DATETIME.parse(orderTimesNodeElement));
+            }
+            return List.copyOf(orderTimes);
+        }).orElse(null);
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.objectValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
@@ -274,8 +381,16 @@ public class CashInfo extends ObjectModel<CashInfo> {
         return updatedFields.get(3);
     }
 
-    public boolean testDateUpdated() {
+    public boolean orderDatesUpdated() {
         return updatedFields.get(4);
+    }
+
+    public boolean orderTimesUpdated() {
+        return updatedFields.get(5);
+    }
+
+    public boolean testDateUpdated() {
+        return updatedFields.get(6);
     }
 
     public boolean testDateMapUpdated() {
@@ -310,6 +425,26 @@ public class CashInfo extends ObjectModel<CashInfo> {
             }
         }
         if (updatedFields.get(4)) {
+            var orderDates = this.orderDates;
+            if (orderDates == null) {
+                updates.add(Updates.unset(xpath().resolve("ods").value()));
+            } else {
+                var orderDatesArray = new BsonArray(orderDates.size());
+                orderDates.stream().map(SimpleValueTypes.DATE::toBson).forEach(orderDatesArray::add);
+                updates.add(Updates.set(xpath().resolve("ods").value(), orderDatesArray));
+            }
+        }
+        if (updatedFields.get(5)) {
+            var orderTimes = this.orderTimes;
+            if (orderTimes == null) {
+                updates.add(Updates.unset(xpath().resolve("ots").value()));
+            } else {
+                var orderTimesArray = new BsonArray(orderTimes.size());
+                orderTimes.stream().map(SimpleValueTypes.DATETIME::toBson).forEach(orderTimesArray::add);
+                updates.add(Updates.set(xpath().resolve("ots").value(), orderTimesArray));
+            }
+        }
+        if (updatedFields.get(6)) {
             updates.add(Updates.set(xpath().resolve("tsd").value(), DateTimeUtil.toNumber(testDate)));
         }
         var testDateMap = this.testDateMap;
@@ -364,7 +499,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
 
     @Override
     public String toString() {
-        return "CashInfo(" + "stages=" + stages + ", " + "cards=" + cards + ", " + "orderIds=" + orderIds + ", " + "testDate=" + testDate + ", " + "testDateMap=" + testDateMap + ")";
+        return "CashInfo(" + "stages=" + stages + ", " + "cards=" + cards + ", " + "orderIds=" + orderIds + ", " + "orderDates=" + orderDates + ", " + "orderTimes=" + orderTimes + ", " + "testDate=" + testDate + ", " + "testDateMap=" + testDateMap + ")";
     }
 
 }
