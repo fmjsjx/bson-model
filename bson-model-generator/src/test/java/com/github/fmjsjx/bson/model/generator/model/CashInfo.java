@@ -480,7 +480,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (stages.updated()) {
             update.put("stages", stages.toUpdate());
         }
-        if (updatedFields.get(2)) {
+        if (updatedFields.get(2) && cards != null) {
             update.put("cards", cards);
         }
         return update;
@@ -493,7 +493,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (stages.deletedSize() > 0) {
             delete.put("stages", stages.toDelete());
         }
-        if (updatedFields.get(2)) {
+        if (updatedFields.get(2) && cards == null) {
             delete.put("cards", 1);
         }
         return delete;
@@ -505,7 +505,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (stages.deletedSize() > 0) {
             n++;
         }
-        if (updatedFields.get(2)) {
+        if (updatedFields.get(2) && cards == null) {
             n++;
         }
         return n;

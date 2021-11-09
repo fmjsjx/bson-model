@@ -1180,6 +1180,9 @@ def fill_to_sub_update(code, cfg)
       if %w(object map simple-map list).include?(field['type'])
         code << tabs(2, "if (#{name}.updated()) {\n")
         code << tabs(3, "update.put(\"#{name}\", #{name}.toUpdate());\n")
+      elsif field['type'] == 'simple-list'
+        code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} != null) {\n")
+        code << tabs(3, "update.put(\"#{name}\", #{name});\n")
       else
         code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
         if field['virtual']
@@ -1209,7 +1212,7 @@ def fill_to_delete(code, cfg)
       if %w(object map simple-map list simple-list).include?(field['type'])
         name = field['name']
         if field['type'] == 'simple-list'
-          code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
+          code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} == null) {\n")
           code << tabs(3, "delete.put(\"#{name}\", 1);\n")
         else
           code << tabs(2, "var #{name} = this.#{name};\n")
@@ -1238,7 +1241,7 @@ def fill_deleted_size(code, cfg)
       if %w(object map simple-map list simple-list).include?(field['type'])
         name = field['name']
         if field['type'] == 'simple-list'
-          code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
+          code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} == null) {\n")
         else
           code << tabs(2, "if (#{name}.deletedSize() > 0) {\n")
         end
