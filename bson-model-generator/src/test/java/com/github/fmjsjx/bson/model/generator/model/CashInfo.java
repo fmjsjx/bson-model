@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.bson.BsonDocument;
@@ -85,6 +86,19 @@ public class CashInfo extends ObjectModel<CashInfo> {
             this.orderIds = null;
         } else {
             this.orderIds = List.copyOf(orderIds);
+        }
+        updatedFields.set(3);
+    }
+
+    public Optional<List<Integer>> optionalOrderIds() {
+        return Optional.ofNullable(orderIds);
+    }
+
+    public void setOrderIdsOf(Integer... orderIds) {
+        if (orderIds.length == 0) {
+            this.orderIds = List.of();
+        } else {
+            this.orderIds = List.of(orderIds);
         }
         updatedFields.set(3);
     }

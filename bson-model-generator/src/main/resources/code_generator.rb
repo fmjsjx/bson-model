@@ -82,6 +82,9 @@ def fill_imports(code, super_class, cfg)
     if fields.any? { |field| field['type'] == 'simple-list' and field['value'] == 'date' }
       javas << 'java.time.LocalDate'
     end
+    if fields.any? { |field| field['type'] == 'simple-list' and field['optional'] == true }
+      javas << 'java.util.Optional'
+    end
   end
   if fields.any? { |field| field['type'] == 'object-id' }
     coms << 'org.bson.types.ObjectId'
@@ -300,6 +303,21 @@ def fill_xetters(code, cfg)
       code << tabs(2, "}\n")
       code << tabs(2, "updatedFields.set(#{index + 1});\n")
       code << tabs(1, "}\n\n")
+      if field['optional'] == true
+        code << tabs(1, "public Optional<List<#{value_type}>> optional#{camcel}() {\n")
+        code << tabs(2, "return Optional.ofNullable(#{name});\n")
+        code << tabs(1, "}\n\n")
+      end
+      if field['nocopy'] == true
+        code << tabs(1, "public void set#{camcel}Of(#{value_type}... #{name}) {\n")
+        code << tabs(2, "if (#{name}.length == 0) {\n")
+        code << tabs(3, "this.#{name} = List.of();\n")
+        code << tabs(2, "} else {\n")
+        code << tabs(3, "this.#{name} = List.of(#{name});\n")
+        code << tabs(2, "}\n")
+        code << tabs(2, "updatedFields.set(#{index + 1});\n")
+        code << tabs(1, "}\n\n")
+      end
     else
       value_type = jtype(type)
       if type == 'bool'

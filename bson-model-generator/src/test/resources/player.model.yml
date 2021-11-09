@@ -136,6 +136,8 @@ objects:
     type: simple-list
     value: int
     json-ignore: true
+    optional: true
+    nocopy: true
   - name: orderDates
     bname: ods
     type: simple-list
