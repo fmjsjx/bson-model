@@ -73,6 +73,7 @@ def fill_imports(code, super_class, cfg)
   if fields.any? { |field| field['type'] == 'simple-list' }
     coms << 'org.bson.BsonArray'
     coms << 'com.jsoniter.ValueType'
+    coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
     javas << 'java.util.stream.Collectors'
     javas << 'java.util.ArrayList'
     if fields.any? { |field| field['type'] == 'simple-list' and field['value'] == 'datetime' }
