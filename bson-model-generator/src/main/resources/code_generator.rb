@@ -292,6 +292,12 @@ def fill_xetters(code, cfg)
       code << tabs(1, "}\n\n")
     when 'simple-list'
       value_type = boxed_jtype(field['value'])
+      if field['virtual']
+        code << tabs(1, "public List<#{value_type}> get#{camcel}() {\n")
+        code << tabs(2, "return #{field['formula']};\n")
+        code << tabs(1, "}\n\n")
+        next
+      end
       code << tabs(1, "public List<#{value_type}> get#{camcel}() {\n")
       code << tabs(2, "return #{name};\n")
       code << tabs(1, "}\n\n")
@@ -302,6 +308,11 @@ def fill_xetters(code, cfg)
       code << tabs(3, "this.#{name} = List.copyOf(#{name});\n")
       code << tabs(2, "}\n")
       code << tabs(2, "updatedFields.set(#{index + 1});\n")
+      if field.has_key? 'relations'
+        field['relations'].each do |i|
+          code << tabs(2, "updatedFields.set(#{i});\n")
+        end
+      end
       code << tabs(1, "}\n\n")
       if field['optional'] == true
         code << tabs(1, "public Optional<List<#{value_type}>> optional#{camcel}() {\n")
@@ -316,6 +327,11 @@ def fill_xetters(code, cfg)
         code << tabs(3, "this.#{name} = List.of(#{name});\n")
         code << tabs(2, "}\n")
         code << tabs(2, "updatedFields.set(#{index + 1});\n")
+        if field.has_key? 'relations'
+          field['relations'].each do |i|
+            code << tabs(2, "updatedFields.set(#{i});\n")
+          end
+        end
         code << tabs(1, "}\n\n")
       end
     else
@@ -1181,8 +1197,13 @@ def fill_to_sub_update(code, cfg)
         code << tabs(2, "if (#{name}.updated()) {\n")
         code << tabs(3, "update.put(\"#{name}\", #{name}.toUpdate());\n")
       elsif field['type'] == 'simple-list'
-        code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} != null) {\n")
-        code << tabs(3, "update.put(\"#{name}\", #{name});\n")
+        if field['virtual']
+          code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
+          code << tabs(3, "update.put(\"#{name}\", get#{camcel_name(name)}());\n")
+        else
+          code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} != null) {\n")
+          code << tabs(3, "update.put(\"#{name}\", #{name});\n")
+        end
       else
         code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
         if field['virtual']
@@ -1204,11 +1225,11 @@ def fill_to_delete(code, cfg)
   code << tabs(1, "@Override\n")
   code << tabs(1, "public Map<Object, Object> toDelete() {\n")
   if cfg['fields'].select do |field|
-    not field['json-ignore']
+    not (field['json-ignore'] or field['virtual'])
   end.any? { |field| %w(object map simple-map list simple-list).include?(field['type']) }
     code << tabs(2, "var delete = new LinkedHashMap<>();\n")
     cfg['fields'].each_with_index do |field, index|
-      next if field['json-ignore']
+      next if field['json-ignore'] || field['virtual']
       if %w(object map simple-map list simple-list).include?(field['type'])
         name = field['name']
         if field['type'] == 'simple-list'
@@ -1233,11 +1254,11 @@ def fill_deleted_size(code, cfg)
   code << tabs(1, "@Override\n")
   code << tabs(1, "protected int deletedSize() {\n")
   if cfg['fields'].select do |field|
-    not field['json-ignore']
+    not (field['json-ignore'] or field['virtual'])
   end.any? { |field| %w(object map simple-map list simple-list).include?(field['type']) }
     code << tabs(2, "var n = 0;\n")
     cfg['fields'].each_with_index do |field, index|
-      next if field['json-ignore']
+      next if field['json-ignore'] || field['virtual']
       if %w(object map simple-map list simple-list).include?(field['type'])
         name = field['name']
         if field['type'] == 'simple-list'
