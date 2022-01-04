@@ -123,6 +123,8 @@ public abstract class MapModel<K, V, Parent extends BsonModel, Self extends MapM
      * Copies all of the mappings from the specified map to this map.
      * 
      * @param map mappings to be stored in this map
+     * @return this map
+     * 
      * @since 1.2
      */
     @SuppressWarnings("unchecked")
