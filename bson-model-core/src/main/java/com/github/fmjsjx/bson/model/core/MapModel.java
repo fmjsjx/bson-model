@@ -4,6 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -117,6 +120,75 @@ public abstract class MapModel<K, V, Parent extends BsonModel, Self extends MapM
     public abstract Optional<V> put(K key, V value);
 
     /**
+     * Copies all of the mappings from the specified map to this map.
+     * 
+     * @param map mappings to be stored in this map
+     * @since 1.2
+     */
+    @SuppressWarnings("unchecked")
+    public Self putAll(Map<K, V> map) {
+        map.forEach(this::put);
+        return (Self) this;
+    }
+
+    /**
+     * If the specified key is not already associated with a value, attempts to
+     * compute its value using the given mapping function and enters it into this
+     * map.
+     * 
+     * @param key             key with which the specified value is to be associated
+     * @param mappingFunction the mapping function to compute a value (must not be
+     *                        {@code null})
+     * @return the current (existing or computed) value associated with the
+     *         specified key
+     * @throws NullPointerException   if the specified key is {@code null} and this
+     *                                map does not support null keys, or the
+     *                                mappingFunction is {@code null}
+     * @throws NoSuchElementException if the computed value is {@code null}
+     * @since 1.2
+     */
+    public V putIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) throws NoSuchElementException {
+        Objects.requireNonNull(mappingFunction);
+        var v = get(key);
+        if (v.isEmpty()) {
+            var value = mappingFunction.apply(key);
+            if (value == null) {
+                throw new NoSuchElementException("the value computed by the mappingFunction must not be null");
+            }
+            put(key, value);
+            return value;
+        }
+        return v.get();
+    }
+
+    /**
+     * If the specified key is not already associated with a value (or is mapped to
+     * {@code null}), attempts to compute its value using the given mapping function
+     * and enters it into this map unless {@code null}.
+     * 
+     * @param key             key with which the specified value is to be associated
+     * @param mappingFunction the mapping function to compute a value
+     * @return the current (existing or computed) value associated with the
+     *         specified key, or {@code null} if the computed value is {@code null}
+     * @throws NullPointerException if the specified key is {@code null} and this
+     *                              map does not support null keys, or the
+     *                              mappingFunction is {@code null}
+     * @since 1.2
+     */
+    public Optional<V> computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        Objects.requireNonNull(mappingFunction);
+        var v = get(key);
+        if (v.isEmpty()) {
+            var value = mappingFunction.apply(key);
+            if (value != null) {
+                put(key, value);
+                return Optional.of(value);
+            }
+        }
+        return v;
+    }
+
+    /**
      * Removes the mapping for a key from this map if it is present.
      * 
      * @param key the key
@@ -188,6 +260,17 @@ public abstract class MapModel<K, V, Parent extends BsonModel, Self extends MapM
      */
     public void forEach(BiConsumer<K, V> action) {
         map.forEach(action);
+    }
+
+    /**
+     * Returns a sequential {@code Stream} with the mappings contained in this map.
+     * 
+     * @return a sequential {@code Stream} with the mappings contained in this map
+     * 
+     * @since 1.2
+     */
+    public Stream<Entry<K, V>> entries() {
+        return map.entrySet().stream();
     }
 
     /**

@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.BsonArray;
 import org.bson.BsonDateTime;
@@ -45,14 +46,16 @@ public class TestModel {
             player.getWallet().setCoinTotal(5000);
             player.getWallet().setCoinUsed(200);
             player.getWallet().setDiamond(10);
-            var equipment = new Equipment();
-            equipment.setId("12345678-1234-5678-9abc-123456789abc");
-            equipment.setRefId(1);
-            equipment.setAtk(10);
-            equipment.setDef(0);
-            equipment.setHp(0);
-            player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
-            player.getItems().put(2001, 5);
+            player.getEquipments().putIfAbsent("12345678-1234-5678-9abc-123456789abc", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(1);
+                equipment.setAtk(10);
+                equipment.setDef(0);
+                equipment.setHp(0);
+                return equipment;
+            });
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setCards(List.of(1, 2, 3, 4));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
@@ -177,14 +180,16 @@ public class TestModel {
             player.getWallet().setCoinTotal(5000);
             player.getWallet().setCoinUsed(200);
             player.getWallet().setDiamond(10);
-            var equipment = new Equipment();
-            equipment.setId("12345678-1234-5678-9abc-123456789abc");
-            equipment.setRefId(1);
-            equipment.setAtk(10);
-            equipment.setDef(0);
-            equipment.setHp(0);
-            player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
-            player.getItems().put(2001, 5);
+            player.getEquipments().putIfAbsent("12345678-1234-5678-9abc-123456789abc", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(1);
+                equipment.setAtk(10);
+                equipment.setDef(0);
+                equipment.setHp(0);
+                return equipment;
+            });
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setCards(List.of(1, 2, 3, 4));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
@@ -293,14 +298,16 @@ public class TestModel {
             player.getWallet().setCoinTotal(5000);
             player.getWallet().setCoinUsed(200);
             player.getWallet().setDiamond(10);
-            var equipment = new Equipment();
-            equipment.setId("12345678-1234-5678-9abc-123456789abc");
-            equipment.setRefId(1);
-            equipment.setAtk(10);
-            equipment.setDef(0);
-            equipment.setHp(0);
-            player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
-            player.getItems().put(2001, 5);
+            player.getEquipments().putIfAbsent("12345678-1234-5678-9abc-123456789abc", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(1);
+                equipment.setAtk(10);
+                equipment.setDef(0);
+                equipment.setHp(0);
+                return equipment;
+            });
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setCards(List.of(1, 2, 3, 4));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var today = LocalDate.now();
@@ -917,14 +924,16 @@ public class TestModel {
             player.getWallet().setCoinTotal(5000);
             player.getWallet().setCoinUsed(200);
             player.getWallet().setDiamond(10);
-            var equipment = new Equipment();
-            equipment.setId("12345678-1234-5678-9abc-123456789abc");
-            equipment.setRefId(1);
-            equipment.setAtk(10);
-            equipment.setDef(0);
-            equipment.setHp(0);
-            player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", equipment);
-            player.getItems().put(2001, 5);
+            player.getEquipments().putIfAbsent("12345678-1234-5678-9abc-123456789abc", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(1);
+                equipment.setAtk(10);
+                equipment.setDef(0);
+                equipment.setHp(0);
+                return equipment;
+            });
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().getStages().put(1, 1);
             player.getCash().setCards(List.of(1, 2, 3, 4));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
@@ -984,20 +993,24 @@ public class TestModel {
             player.getWallet().setCoinTotal(5000);
             player.getWallet().setCoinUsed(200);
             player.getWallet().setDiamond(10);
-            var eq1 = new Equipment();
-            eq1.setId("12345678-1234-5678-9abc-123456789abc");
-            eq1.setRefId(1);
-            eq1.setAtk(10);
-            eq1.setDef(0);
-            eq1.setHp(0);
-            player.getEquipments().put("12345678-1234-5678-9abc-123456789abc", eq1);
-            var eq2 = new Equipment();
-            eq2.setId("11111111-2222-3333-4444-555555555555");
-            eq2.setRefId(2);
-            eq2.setDef(5);
-            eq2.setHp(2);
-            player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
-            player.getItems().put(2001, 5);
+            var eq1 = player.getEquipments().putIfAbsent("12345678-1234-5678-9abc-123456789abc", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(1);
+                equipment.setAtk(10);
+                equipment.setDef(0);
+                equipment.setHp(0);
+                return equipment;
+            });
+            player.getEquipments().putIfAbsent("11111111-2222-3333-4444-555555555555", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(2);
+                equipment.setDef(5);
+                equipment.setHp(2);
+                return equipment;
+            });
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             var today = now.toLocalDate();
@@ -1025,12 +1038,15 @@ public class TestModel {
 
             player.getEquipments().get("12345678-1234-5678-9abc-123456789abc").get().fullyUpdate(true).setAtk(12);
             assertTrue(player.getEquipments().remove("11111111-2222-3333-4444-555555555555").isPresent());
-            var eq3 = new Equipment();
-            eq3.setId("00000000-0000-0000-0000-000000000000");
-            eq3.setRefId(3);
-            eq3.setDef(5);
-            eq3.setHp(2);
-            player.getEquipments().put("00000000-0000-0000-0000-000000000000", eq3.fullyUpdate(true));
+
+            var eq3 = player.getEquipments().putIfAbsent("00000000-0000-0000-0000-000000000000", k -> {
+                var equipment = new Equipment();
+                equipment.setId(k);
+                equipment.setRefId(3);
+                equipment.setDef(5);
+                equipment.setHp(2);
+                return equipment.fullyUpdate(true);
+            });
 
             player.getItems().put(2002, 1);
             player.getItems().remove(2001);
@@ -1095,6 +1111,7 @@ public class TestModel {
             assertEquals(0, n2);
             assertTrue(updates2.isEmpty());
         } catch (Exception e) {
+            e.printStackTrace();
             fail(e);
         }
     }
@@ -1120,7 +1137,7 @@ public class TestModel {
             eq2.setDef(5);
             eq2.setHp(2);
             player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
-            player.getItems().put(2001, 5);
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             var today = now.toLocalDate();
@@ -1236,7 +1253,7 @@ public class TestModel {
             eq2.setDef(5);
             eq2.setHp(2);
             player.getEquipments().put("11111111-2222-3333-4444-555555555555", eq2);
-            player.getItems().put(2001, 5);
+            player.getItems().putAll(Map.of(2001, 5));
             player.getCash().setCards(List.of(1, 2, 3, 4));
             player.getCash().setOrderIds(List.of(0, 1, 2, 3, 4));
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
