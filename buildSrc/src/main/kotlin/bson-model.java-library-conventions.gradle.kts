@@ -11,11 +11,11 @@ repositories {
 
 dependencies {
     // netty-bom
-    api(platform("io.netty:netty-bom:4.1.72.Final"))
+    api(platform("io.netty:netty-bom:4.1.73.Final"))
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:2.5.4"))
+    api(platform("com.github.fmjsjx:libcommon-bom:2.5.5"))
     // junit-bom
-    testImplementation(platform("org.junit:junit-bom:5.7.0"))
+    testImplementation(platform("org.junit:junit-bom:5.8.2"))
     // jackson2-bom
     api(platform("com.fasterxml.jackson:jackson-bom:2.13.1"))
 
@@ -24,19 +24,19 @@ dependencies {
         implementation("ch.qos.logback:logback-classic:1.2.10")
         api("com.dslplatform:dsl-json-java8:1.9.9")
         api("com.jsoniter:jsoniter:0.9.23")
-        api("org.mongodb:bson:4.4.0")
-        api("org.mongodb:mongodb-driver-core:4.4.0")
-        api("org.mongodb:mongodb-driver-sync:4.4.0")
-        api("org.mongodb:mongodb-driver-reactivestreams:4.4.0")
-        api("org.mongodb:mongodb-driver-legacy:4.4.0")
+        api("org.mongodb:bson:4.4.1")
+        api("org.mongodb:mongodb-driver-core:4.4.1")
+        api("org.mongodb:mongodb-driver-sync:4.4.1")
+        api("org.mongodb:mongodb-driver-reactivestreams:4.4.1")
+        api("org.mongodb:mongodb-driver-legacy:4.4.1")
         implementation("org.jruby:jruby-complete:9.3.2.0")
         implementation("org.jruby:jruby:9.3.2.0")
         implementation("org.jruby:jruby-core:9.3.2.0")
         implementation("org.jruby:jruby-stdlib:9.3.2.0")
-        implementation("org.yaml:snakeyaml:1.29")
+        implementation("org.yaml:snakeyaml:1.30")
     }
     // log4j2
-    implementation(platform("org.apache.logging.log4j:log4j-bom:2.17.0"))
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.17.1"))
 
 }
 
