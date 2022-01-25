@@ -3,10 +3,13 @@ package com.github.fmjsjx.bson.model.generator.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.bson.BsonDocument;
@@ -37,6 +40,10 @@ public class CashInfo extends ObjectModel<CashInfo> {
     public static final String BNAME_ORDER_TIMES = "ots";
     public static final String BNAME_TEST_DATE = "tsd";
     public static final String BNAME_TEST_DATE_MAP = "tdm";
+    public static final String BNAME_TEST_SIMPLE_SET = "tss";
+    public static final String BNAME_TEST_SIMPLE_SET2 = "tss2";
+    public static final String BNAME_TEST_SIMPLE_SET3 = "tss3";
+    public static final String BNAME_TEST_SIMPLE_SET4 = "tss4";
 
     private static final DotNotation XPATH = DotNotation.of("cs");
 
@@ -54,6 +61,12 @@ public class CashInfo extends ObjectModel<CashInfo> {
     private LocalDate testDate;
     @JsonIgnore
     private final SimpleMapModel<Integer, LocalDate, CashInfo> testDateMap = SimpleMapModel.integerKeys(this, "tdm", SimpleValueTypes.DATE);
+    private Set<Integer> testSimpleSet;
+    private Set<String> testSimpleSet2;
+    @JsonIgnore
+    private Set<LocalDate> testSimpleSet3;
+    @JsonIgnore
+    private Set<LocalDateTime> testSimpleSet4;
 
     public CashInfo(Player parent) {
         this.parent = parent;
@@ -148,6 +161,76 @@ public class CashInfo extends ObjectModel<CashInfo> {
         return testDateMap;
     }
 
+    public Set<Integer> getTestSimpleSet() {
+        return testSimpleSet;
+    }
+
+    public void setTestSimpleSet(Set<Integer> testSimpleSet) {
+        if (testSimpleSet == null) {
+            this.testSimpleSet = null;
+        } else {
+            if (testSimpleSet instanceof LinkedHashSet) {
+                this.testSimpleSet = Collections.unmodifiableSet(new LinkedHashSet<>(testSimpleSet));
+            } else {
+                this.testSimpleSet = Set.copyOf(testSimpleSet);
+            }
+        }
+        updatedFields.set(8);
+    }
+
+    public Set<String> getTestSimpleSet2() {
+        return testSimpleSet2;
+    }
+
+    public void setTestSimpleSet2(Set<String> testSimpleSet2) {
+        if (testSimpleSet2 == null) {
+            this.testSimpleSet2 = null;
+        } else {
+            if (testSimpleSet2 instanceof LinkedHashSet) {
+                this.testSimpleSet2 = Collections.unmodifiableSet(new LinkedHashSet<>(testSimpleSet2));
+            } else {
+                this.testSimpleSet2 = Set.copyOf(testSimpleSet2);
+            }
+        }
+        updatedFields.set(9);
+    }
+
+    @JsonIgnore
+    public Set<LocalDate> getTestSimpleSet3() {
+        return testSimpleSet3;
+    }
+
+    public void setTestSimpleSet3(Set<LocalDate> testSimpleSet3) {
+        if (testSimpleSet3 == null) {
+            this.testSimpleSet3 = null;
+        } else {
+            if (testSimpleSet3 instanceof LinkedHashSet) {
+                this.testSimpleSet3 = Collections.unmodifiableSet(new LinkedHashSet<>(testSimpleSet3));
+            } else {
+                this.testSimpleSet3 = Set.copyOf(testSimpleSet3);
+            }
+        }
+        updatedFields.set(10);
+    }
+
+    @JsonIgnore
+    public Set<LocalDateTime> getTestSimpleSet4() {
+        return testSimpleSet4;
+    }
+
+    public void setTestSimpleSet4(Set<LocalDateTime> testSimpleSet4) {
+        if (testSimpleSet4 == null) {
+            this.testSimpleSet4 = null;
+        } else {
+            if (testSimpleSet4 instanceof LinkedHashSet) {
+                this.testSimpleSet4 = Collections.unmodifiableSet(new LinkedHashSet<>(testSimpleSet4));
+            } else {
+                this.testSimpleSet4 = Set.copyOf(testSimpleSet4);
+            }
+        }
+        updatedFields.set(11);
+    }
+
     @Override
     public Player parent() {
         return parent;
@@ -198,6 +281,30 @@ public class CashInfo extends ObjectModel<CashInfo> {
             bson.append("tsd", new BsonInt32(DateTimeUtil.toNumber(testDate)));
         }
         bson.append("tdm", testDateMap.toBson());
+        var testSimpleSet = this.testSimpleSet;
+        if (testSimpleSet != null) {
+            var testSimpleSetArray = new BsonArray(testSimpleSet.size());
+            testSimpleSet.stream().map(SimpleValueTypes.INTEGER::toBson).forEach(testSimpleSetArray::add);
+            bson.append("tss", testSimpleSetArray);
+        }
+        var testSimpleSet2 = this.testSimpleSet2;
+        if (testSimpleSet2 != null) {
+            var testSimpleSet2Array = new BsonArray(testSimpleSet2.size());
+            testSimpleSet2.stream().map(SimpleValueTypes.STRING::toBson).forEach(testSimpleSet2Array::add);
+            bson.append("tss2", testSimpleSet2Array);
+        }
+        var testSimpleSet3 = this.testSimpleSet3;
+        if (testSimpleSet3 != null) {
+            var testSimpleSet3Array = new BsonArray(testSimpleSet3.size());
+            testSimpleSet3.stream().map(SimpleValueTypes.DATE::toBson).forEach(testSimpleSet3Array::add);
+            bson.append("tss3", testSimpleSet3Array);
+        }
+        var testSimpleSet4 = this.testSimpleSet4;
+        if (testSimpleSet4 != null) {
+            var testSimpleSet4Array = new BsonArray(testSimpleSet4.size());
+            testSimpleSet4.stream().map(SimpleValueTypes.DATETIME::toBson).forEach(testSimpleSet4Array::add);
+            bson.append("tss4", testSimpleSet4Array);
+        }
         return bson;
     }
 
@@ -233,6 +340,30 @@ public class CashInfo extends ObjectModel<CashInfo> {
             doc.append("tsd", DateTimeUtil.toNumber(testDate));
         }
         doc.append("tdm", testDateMap.toDocument());
+        var testSimpleSet = this.testSimpleSet;
+        if (testSimpleSet != null) {
+            doc.append("tss", testSimpleSet.stream().collect(Collectors.toList()));
+        } else {
+            doc.append("tss", null);
+        }
+        var testSimpleSet2 = this.testSimpleSet2;
+        if (testSimpleSet2 != null) {
+            doc.append("tss2", testSimpleSet2.stream().collect(Collectors.toList()));
+        } else {
+            doc.append("tss2", null);
+        }
+        var testSimpleSet3 = this.testSimpleSet3;
+        if (testSimpleSet3 != null) {
+            doc.append("tss3", testSimpleSet3.stream().map(SimpleValueTypes.DATE::toStorage).collect(Collectors.toList()));
+        } else {
+            doc.append("tss3", null);
+        }
+        var testSimpleSet4 = this.testSimpleSet4;
+        if (testSimpleSet4 != null) {
+            doc.append("tss4", testSimpleSet4.stream().map(SimpleValueTypes.DATETIME::toStorage).collect(Collectors.toList()));
+        } else {
+            doc.append("tss4", null);
+        }
         return doc;
     }
 
@@ -260,6 +391,22 @@ public class CashInfo extends ObjectModel<CashInfo> {
             data.put("tsd", DateTimeUtil.toNumber(testDate));
         }
         data.put("tdm", testDateMap.toData());
+        var testSimpleSet = this.testSimpleSet;
+        if (testSimpleSet != null) {
+            data.put("tss", testSimpleSet);
+        }
+        var testSimpleSet2 = this.testSimpleSet2;
+        if (testSimpleSet2 != null) {
+            data.put("tss2", testSimpleSet2);
+        }
+        var testSimpleSet3 = this.testSimpleSet3;
+        if (testSimpleSet3 != null) {
+            data.put("tss3", testSimpleSet3.stream().map(SimpleValueTypes.DATE::toData).collect(Collectors.toList()));
+        }
+        var testSimpleSet4 = this.testSimpleSet4;
+        if (testSimpleSet4 != null) {
+            data.put("tss4", testSimpleSet4.stream().map(SimpleValueTypes.DATETIME::toData).collect(Collectors.toList()));
+        }
         return data;
     }
 
@@ -281,6 +428,26 @@ public class CashInfo extends ObjectModel<CashInfo> {
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.documentValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
+        testSimpleSet = BsonUtil.listValue(src, "tss").map(testSimpleSetList -> {
+            var testSimpleSetSet = new LinkedHashSet<Integer>(testSimpleSetList.size() << 1);
+            testSimpleSetList.stream().map(SimpleValueTypes.INTEGER::cast).forEach(testSimpleSetSet::add);
+            return Collections.unmodifiableSet(testSimpleSetSet);
+        }).orElse(null);
+        testSimpleSet2 = BsonUtil.listValue(src, "tss2").map(testSimpleSet2List -> {
+            var testSimpleSet2Set = new LinkedHashSet<String>(testSimpleSet2List.size() << 1);
+            testSimpleSet2List.stream().map(SimpleValueTypes.STRING::cast).forEach(testSimpleSet2Set::add);
+            return Collections.unmodifiableSet(testSimpleSet2Set);
+        }).orElse(null);
+        testSimpleSet3 = BsonUtil.listValue(src, "tss3").map(testSimpleSet3List -> {
+            var testSimpleSet3Set = new LinkedHashSet<LocalDate>(testSimpleSet3List.size() << 1);
+            testSimpleSet3List.stream().map(SimpleValueTypes.DATE::cast).forEach(testSimpleSet3Set::add);
+            return Collections.unmodifiableSet(testSimpleSet3Set);
+        }).orElse(null);
+        testSimpleSet4 = BsonUtil.listValue(src, "tss4").map(testSimpleSet4List -> {
+            var testSimpleSet4Set = new LinkedHashSet<LocalDateTime>(testSimpleSet4List.size() << 1);
+            testSimpleSet4List.stream().map(SimpleValueTypes.DATETIME::cast).forEach(testSimpleSet4Set::add);
+            return Collections.unmodifiableSet(testSimpleSet4Set);
+        }).orElse(null);
     }
 
     @Override
@@ -301,6 +468,26 @@ public class CashInfo extends ObjectModel<CashInfo> {
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.documentValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
+        testSimpleSet = BsonUtil.arrayValue(src, "tss").map(testSimpleSetArray -> {
+            var testSimpleSetSet = new LinkedHashSet<Integer>(testSimpleSetArray.size() << 1);
+            testSimpleSetArray.stream().map(SimpleValueTypes.INTEGER::parse).forEach(testSimpleSetSet::add);
+            return Collections.unmodifiableSet(testSimpleSetSet);
+        }).orElse(null);
+        testSimpleSet2 = BsonUtil.arrayValue(src, "tss2").map(testSimpleSet2Array -> {
+            var testSimpleSet2Set = new LinkedHashSet<String>(testSimpleSet2Array.size() << 1);
+            testSimpleSet2Array.stream().map(SimpleValueTypes.STRING::parse).forEach(testSimpleSet2Set::add);
+            return Collections.unmodifiableSet(testSimpleSet2Set);
+        }).orElse(null);
+        testSimpleSet3 = BsonUtil.arrayValue(src, "tss3").map(testSimpleSet3Array -> {
+            var testSimpleSet3Set = new LinkedHashSet<LocalDate>(testSimpleSet3Array.size() << 1);
+            testSimpleSet3Array.stream().map(SimpleValueTypes.DATE::parse).forEach(testSimpleSet3Set::add);
+            return Collections.unmodifiableSet(testSimpleSet3Set);
+        }).orElse(null);
+        testSimpleSet4 = BsonUtil.arrayValue(src, "tss4").map(testSimpleSet4Array -> {
+            var testSimpleSet4Set = new LinkedHashSet<LocalDateTime>(testSimpleSet4Array.size() << 1);
+            testSimpleSet4Array.stream().map(SimpleValueTypes.DATETIME::parse).forEach(testSimpleSet4Set::add);
+            return Collections.unmodifiableSet(testSimpleSet4Set);
+        }).orElse(null);
     }
 
     @Override
@@ -311,36 +498,64 @@ public class CashInfo extends ObjectModel<CashInfo> {
         }
         BsonUtil.objectValue(src, "stg").ifPresentOrElse(stages::load, stages::clear);
         cards = BsonUtil.arrayValue(src, "cs").filter(cardsAny -> cardsAny.valueType() == ValueType.ARRAY).map(cardsAny -> {
-            var cards = new ArrayList<Integer>(cardsAny.size());
+            var cardsList = new ArrayList<Integer>(cardsAny.size());
             for (var cardsAnyElement : cardsAny) {
-                cards.add(SimpleValueTypes.INTEGER.parse(cardsAnyElement));
+                cardsList.add(SimpleValueTypes.INTEGER.parse(cardsAnyElement));
             }
-            return List.copyOf(cards);
+            return List.copyOf(cardsList);
         }).orElse(null);
         orderIds = BsonUtil.arrayValue(src, "ois").filter(orderIdsAny -> orderIdsAny.valueType() == ValueType.ARRAY).map(orderIdsAny -> {
-            var orderIds = new ArrayList<Integer>(orderIdsAny.size());
+            var orderIdsList = new ArrayList<Integer>(orderIdsAny.size());
             for (var orderIdsAnyElement : orderIdsAny) {
-                orderIds.add(SimpleValueTypes.INTEGER.parse(orderIdsAnyElement));
+                orderIdsList.add(SimpleValueTypes.INTEGER.parse(orderIdsAnyElement));
             }
-            return List.copyOf(orderIds);
+            return List.copyOf(orderIdsList);
         }).orElse(null);
         orderDates = BsonUtil.arrayValue(src, "ods").filter(orderDatesAny -> orderDatesAny.valueType() == ValueType.ARRAY).map(orderDatesAny -> {
-            var orderDates = new ArrayList<LocalDate>(orderDatesAny.size());
+            var orderDatesList = new ArrayList<LocalDate>(orderDatesAny.size());
             for (var orderDatesAnyElement : orderDatesAny) {
-                orderDates.add(SimpleValueTypes.DATE.parse(orderDatesAnyElement));
+                orderDatesList.add(SimpleValueTypes.DATE.parse(orderDatesAnyElement));
             }
-            return List.copyOf(orderDates);
+            return List.copyOf(orderDatesList);
         }).orElse(null);
         orderTimes = BsonUtil.arrayValue(src, "ots").filter(orderTimesAny -> orderTimesAny.valueType() == ValueType.ARRAY).map(orderTimesAny -> {
-            var orderTimes = new ArrayList<LocalDateTime>(orderTimesAny.size());
+            var orderTimesList = new ArrayList<LocalDateTime>(orderTimesAny.size());
             for (var orderTimesAnyElement : orderTimesAny) {
-                orderTimes.add(SimpleValueTypes.DATETIME.parse(orderTimesAnyElement));
+                orderTimesList.add(SimpleValueTypes.DATETIME.parse(orderTimesAnyElement));
             }
-            return List.copyOf(orderTimes);
+            return List.copyOf(orderTimesList);
         }).orElse(null);
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.objectValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
+        testSimpleSet = BsonUtil.arrayValue(src, "tss").filter(testSimpleSetAny -> testSimpleSetAny.valueType() == ValueType.ARRAY).map(testSimpleSetAny -> {
+            var testSimpleSetSet = new LinkedHashSet<Integer>(testSimpleSetAny.size() << 1);
+            for (var testSimpleSetAnyElement : testSimpleSetAny) {
+                testSimpleSetSet.add(SimpleValueTypes.INTEGER.parse(testSimpleSetAnyElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSetSet);
+        }).orElse(null);
+        testSimpleSet2 = BsonUtil.arrayValue(src, "tss2").filter(testSimpleSet2Any -> testSimpleSet2Any.valueType() == ValueType.ARRAY).map(testSimpleSet2Any -> {
+            var testSimpleSet2Set = new LinkedHashSet<String>(testSimpleSet2Any.size() << 1);
+            for (var testSimpleSet2AnyElement : testSimpleSet2Any) {
+                testSimpleSet2Set.add(SimpleValueTypes.STRING.parse(testSimpleSet2AnyElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet2Set);
+        }).orElse(null);
+        testSimpleSet3 = BsonUtil.arrayValue(src, "tss3").filter(testSimpleSet3Any -> testSimpleSet3Any.valueType() == ValueType.ARRAY).map(testSimpleSet3Any -> {
+            var testSimpleSet3Set = new LinkedHashSet<LocalDate>(testSimpleSet3Any.size() << 1);
+            for (var testSimpleSet3AnyElement : testSimpleSet3Any) {
+                testSimpleSet3Set.add(SimpleValueTypes.DATE.parse(testSimpleSet3AnyElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet3Set);
+        }).orElse(null);
+        testSimpleSet4 = BsonUtil.arrayValue(src, "tss4").filter(testSimpleSet4Any -> testSimpleSet4Any.valueType() == ValueType.ARRAY).map(testSimpleSet4Any -> {
+            var testSimpleSet4Set = new LinkedHashSet<LocalDateTime>(testSimpleSet4Any.size() << 1);
+            for (var testSimpleSet4AnyElement : testSimpleSet4Any) {
+                testSimpleSet4Set.add(SimpleValueTypes.DATETIME.parse(testSimpleSet4AnyElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet4Set);
+        }).orElse(null);
     }
 
     @Override
@@ -381,6 +596,34 @@ public class CashInfo extends ObjectModel<CashInfo> {
         var testDateOptionalInt = BsonUtil.intValue(src, "tsd");
         testDate = testDateOptionalInt.isEmpty() ? null : DateTimeUtil.toDate(testDateOptionalInt.getAsInt());
         BsonUtil.objectValue(src, "tdm").ifPresentOrElse(testDateMap::load, testDateMap::clear);
+        testSimpleSet = BsonUtil.arrayValue(src, "tss").filter(JsonNode::isArray).map(testSimpleSetNode -> {
+            var testSimpleSetSet = new LinkedHashSet<Integer>(testSimpleSetNode.size() << 1);
+            for (var testSimpleSetNodeElement : testSimpleSetNode) {
+                testSimpleSetSet.add(SimpleValueTypes.INTEGER.parse(testSimpleSetNodeElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSetSet);
+        }).orElse(null);
+        testSimpleSet2 = BsonUtil.arrayValue(src, "tss2").filter(JsonNode::isArray).map(testSimpleSet2Node -> {
+            var testSimpleSet2Set = new LinkedHashSet<String>(testSimpleSet2Node.size() << 1);
+            for (var testSimpleSet2NodeElement : testSimpleSet2Node) {
+                testSimpleSet2Set.add(SimpleValueTypes.STRING.parse(testSimpleSet2NodeElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet2Set);
+        }).orElse(null);
+        testSimpleSet3 = BsonUtil.arrayValue(src, "tss3").filter(JsonNode::isArray).map(testSimpleSet3Node -> {
+            var testSimpleSet3Set = new LinkedHashSet<LocalDate>(testSimpleSet3Node.size() << 1);
+            for (var testSimpleSet3NodeElement : testSimpleSet3Node) {
+                testSimpleSet3Set.add(SimpleValueTypes.DATE.parse(testSimpleSet3NodeElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet3Set);
+        }).orElse(null);
+        testSimpleSet4 = BsonUtil.arrayValue(src, "tss4").filter(JsonNode::isArray).map(testSimpleSet4Node -> {
+            var testSimpleSet4Set = new LinkedHashSet<LocalDateTime>(testSimpleSet4Node.size() << 1);
+            for (var testSimpleSet4NodeElement : testSimpleSet4Node) {
+                testSimpleSet4Set.add(SimpleValueTypes.DATETIME.parse(testSimpleSet4NodeElement));
+            }
+            return Collections.unmodifiableSet(testSimpleSet4Set);
+        }).orElse(null);
     }
 
     public boolean stagesUpdated() {
@@ -409,6 +652,22 @@ public class CashInfo extends ObjectModel<CashInfo> {
 
     public boolean testDateMapUpdated() {
         return testDateMap.updated();
+    }
+
+    public boolean testSimpleSetUpdated() {
+        return updatedFields.get(8);
+    }
+
+    public boolean testSimpleSet2Updated() {
+        return updatedFields.get(9);
+    }
+
+    public boolean testSimpleSet3Updated() {
+        return updatedFields.get(10);
+    }
+
+    public boolean testSimpleSet4Updated() {
+        return updatedFields.get(11);
     }
 
     @Override
@@ -465,6 +724,46 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (testDateMap.updated()) {
             testDateMap.appendUpdates(updates);
         }
+        if (updatedFields.get(8)) {
+            var testSimpleSet = this.testSimpleSet;
+            if (testSimpleSet == null) {
+                updates.add(Updates.unset(xpath().resolve("tss").value()));
+            } else {
+                var testSimpleSetArray = new BsonArray(testSimpleSet.size());
+                testSimpleSet.stream().map(SimpleValueTypes.INTEGER::toBson).forEach(testSimpleSetArray::add);
+                updates.add(Updates.set(xpath().resolve("tss").value(), testSimpleSetArray));
+            }
+        }
+        if (updatedFields.get(9)) {
+            var testSimpleSet2 = this.testSimpleSet2;
+            if (testSimpleSet2 == null) {
+                updates.add(Updates.unset(xpath().resolve("tss2").value()));
+            } else {
+                var testSimpleSet2Array = new BsonArray(testSimpleSet2.size());
+                testSimpleSet2.stream().map(SimpleValueTypes.STRING::toBson).forEach(testSimpleSet2Array::add);
+                updates.add(Updates.set(xpath().resolve("tss2").value(), testSimpleSet2Array));
+            }
+        }
+        if (updatedFields.get(10)) {
+            var testSimpleSet3 = this.testSimpleSet3;
+            if (testSimpleSet3 == null) {
+                updates.add(Updates.unset(xpath().resolve("tss3").value()));
+            } else {
+                var testSimpleSet3Array = new BsonArray(testSimpleSet3.size());
+                testSimpleSet3.stream().map(SimpleValueTypes.DATE::toBson).forEach(testSimpleSet3Array::add);
+                updates.add(Updates.set(xpath().resolve("tss3").value(), testSimpleSet3Array));
+            }
+        }
+        if (updatedFields.get(11)) {
+            var testSimpleSet4 = this.testSimpleSet4;
+            if (testSimpleSet4 == null) {
+                updates.add(Updates.unset(xpath().resolve("tss4").value()));
+            } else {
+                var testSimpleSet4Array = new BsonArray(testSimpleSet4.size());
+                testSimpleSet4.stream().map(SimpleValueTypes.DATETIME::toBson).forEach(testSimpleSet4Array::add);
+                updates.add(Updates.set(xpath().resolve("tss4").value(), testSimpleSet4Array));
+            }
+        }
     }
 
     @Override
@@ -483,6 +782,12 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (updatedFields.get(2) && cards != null) {
             update.put("cards", cards);
         }
+        if (updatedFields.get(8) && testSimpleSet != null) {
+            update.put("testSimpleSet", testSimpleSet);
+        }
+        if (updatedFields.get(9) && testSimpleSet2 != null) {
+            update.put("testSimpleSet2", testSimpleSet2);
+        }
         return update;
     }
 
@@ -496,6 +801,12 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (updatedFields.get(2) && cards == null) {
             delete.put("cards", 1);
         }
+        if (updatedFields.get(8) && testSimpleSet == null) {
+            delete.put("testSimpleSet", 1);
+        }
+        if (updatedFields.get(9) && testSimpleSet2 == null) {
+            delete.put("testSimpleSet2", 1);
+        }
         return delete;
     }
 
@@ -508,12 +819,18 @@ public class CashInfo extends ObjectModel<CashInfo> {
         if (updatedFields.get(2) && cards == null) {
             n++;
         }
+        if (updatedFields.get(8) && testSimpleSet == null) {
+            n++;
+        }
+        if (updatedFields.get(9) && testSimpleSet2 == null) {
+            n++;
+        }
         return n;
     }
 
     @Override
     public String toString() {
-        return "CashInfo(" + "stages=" + stages + ", " + "cards=" + cards + ", " + "orderIds=" + orderIds + ", " + "orderDates=" + orderDates + ", " + "orderTimes=" + orderTimes + ", " + "testDate=" + testDate + ", " + "testDateMap=" + testDateMap + ")";
+        return "CashInfo(" + "stages=" + stages + ", " + "cards=" + cards + ", " + "orderIds=" + orderIds + ", " + "orderDates=" + orderDates + ", " + "orderTimes=" + orderTimes + ", " + "testDate=" + testDate + ", " + "testDateMap=" + testDateMap + ", " + "testSimpleSet=" + testSimpleSet + ", " + "testSimpleSet2=" + testSimpleSet2 + ", " + "testSimpleSet3=" + testSimpleSet3 + ", " + "testSimpleSet4=" + testSimpleSet4 + ")";
     }
 
 }

@@ -158,6 +158,24 @@ objects:
     key: int
     value: date
     json-ignore: true
+  - name: testSimpleSet
+    bname: tss
+    type: simple-set
+    value: int
+  - name: testSimpleSet2
+    bname: tss2
+    type: simple-set
+    value: string
+  - name: testSimpleSet3
+    bname: tss3
+    type: simple-set
+    value: date
+    json-ignore: true
+  - name: testSimpleSet4
+    bname: tss4
+    type: simple-set
+    value: datetime
+    json-ignore: true
 - name: GiftInfo
   type: list-value
   fields:
