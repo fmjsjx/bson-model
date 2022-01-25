@@ -91,7 +91,6 @@ def fill_imports(code, super_class, cfg)
     coms << 'com.jsoniter.ValueType'
     coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
     javas << 'java.util.stream.Collectors'
-    javas << 'java.util.ArrayList'
     javas << 'java.util.Set'
     javas << 'java.util.LinkedHashSet'
     javas << 'java.util.Collections'
