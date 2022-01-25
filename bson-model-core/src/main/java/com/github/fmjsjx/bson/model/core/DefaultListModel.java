@@ -386,7 +386,7 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
                 if (value.bound()) {
                     throw new IllegalArgumentException("some value has already been bound");
                 }
-                list.add(value.parent(this).index(index));
+                list.add(bindValue(index, value));
             }
             this.list = list;
         }
@@ -402,6 +402,15 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
      * @return the element previously at the specified position
      */
     public Optional<E> value(int index, E value) {
+        var list = this.list;
+        if (list == null) {
+            if (value != null) {
+                fullyUpdate = true;
+                this.list = list = new ArrayList<E>(index + 1);
+                list.set(index, bindValue(index, value));
+            }
+            return Optional.empty();
+        }
         if (value == null) {
             var old = setValue(index, null);
             return Optional.ofNullable(old);
@@ -409,9 +418,12 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         if (value.bound()) {
             throw new IllegalArgumentException("the value has already been bound");
         }
-        var old = setValue(index, value);
-        value.parent(this).index(index);
+        var old = setValue(index, bindValue(index, value));
         return Optional.ofNullable(old);
+    }
+
+    private E bindValue(int index, E value) {
+        return value.parent(this).index(index);
     }
 
     private E setValue(int index, E value) {
@@ -473,7 +485,7 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
                 fullyUpdate = true;
             }
             var index = list.size();
-            list.add(value.parent(this).index(index).fullyUpdate(true));
+            list.add(bindValue(index, value).fullyUpdate(true));
             markUpdated(index);
         }
         return this;
