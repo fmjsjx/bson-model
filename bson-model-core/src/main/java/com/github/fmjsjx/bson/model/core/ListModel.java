@@ -2,6 +2,7 @@ package com.github.fmjsjx.bson.model.core;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -89,6 +90,21 @@ public abstract class ListModel<E, Parent extends BsonModel, Self extends ListMo
     }
 
     /**
+     * If a value is present, returns the value, otherwise throws
+     * {@code NoSuchElementException}.
+     * 
+     * <p>
+     * This method is equivalent to {@link #orElseThrow()}.
+     * 
+     * @return the values
+     * @throws NoSuchElementException - if no value is present
+     * @since 1.3
+     */
+    public List<E> get() throws NoSuchElementException {
+        return orElseThrow();
+    }
+
+    /**
      * If the values are present, returns the values, otherwise returns the result
      * produced by the supplying function.
      * 
@@ -123,6 +139,43 @@ public abstract class ListModel<E, Parent extends BsonModel, Self extends ListMo
         }
         if (list == null) {
             return null;
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    /**
+     * If a value is present, returns the value, otherwise throws
+     * {@code NoSuchElementException}.
+     * 
+     * @return the values
+     * @throws NoSuchElementException - if no value is present
+     * @since 1.3
+     */
+    public List<E> orElseThrow() throws NoSuchElementException {
+        var list = this.list;
+        if (list == null) {
+            throw new NoSuchElementException("No value present");
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    /**
+     * If a value is present, returns the value, otherwise throws an exception
+     * produced by the exception supplying function.
+     * 
+     * @param <X>               Type of the exception to be thrown
+     * @param exceptionSupplier the supplying function that produces an exception to
+     *                          be thrown
+     * @return the values
+     * @throws X                    if no value is present
+     * @throws NullPointerException if no value is present and the exception
+     *                              supplying function is {@code null}
+     * @since 1.3
+     */
+    public <X extends Throwable> List<E> orElseThrow(Supplier<? extends X> exceptionSupplier) throws X {
+        var list = this.list;
+        if (list == null) {
+            throw exceptionSupplier.get();
         }
         return Collections.unmodifiableList(list);
     }
