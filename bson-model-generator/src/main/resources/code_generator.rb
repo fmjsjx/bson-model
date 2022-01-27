@@ -631,8 +631,6 @@ def fill_to_document(code, cfg)
       else
         code << tabs(3, "doc.append(\"#{bname}\", #{name});\n")
       end
-      code << tabs(2, "} else {\n")
-      code << tabs(3, "doc.append(\"#{bname}\", null);\n")
       code << tabs(2, "}\n")
     when %w(simple-set list-set).include?(type)
       code << tabs(2, "var #{name} = this.#{name};\n")
@@ -645,8 +643,6 @@ def fill_to_document(code, cfg)
       else
         code << tabs(3, "doc.append(\"#{bname}\", #{name}.internalList());\n")
       end
-      code << tabs(2, "} else {\n")
-      code << tabs(3, "doc.append(\"#{bname}\", null);\n")
       code << tabs(2, "}\n")
     when type == 'datetime'
       if field['required']
