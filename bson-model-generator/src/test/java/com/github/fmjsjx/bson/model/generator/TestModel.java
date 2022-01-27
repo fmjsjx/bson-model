@@ -31,6 +31,7 @@ import com.github.fmjsjx.bson.model.core.BsonUtil;
 import com.github.fmjsjx.bson.model.generator.model.Equipment;
 import com.github.fmjsjx.bson.model.generator.model.GiftInfo;
 import com.github.fmjsjx.bson.model.generator.model.Player;
+import com.github.fmjsjx.libcommon.collection.ListSet;
 import com.github.fmjsjx.libcommon.json.Jackson2Library;
 import com.github.fmjsjx.libcommon.json.JsoniterLibrary;
 import com.github.fmjsjx.libcommon.util.DateTimeUtil;
@@ -69,6 +70,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(new LinkedHashSet<>(List.of("a", "b", "c")));
             player.getCash().setTestSimpleSet3(new LinkedHashSet<>(List.of(today.minusDays(1), today)));
             player.getCash().setTestSimpleSet4(new LinkedHashSet<>(List.of(now.minusDays(1), now)));
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             var g1 = new GiftInfo();
             g1.setId(1);
             g1.setPrice(100);
@@ -108,7 +110,7 @@ public class TestModel {
             assertEquals(1, bson.getDocument("itm").size());
             assertEquals(5, bson.getDocument("itm").getInt32("2001").intValue());
             assertEquals(0, bson.getInt32("_uv").intValue());
-            assertEquals(10, bson.getDocument("cs").size());
+            assertEquals(11, bson.getDocument("cs").size());
             assertEquals(0, bson.getDocument("cs").getDocument("stg").size());
             assertEquals(4, bson.getDocument("cs").getArray("cs").size());
             assertEquals(1, bson.getDocument("cs").getArray("cs").get(0).asInt32().getValue());
@@ -153,6 +155,11 @@ public class TestModel {
                     bson.getDocument("cs").getArray("tss4").get(0).asDateTime().getValue());
             assertEquals(DateTimeUtil.toEpochMilli(now),
                     bson.getDocument("cs").getArray("tss4").get(1).asDateTime().getValue());
+            assertEquals(4, bson.getDocument("cs").getArray("tls").size());
+            assertEquals(1, bson.getDocument("cs").getArray("tls").get(0).asInt32().getValue());
+            assertEquals(2, bson.getDocument("cs").getArray("tls").get(1).asInt32().getValue());
+            assertEquals(3, bson.getDocument("cs").getArray("tls").get(2).asInt32().getValue());
+            assertEquals(4, bson.getDocument("cs").getArray("tls").get(3).asInt32().getValue());
 
             assertEquals(2, bson.getArray("gfs").size());
             assertEquals(1, bson.getArray("gfs").get(0).asDocument().getInt32("id").getValue());
@@ -173,7 +180,7 @@ public class TestModel {
             bson = player.toBson();
             assertNotNull(bson);
             assertEquals(9, bson.size());
-            assertEquals(11, bson.getDocument("cs").size());
+            assertEquals(12, bson.getDocument("cs").size());
             assertEquals(DateTimeUtil.toNumber(today), bson.getDocument("cs").getInt32("tsd").getValue());
             assertEquals(BsonNull.VALUE, bson.getArray("gfs").get(0));
             assertEquals(now, LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.getDateTime("_ct").getValue()), zone));
@@ -212,6 +219,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(new LinkedHashSet<>(List.of("a", "b", "c")));
             player.getCash().setTestSimpleSet3(new LinkedHashSet<>(List.of(today.minusDays(1), today)));
             player.getCash().setTestSimpleSet4(new LinkedHashSet<>(List.of(now.minusDays(1), now)));
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             var g1 = new GiftInfo();
             g1.setId(1);
             g1.setPrice(100);
@@ -246,7 +254,7 @@ public class TestModel {
             assertEquals(1, BsonUtil.documentValue(doc, "itm").get().size());
             assertEquals(5, BsonUtil.embeddedInt(doc, "itm", "2001").getAsInt());
             assertEquals(0, BsonUtil.intValue(doc, "_uv").getAsInt());
-            assertEquals(10, BsonUtil.embeddedDocument(doc, "cs").get().size());
+            assertEquals(11, BsonUtil.embeddedDocument(doc, "cs").get().size());
             assertEquals(0, BsonUtil.embeddedDocument(doc, "cs", "stg").get().size());
             assertEquals(4, BsonUtil.embeddedList(doc, "cs", "cs").get().size());
             assertEquals(1, BsonUtil.embeddedInt(doc, "cs", "cs", 0).getAsInt());
@@ -283,6 +291,11 @@ public class TestModel {
             assertEquals(2, BsonUtil.embeddedList(doc, "cs", "tss4").get().size());
             assertEquals(now.minusDays(1), BsonUtil.embeddedDateTime(doc, "cs", "tss4", 0).get());
             assertEquals(now, BsonUtil.embeddedDateTime(doc, "cs", "tss4", 1).get());
+            assertEquals(4, BsonUtil.embeddedList(doc, "cs", "tls").get().size());
+            assertEquals(1, BsonUtil.embeddedInt(doc, "cs", "tls", 0).getAsInt());
+            assertEquals(2, BsonUtil.embeddedInt(doc, "cs", "tls", 1).getAsInt());
+            assertEquals(3, BsonUtil.embeddedInt(doc, "cs", "tls", 2).getAsInt());
+            assertEquals(4, BsonUtil.embeddedInt(doc, "cs", "tls", 3).getAsInt());
 
             assertEquals(2, BsonUtil.embeddedList(doc, "gfs").get().size());
             assertEquals(1, BsonUtil.embeddedInt(doc, "gfs", 0, "id").getAsInt());
@@ -301,7 +314,7 @@ public class TestModel {
             doc = player.toDocument();
             assertNotNull(doc);
             assertEquals(9, doc.size());
-            assertEquals(11, BsonUtil.embeddedDocument(doc, "cs").get().size());
+            assertEquals(12, BsonUtil.embeddedDocument(doc, "cs").get().size());
             assertEquals(DateTimeUtil.toNumber(today), BsonUtil.embeddedInt(doc, "cs", "tsd").getAsInt());
             assertNull(BsonUtil.embedded(doc, "gts", 0).orElse(null));
         } catch (Exception e) {
@@ -338,6 +351,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(new LinkedHashSet<>(List.of("a", "b", "c")));
             player.getCash().setTestSimpleSet3(new LinkedHashSet<>(List.of(today.minusDays(1), today)));
             player.getCash().setTestSimpleSet4(new LinkedHashSet<>(List.of(now.minusDays(1), now)));
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             var g1 = new GiftInfo();
             g1.setId(1);
             g1.setPrice(100);
@@ -388,6 +402,7 @@ public class TestModel {
             cs.put("tss2", List.of("a", "b", "c"));
             cs.put("tss3", List.of(DateTimeUtil.toNumber(today.minusDays(1)), DateTimeUtil.toNumber(today)));
             cs.put("tss4", List.of(DateTimeUtil.toEpochMilli(now.minusDays(1)), DateTimeUtil.toEpochMilli(now)));
+            cs.put("tls", List.of(1, 2, 3, 4));
             var gfs = new ArrayList<>();
             map.put("gfs", gfs);
             var gm0 = new LinkedHashMap<>();
@@ -442,6 +457,7 @@ public class TestModel {
                                                     DateTimeUtil.toNumber(today))))
                                     .append("tss4", // testSimpleSet4
                                             new ArrayList<>(List.of(DateTimeUtil.toLegacyDate(now.minusDays(1)), date))) //
+                                    .append("tls", new ArrayList<>(List.of(1, 2, 3, 4))) // testListSet
                     ) // cash end
                     .append("gfs", // gifts
                             new ArrayList<>(Arrays.asList(null, // 0
@@ -512,6 +528,10 @@ public class TestModel {
             assertEquals(2, player.getCash().getTestSimpleSet4().size());
             assertArrayEquals(new Object[] { now.minusDays(1), now },
                     player.getCash().getTestSimpleSet4().stream().sorted().toArray());
+            assertNotNull(player.getCash().getTestListSet());
+            assertEquals(4, player.getCash().getTestListSet().size());
+            assertArrayEquals(new int[] { 1, 2, 3, 4 },
+                    player.getCash().getTestListSet().stream().mapToInt(Integer::intValue).sorted().toArray());
             assertFalse(player.getGifts().nil());
             assertEquals(2, player.getGifts().size());
             assertTrue(player.getGifts().value(0).isEmpty());
@@ -628,7 +648,10 @@ public class TestModel {
                                     .append("tss4", // testSimpleSet4
                                             new BsonArray(List.of(
                                                     new BsonDateTime(DateTimeUtil.toEpochMilli(now.minusDays(1))),
-                                                    new BsonDateTime(DateTimeUtil.toEpochMilli(now))))) //
+                                                    new BsonDateTime(DateTimeUtil.toEpochMilli(now)))))
+                                    .append("tls", // testListSet
+                                            new BsonArray(List.of(new BsonInt32(1), new BsonInt32(2), new BsonInt32(3),
+                                                    new BsonInt32(4)))) //
                     ) // cash end
                     .append("gfs", // gifts
                             new BsonArray(List.of(BsonNull.VALUE, // 0
@@ -700,6 +723,10 @@ public class TestModel {
             assertEquals(2, player.getCash().getTestSimpleSet4().size());
             assertArrayEquals(new Object[] { now.minusDays(1), now },
                     player.getCash().getTestSimpleSet4().stream().sorted().toArray());
+            assertNotNull(player.getCash().getTestListSet());
+            assertEquals(4, player.getCash().getTestListSet().size());
+            assertArrayEquals(new int[] { 1, 2, 3, 4 },
+                    player.getCash().getTestListSet().stream().mapToInt(Integer::intValue).sorted().toArray());
             assertFalse(player.getGifts().nil());
             assertEquals(2, player.getGifts().size());
             assertTrue(player.getGifts().value(0).isEmpty());
@@ -812,6 +839,7 @@ public class TestModel {
         cs.put("tss2", new ArrayList<>(List.of("a", "b", "c")));
         cs.put("tss3", List.of(DateTimeUtil.toNumber(today.minusDays(1)), DateTimeUtil.toNumber(today)));
         cs.put("tss4", List.of(DateTimeUtil.toEpochMilli(now.minusDays(1)), DateTimeUtil.toEpochMilli(now)));
+        cs.put("tls", new ArrayList<>(List.of(1, 2, 3, 4)));
         var gfs = new ArrayList<>();
         map.put("gfs", gfs);
         var gm1 = new LinkedHashMap<>();
@@ -888,6 +916,10 @@ public class TestModel {
             assertEquals(2, player.getCash().getTestSimpleSet4().size());
             assertArrayEquals(new Object[] { now.minusDays(1), now },
                     player.getCash().getTestSimpleSet4().stream().sorted().toArray());
+            assertNotNull(player.getCash().getTestListSet());
+            assertEquals(4, player.getCash().getTestListSet().size());
+            assertArrayEquals(new int[] { 1, 2, 3, 4 },
+                    player.getCash().getTestListSet().stream().mapToInt(Integer::intValue).sorted().toArray());
             assertFalse(player.getGifts().nil());
             assertEquals(2, player.getGifts().size());
             assertTrue(player.getGifts().value(0).isEmpty());
@@ -939,6 +971,7 @@ public class TestModel {
         cs.put("tss2", new ArrayList<>(List.of("a", "b", "c")));
         cs.put("tss3", List.of(DateTimeUtil.toNumber(today.minusDays(1)), DateTimeUtil.toNumber(today)));
         cs.put("tss4", List.of(DateTimeUtil.toEpochMilli(now.minusDays(1)), DateTimeUtil.toEpochMilli(now)));
+        cs.put("tls", new ArrayList<>(List.of(1, 2, 3, 4)));
         var gfs = new ArrayList<>();
         map.put("gfs", gfs);
         var gm1 = new LinkedHashMap<>();
@@ -1015,6 +1048,10 @@ public class TestModel {
             assertEquals(2, player.getCash().getTestSimpleSet4().size());
             assertArrayEquals(new Object[] { now.minusDays(1), now },
                     player.getCash().getTestSimpleSet4().stream().sorted().toArray());
+            assertNotNull(player.getCash().getTestListSet());
+            assertEquals(4, player.getCash().getTestListSet().size());
+            assertArrayEquals(new int[] { 1, 2, 3, 4 },
+                    player.getCash().getTestListSet().stream().mapToInt(Integer::intValue).sorted().toArray());
             assertFalse(player.getGifts().nil());
             assertEquals(2, player.getGifts().size());
             assertTrue(player.getGifts().value(0).isEmpty());
@@ -1057,6 +1094,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(new LinkedHashSet<>(List.of("a", "b", "c")));
             player.getCash().setTestSimpleSet3(new LinkedHashSet<>(List.of(today.minusDays(1), today)));
             player.getCash().setTestSimpleSet4(new LinkedHashSet<>(List.of(now.minusDays(1), now)));
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             var g2 = new GiftInfo();
             g2.setId(2);
             g2.setPrice(200);
@@ -1084,7 +1122,7 @@ public class TestModel {
             assertEquals(0, any.toInt("equipments", "12345678-1234-5678-9abc-123456789abc", "hp"));
             assertEquals(1, any.get("items").asMap().size());
             assertEquals(5, any.toInt("items", "2001"));
-            assertEquals(4, any.get("cash").asMap().size());
+            assertEquals(5, any.get("cash").asMap().size());
             assertEquals(1, any.get("cash", "stages").asMap().size());
             assertEquals(1, any.toInt("cash", "stages", "1"));
             assertEquals(4, any.get("cash", "cards").asList().size());
@@ -1098,6 +1136,10 @@ public class TestModel {
             assertEquals(3, any.get("cash", "testSimpleSet2").size());
             assertArrayEquals(new String[] { "a", "b", "c" }, any.get("cash", "testSimpleSet2").asList().stream()
                     .map(Any::toString).sorted().toArray(String[]::new));
+            assertEquals(4, any.get("cash", "testListSet").size());
+            assertArrayEquals(new int[] { 1, 2, 3, 4 },
+                    any.get("cash", "testListSet").asList().stream().mapToInt(Any::toInt).sorted().toArray());
+            assertEquals(3, any.get("cash", "testSimpleSet2").size());
             assertEquals(2, any.get("gifts").asList().size());
             assertEquals(ValueType.NULL, any.get("gifts", 0).valueType());
             assertEquals(2, any.toInt("gifts", 1, "id"));
@@ -1187,6 +1229,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(null);
             player.getCash().setTestSimpleSet3(null);
             player.getCash().setTestSimpleSet4(null);
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.getGifts().remove(0);
             player.getGifts().value(1).get().setPrice(300);
@@ -1202,8 +1245,8 @@ public class TestModel {
             var updates = new ArrayList<Bson>();
             var n = player.appendUpdates(updates);
             assertTrue(n > 0);
-            assertEquals(25, n);
-            assertEquals(25, updates.size());
+            assertEquals(26, n);
+            assertEquals(26, updates.size());
             assertEquals(Updates.set("wt.ct", 5200L), updates.get(0));
             assertEquals(Updates.set("wt.cu", 300L), updates.get(1));
             assertEquals(Updates.set("wt.ad", 1), updates.get(2));
@@ -1232,14 +1275,19 @@ public class TestModel {
             assertEquals(Updates.unset("cs.tss2"), updates.get(17));
             assertEquals(Updates.unset("cs.tss3"), updates.get(18));
             assertEquals(Updates.unset("cs.tss4"), updates.get(19));
-            assertEquals(Updates.unset("gfs.0"), updates.get(20));
-            assertEquals(Updates.set("gfs.1.prc", 300), updates.get(21));
+            assertEquals(
+                    Updates.set("cs.tls",
+                            new BsonArray(
+                                    List.of(new BsonInt32(1), new BsonInt32(2), new BsonInt32(3), new BsonInt32(4)))),
+                    updates.get(20));
+            assertEquals(Updates.unset("gfs.0"), updates.get(21));
+            assertEquals(Updates.set("gfs.1.prc", 300), updates.get(22));
             assertEquals(Updates.set("gfs.2", new BsonDocument("id", new BsonInt32(3)).append("prc", new BsonInt32(500))
-                    .append("ct", new BsonDateTime(DateTimeUtil.toEpochMilli(now)))), updates.get(22));
-            assertEquals(Updates.set("_uv", 1), updates.get(23));
+                    .append("ct", new BsonDateTime(DateTimeUtil.toEpochMilli(now)))), updates.get(23));
+            assertEquals(Updates.set("_uv", 1), updates.get(24));
             var zone = ZoneId.systemDefault();
             var _ut = new BsonDateTime(now.atZone(zone).toInstant().toEpochMilli());
-            assertEquals(Updates.set("_ut", _ut), updates.get(24));
+            assertEquals(Updates.set("_ut", _ut), updates.get(25));
 
             player.reset();
             assertFalse(player.updated());
@@ -1322,6 +1370,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(null);
             player.getCash().setTestSimpleSet3(null);
             player.getCash().setTestSimpleSet4(null);
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.getGifts().remove(0);
             player.getGifts().value(1).get().setPrice(300);
@@ -1344,10 +1393,11 @@ public class TestModel {
             assertEquals(5, any.get("equipments", "12345678-1234-5678-9abc-123456789abc").asMap().size());
             assertEquals(5, any.get("equipments", "00000000-0000-0000-0000-000000000000").asMap().size());
             assertEquals(1, any.get("items").asMap().size());
-            assertEquals(3, any.get("cash").asMap().size());
+            assertEquals(4, any.get("cash").asMap().size());
             assertEquals(1, any.get("cash", "stages").asMap().size());
             assertEquals(4, any.get("cash", "cards").asList().size());
             assertEquals(4, any.get("cash", "testSimpleSet").asList().size());
+            assertEquals(4, any.get("cash", "testListSet").asList().size());
             assertEquals(5200, any.toInt("wallet", "coinTotal"));
             assertEquals(4900, any.toInt("wallet", "coin"));
             assertEquals("12345678-1234-5678-9abc-123456789abc",
@@ -1373,6 +1423,10 @@ public class TestModel {
             assertEquals(2, any.toInt("cash", "testSimpleSet", 1));
             assertEquals(3, any.toInt("cash", "testSimpleSet", 2));
             assertEquals(4, any.toInt("cash", "testSimpleSet", 3));
+            assertEquals(1, any.toInt("cash", "testListSet", 0));
+            assertEquals(2, any.toInt("cash", "testListSet", 1));
+            assertEquals(3, any.toInt("cash", "testListSet", 2));
+            assertEquals(4, any.toInt("cash", "testListSet", 3));
             assertEquals(300, any.toInt("gifts", "1", "price"));
             assertEquals(3, any.toInt("gifts", "2", "id"));
             assertEquals(500, any.toInt("gifts", "2", "price"));
@@ -1413,6 +1467,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(new LinkedHashSet<>(List.of("a", "b", "c")));
             player.getCash().setTestSimpleSet3(new LinkedHashSet<>(List.of(today.minusDays(1), today)));
             player.getCash().setTestSimpleSet4(new LinkedHashSet<>(List.of(now.minusDays(1), now)));
+            player.getCash().setTestListSet(ListSet.of(1, 2, 3, 4));
             var g1 = new GiftInfo();
             g1.setId(1);
             g1.setPrice(100);
@@ -1450,6 +1505,7 @@ public class TestModel {
             player.getCash().setTestSimpleSet2(null);
             player.getCash().setTestSimpleSet3(null);
             player.getCash().setTestSimpleSet4(null);
+            player.getCash().setTestListSet(null);
             now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
             player.getGifts().value(0).get().setPrice(300);
             player.getGifts().remove(1);
@@ -1468,12 +1524,13 @@ public class TestModel {
             assertEquals(4, any.asMap().size());
             assertEquals(1, any.get("equipments").asMap().size());
             assertEquals(1, any.get("items").asMap().size());
-            assertEquals(3, any.get("cash").asMap().size());
+            assertEquals(4, any.get("cash").asMap().size());
             assertEquals(1, any.toInt("equipments", "11111111-2222-3333-4444-555555555555"));
             assertEquals(1, any.toInt("items", "2001"));
             assertEquals(1, any.toInt("cash", "cards"));
             assertEquals(1, any.toInt("cash", "testSimpleSet"));
             assertEquals(1, any.toInt("cash", "testSimpleSet2"));
+            assertEquals(1, any.toInt("cash", "testListSet"));
             assertEquals(1, any.toInt("gifts", "1"));
         } catch (Exception e) {
             fail(e);

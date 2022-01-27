@@ -176,6 +176,10 @@ objects:
     type: simple-set
     value: datetime
     json-ignore: true
+  - name: testListSet
+    bname: tls
+    type: list-set
+    value: int
 - name: GiftInfo
   type: list-value
   fields:
