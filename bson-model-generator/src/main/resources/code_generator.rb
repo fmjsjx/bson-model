@@ -1437,7 +1437,7 @@ def fill_deleted_size(code, cfg)
       next if field['json-ignore'] || field['virtual']
       if %w(object map simple-map list simple-list simple-set list-set).include?(field['type'])
         name = field['name']
-        if %w(simple-list simple-set).include?(field['type'])
+        if %w(simple-list simple-set list-set).include?(field['type'])
           code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} == null) {\n")
         else
           code << tabs(2, "if (#{name}.deletedSize() > 0) {\n")
