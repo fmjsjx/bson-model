@@ -94,7 +94,6 @@ def fill_imports(code, super_class, cfg)
       coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
       coms << 'com.github.fmjsjx.libcommon.collection.ListSet'
       javas << 'java.util.stream.Collectors'
-      javas << 'java.util.Collection'
       javas << 'java.util.ArrayList'
       if fields.any? { |field| field['type'] == 'simple-set' and field['value'] == 'datetime' }
         javas << 'java.time.LocalDateTime'
@@ -114,6 +113,7 @@ def fill_imports(code, super_class, cfg)
       coms << 'com.jsoniter.ValueType'
       coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
       javas << 'java.util.stream.Collectors'
+      javas << 'java.util.Collection'
       javas << 'java.util.ArrayList'
       if fields.any? { |field| field['type'] == 'list-set' and field['value'] == 'datetime' }
         javas << 'java.time.LocalDateTime'
