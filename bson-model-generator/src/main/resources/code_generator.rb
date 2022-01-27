@@ -70,7 +70,7 @@ def fill_imports(code, super_class, cfg)
   if fields.any? { |field| field['type'] == 'list' }
     coms << 'com.github.fmjsjx.bson.model.core.DefaultListModel'
   end
-  if fields.any? { |field| field['type'] == 'simple-list' }
+  if fields.any? { |field| field['type'] == 'simple-list' and field['virtual'] != true }
     coms << 'org.bson.BsonArray'
     coms << 'com.jsoniter.ValueType'
     coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
@@ -87,21 +87,43 @@ def fill_imports(code, super_class, cfg)
     end
   end
   if fields.any? { |field| field['type'] == 'simple-set' }
-    coms << 'org.bson.BsonArray'
-    coms << 'com.jsoniter.ValueType'
-    coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
-    javas << 'java.util.stream.Collectors'
     javas << 'java.util.Set'
-    javas << 'java.util.LinkedHashSet'
-    javas << 'java.util.Collections'
-    if fields.any? { |field| field['type'] == 'simple-set' and field['value'] == 'datetime' }
-      javas << 'java.time.LocalDateTime'
+    if fields.any? { |field| field['type'] == 'simple-set' and field['virtual'] != true }
+      coms << 'org.bson.BsonArray'
+      coms << 'com.jsoniter.ValueType'
+      coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
+      coms << 'com.github.fmjsjx.libcommon.collection.ListSet'
+      javas << 'java.util.stream.Collectors'
+      javas << 'java.util.Collection'
+      javas << 'java.util.ArrayList'
+      if fields.any? { |field| field['type'] == 'simple-set' and field['value'] == 'datetime' }
+        javas << 'java.time.LocalDateTime'
+      end
+      if fields.any? { |field| field['type'] == 'simple-set' and field['value'] == 'date' }
+        javas << 'java.time.LocalDate'
+      end
+      if fields.any? { |field| field['type'] == 'simple-set' and field['optional'] == true }
+        javas << 'java.util.Optional'
+      end
     end
-    if fields.any? { |field| field['type'] == 'simple-set' and field['value'] == 'date' }
-      javas << 'java.time.LocalDate'
-    end
-    if fields.any? { |field| field['type'] == 'simple-set' and field['optional'] == true }
-      javas << 'java.util.Optional'
+  end
+  if fields.any? { |field| field['type'] == 'list-set' }
+    coms << 'com.github.fmjsjx.libcommon.collection.ListSet'
+    if fields.any? { |field| field['type'] == 'list-set' and field['virtual'] != true }
+      coms << 'org.bson.BsonArray'
+      coms << 'com.jsoniter.ValueType'
+      coms << 'com.github.fmjsjx.bson.model.core.SimpleValueTypes'
+      javas << 'java.util.stream.Collectors'
+      javas << 'java.util.ArrayList'
+      if fields.any? { |field| field['type'] == 'list-set' and field['value'] == 'datetime' }
+        javas << 'java.time.LocalDateTime'
+      end
+      if fields.any? { |field| field['type'] == 'list-set' and field['value'] == 'date' }
+        javas << 'java.time.LocalDate'
+      end
+      if fields.any? { |field| field['type'] == 'list-set' and field['optional'] == true }
+        javas << 'java.util.Optional'
+      end
     end
   end
   if fields.any? { |field| field['type'] == 'object-id' }
@@ -229,7 +251,10 @@ def fill_fields(code, cfg, parent=nil)
       code << tabs(1, "private List<#{value_type}> #{field['name']};\n")
     when 'simple-set'
       value_type = boxed_jtype(field['value'])
-      code << tabs(1, "private Set<#{value_type}> #{field['name']};\n")
+      code << tabs(1, "private ListSet<#{value_type}> #{field['name']};\n")
+    when 'list-set'
+      value_type = boxed_jtype(field['value'])
+      code << tabs(1, "private ListSet<#{value_type}> #{field['name']};\n")
     else
       code << tabs(1, "private #{jtype(field_type)} #{field['name']};\n")
     end
@@ -370,11 +395,7 @@ def fill_xetters(code, cfg)
       code << tabs(2, "if (#{name} == null) {\n")
       code << tabs(3, "this.#{name} = null;\n")
       code << tabs(2, "} else {\n")
-      code << tabs(3, "if (#{name} instanceof LinkedHashSet) {\n")
-      code << tabs(4, "this.#{name} = Collections.unmodifiableSet(new LinkedHashSet<>(#{name}));\n")
-      code << tabs(3, "} else {\n")
-      code << tabs(4, "this.#{name} = Set.copyOf(#{name});\n")
-      code << tabs(3, "}\n")
+      code << tabs(3, "this.#{name} = ListSet.copyOf(#{name});\n")
       code << tabs(2, "}\n")
       code << tabs(2, "updatedFields.set(#{index + 1});\n")
       if field.has_key? 'relations'
@@ -385,6 +406,35 @@ def fill_xetters(code, cfg)
       code << tabs(1, "}\n\n")
       if field['optional'] == true
         code << tabs(1, "public Optional<Set<#{value_type}>> optional#{camcel}() {\n")
+        code << tabs(2, "return Optional.ofNullable(#{name});\n")
+        code << tabs(1, "}\n\n")
+      end
+    when 'list-set'
+      value_type = boxed_jtype(field['value'])
+      if field['virtual']
+        code << tabs(1, "public ListSet<#{value_type}> get#{camcel}() {\n")
+        code << tabs(2, "return #{field['formula']};\n")
+        code << tabs(1, "}\n\n")
+        next
+      end
+      code << tabs(1, "public ListSet<#{value_type}> get#{camcel}() {\n")
+      code << tabs(2, "return #{name};\n")
+      code << tabs(1, "}\n\n")
+      code << tabs(1, "public void set#{camcel}(Collection<#{value_type}> #{name}) {\n")
+      code << tabs(2, "if (#{name} == null) {\n")
+      code << tabs(3, "this.#{name} = null;\n")
+      code << tabs(2, "} else {\n")
+      code << tabs(3, "this.#{name} = ListSet.copyOf(#{name});\n")
+      code << tabs(2, "}\n")
+      code << tabs(2, "updatedFields.set(#{index + 1});\n")
+      if field.has_key? 'relations'
+        field['relations'].each do |i|
+          code << tabs(2, "updatedFields.set(#{i});\n")
+        end
+      end
+      code << tabs(1, "}\n\n")
+      if field['optional'] == true
+        code << tabs(1, "public Optional<ListSet<#{value_type}>> optional#{camcel}() {\n")
         code << tabs(2, "return Optional.ofNullable(#{name});\n")
         code << tabs(1, "}\n\n")
       end
@@ -505,7 +555,7 @@ def fill_to_bson(code, cfg)
       code << tabs(2, "if (!#{name}.nil()) {\n")
       code << tabs(3, "bson.append(\"#{bname}\", #{name}.toBson());\n")
       code << tabs(2, "}\n")
-    when %w(simple-list simple-set).include?(type)
+    when %w(simple-list simple-set list-set).include?(type)
       code << tabs(2, "var #{name} = this.#{name};\n")
       code << tabs(2, "if (#{name} != null) {\n")
       code << tabs(3, "var #{name}Array = new BsonArray(#{name}.size());\n")
@@ -584,7 +634,7 @@ def fill_to_document(code, cfg)
       code << tabs(2, "} else {\n")
       code << tabs(3, "doc.append(\"#{bname}\", null);\n")
       code << tabs(2, "}\n")
-    when type == 'simple-set'
+    when %w(simple-set list-set).include?(type)
       code << tabs(2, "var #{name} = this.#{name};\n")
       code << tabs(2, "if (#{name} != null) {\n")
       case field['value']
@@ -593,7 +643,7 @@ def fill_to_document(code, cfg)
       when 'date'
         code << tabs(3, "doc.append(\"#{bname}\", #{name}.stream().map(SimpleValueTypes.DATE::toStorage).collect(Collectors.toList()));\n")
       else
-        code << tabs(3, "doc.append(\"#{bname}\", #{name}.stream().collect(Collectors.toList()));\n")
+        code << tabs(3, "doc.append(\"#{bname}\", #{name}.internalList());\n")
       end
       code << tabs(2, "} else {\n")
       code << tabs(3, "doc.append(\"#{bname}\", null);\n")
@@ -639,7 +689,7 @@ def fill_to_data(code, cfg)
       code << tabs(2, "if (!#{name}.nil()) {\n")
       code << tabs(3, "data.put(\"#{bname}\", #{name}.toData());\n")
       code << tabs(2, "}\n")
-    when %w(simple-list simple-set).include?(type)
+    when %w(simple-list simple-set list-set).include?(type)
       code << tabs(2, "var #{name} = this.#{name};\n")
       code << tabs(2, "if (#{name} != null) {\n")
       case field['value']
@@ -715,10 +765,13 @@ def fill_load_document(code, cfg)
     when 'simple-set'
       value_type = simple_value_type(field['value'])
       code << tabs(2, "#{name} = BsonUtil.listValue(src, \"#{bname}\").map(#{name}List -> {\n")
-      code << tabs(3, "var #{name}Set = new LinkedHashSet<#{boxed_jtype(field['value'])}>(#{name}List.size() << 1);\n")
-      code << tabs(3, "#{name}List.stream().map(#{value_type}::cast).forEach(#{name}Set::add);\n")
-      code << tabs(3, "return Collections.unmodifiableSet(#{name}Set);\n")
-      code << tabs(2, "}).orElse(null);\n") 
+      code << tabs(3, "return ListSet.copyOf(#{name}List.stream().map(#{value_type}::cast).collect(Collectors.toList()));\n")
+      code << tabs(2, "}).orElse(null);\n")
+    when 'list-set'
+      value_type = simple_value_type(field['value'])
+      code << tabs(2, "#{name} = BsonUtil.listValue(src, \"#{bname}\").map(#{name}List -> {\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List.stream().map(#{value_type}::cast).collect(Collectors.toList()));\n")
+      code << tabs(2, "}).orElse(null);\n")
     when 'int'
       if field['required']
         code << tabs(2, "#{name} = BsonUtil.intValue(src, \"#{bname}\").getAsInt();\n")
@@ -838,9 +891,14 @@ def fill_load_bson(code, cfg)
     when 'simple-set'
       value_type = simple_value_type(field['value'])
       code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").map(#{name}Array -> {\n")
-      code << tabs(3, "var #{name}Set = new LinkedHashSet<#{boxed_jtype(field['value'])}>(#{name}Array.size() << 1);\n")
-      code << tabs(3, "#{name}Array.stream().map(#{value_type}::parse).forEach(#{name}Set::add);\n")
-      code << tabs(3, "return Collections.unmodifiableSet(#{name}Set);\n")
+      code << tabs(3, "var #{name}List = #{name}Array.stream().map(#{value_type}::parse).collect(Collectors.toList());\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
+      code << tabs(2, "}).orElse(null);\n")
+    when 'list-set'
+      value_type = simple_value_type(field['value'])
+      code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").map(#{name}Array -> {\n")
+      code << tabs(3, "var #{name}List = #{name}Array.stream().map(#{value_type}::parse).collect(Collectors.toList());\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
       code << tabs(2, "}).orElse(null);\n")
     when 'int'
       if field['required']
@@ -969,11 +1027,20 @@ def fill_load_any(code, cfg)
     when 'simple-set'
       value_type = simple_value_type(field['value'])
       code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").filter(#{name}Any -> #{name}Any.valueType() == ValueType.ARRAY).map(#{name}Any -> {\n")
-      code << tabs(3, "var #{name}Set = new LinkedHashSet<#{boxed_jtype(field['value'])}>(#{name}Any.size() << 1);\n")
+      code << tabs(3, "var #{name}List = new ArrayList<#{boxed_jtype(field['value'])}>(#{name}Any.size());\n")
       code << tabs(3, "for (var #{name}AnyElement : #{name}Any) {\n")
-      code << tabs(4, "#{name}Set.add(#{value_type}.parse(#{name}AnyElement));\n")
+      code << tabs(4, "#{name}List.add(#{value_type}.parse(#{name}AnyElement));\n")
       code << tabs(3, "}\n")
-      code << tabs(3, "return Collections.unmodifiableSet(#{name}Set);\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
+      code << tabs(2, "}).orElse(null);\n")
+    when 'list-set'
+      value_type = simple_value_type(field['value'])
+      code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").filter(#{name}Any -> #{name}Any.valueType() == ValueType.ARRAY).map(#{name}Any -> {\n")
+      code << tabs(3, "var #{name}List = new ArrayList<#{boxed_jtype(field['value'])}>(#{name}Any.size());\n")
+      code << tabs(3, "for (var #{name}AnyElement : #{name}Any) {\n")
+      code << tabs(4, "#{name}List.add(#{value_type}.parse(#{name}AnyElement));\n")
+      code << tabs(3, "}\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
       code << tabs(2, "}).orElse(null);\n")
     when 'int'
       if field['required']
@@ -1102,11 +1169,20 @@ def fill_load_json_node(code, cfg)
     when 'simple-set'
       value_type = simple_value_type(field['value'])
       code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").filter(JsonNode::isArray).map(#{name}Node -> {\n")
-      code << tabs(3, "var #{name}Set = new LinkedHashSet<#{boxed_jtype(field['value'])}>(#{name}Node.size() << 1);\n")
+      code << tabs(3, "var #{name}List = new ArrayList<#{boxed_jtype(field['value'])}>(#{name}Node.size());\n")
       code << tabs(3, "for (var #{name}NodeElement : #{name}Node) {\n")
-      code << tabs(4, "#{name}Set.add(#{value_type}.parse(#{name}NodeElement));\n")
+      code << tabs(4, "#{name}List.add(#{value_type}.parse(#{name}NodeElement));\n")
       code << tabs(3, "}\n")
-      code << tabs(3, "return Collections.unmodifiableSet(#{name}Set);\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
+      code << tabs(2, "}).orElse(null);\n")
+    when 'list-set'
+      value_type = simple_value_type(field['value'])
+      code << tabs(2, "#{name} = BsonUtil.arrayValue(src, \"#{bname}\").filter(JsonNode::isArray).map(#{name}Node -> {\n")
+      code << tabs(3, "var #{name}List = new ArrayList<#{boxed_jtype(field['value'])}>(#{name}Node.size());\n")
+      code << tabs(3, "for (var #{name}NodeElement : #{name}Node) {\n")
+      code << tabs(4, "#{name}List.add(#{value_type}.parse(#{name}NodeElement));\n")
+      code << tabs(3, "}\n")
+      code << tabs(3, "return ListSet.copyOf(#{name}List);\n")
       code << tabs(2, "}).orElse(null);\n")
     when 'int'
       if field['required']
@@ -1241,7 +1317,7 @@ def fill_append_updates(code, cfg)
       code << tabs(2, "if (#{name}.updated()) {\n")
       code << tabs(3, "#{name}.appendUpdates(updates);\n")
       code << tabs(2, "}\n")
-    when %w(simple-list simple-set).include?(type)
+    when %w(simple-list simple-set list-set).include?(type)
       value_type = simple_value_type(field['value'])
       code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
       code << tabs(3, "var #{name} = this.#{name};\n")
@@ -1296,7 +1372,7 @@ def fill_to_sub_update(code, cfg)
       if %w(object map simple-map list).include?(field['type'])
         code << tabs(2, "if (#{name}.updated()) {\n")
         code << tabs(3, "update.put(\"#{name}\", #{name}.toUpdate());\n")
-      elsif %w(simple-list simple-set).include?(field['type'])
+      elsif %w(simple-list simple-set list-set).include?(field['type'])
         if field['virtual']
           code << tabs(2, "if (updatedFields.get(#{index + 1})) {\n")
           code << tabs(3, "update.put(\"#{name}\", get#{camcel_name(name)}());\n")
@@ -1326,13 +1402,13 @@ def fill_to_delete(code, cfg)
   code << tabs(1, "public Map<Object, Object> toDelete() {\n")
   if cfg['fields'].select do |field|
     not (field['json-ignore'] or field['virtual'])
-  end.any? { |field| %w(object map simple-map list simple-list).include?(field['type']) }
+  end.any? { |field| %w(object map simple-map list simple-list simple-set list-set).include?(field['type']) }
     code << tabs(2, "var delete = new LinkedHashMap<>();\n")
     cfg['fields'].each_with_index do |field, index|
       next if field['json-ignore'] || field['virtual']
-      if %w(object map simple-map list simple-list simple-set).include?(field['type'])
+      if %w(object map simple-map list simple-list simple-set list-set).include?(field['type'])
         name = field['name']
-        if %w(simple-list simple-set).include?(field['type'])
+        if %w(simple-list simple-set list-set).include?(field['type'])
           code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} == null) {\n")
           code << tabs(3, "delete.put(\"#{name}\", 1);\n")
         else
@@ -1355,11 +1431,11 @@ def fill_deleted_size(code, cfg)
   code << tabs(1, "protected int deletedSize() {\n")
   if cfg['fields'].select do |field|
     not (field['json-ignore'] or field['virtual'])
-  end.any? { |field| %w(object map simple-map list simple-list).include?(field['type']) }
+  end.any? { |field| %w(object map simple-map list simple-list simple-set list-set).include?(field['type']) }
     code << tabs(2, "var n = 0;\n")
     cfg['fields'].each_with_index do |field, index|
       next if field['json-ignore'] || field['virtual']
-      if %w(object map simple-map list simple-list simple-set).include?(field['type'])
+      if %w(object map simple-map list simple-list simple-set list-set).include?(field['type'])
         name = field['name']
         if %w(simple-list simple-set).include?(field['type'])
           code << tabs(2, "if (updatedFields.get(#{index + 1}) && #{name} == null) {\n")
