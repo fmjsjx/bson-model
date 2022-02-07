@@ -1669,6 +1669,10 @@ bnames = Hash.new
 map_models = Set.new
 list_models = Set.new
 
+if cfg.has_key? 'java-package'
+  cfg['package'] = cfg['java-package']
+end
+
 cfg['objects'].each do |model|
   model['fields'].each_with_index do |field, index|
     if field['type'] == 'object'

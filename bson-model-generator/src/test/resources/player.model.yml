@@ -1,4 +1,4 @@
-package: com.github.fmjsjx.bson.model.generator.model
+java-package: com.github.fmjsjx.bson.model.generator.model
 
 objects:
 - name: Player
