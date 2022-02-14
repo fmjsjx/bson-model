@@ -11,28 +11,27 @@ repositories {
 
 dependencies {
     // netty-bom
-    api(platform("io.netty:netty-bom:4.1.73.Final"))
+    api(platform("io.netty:netty-bom:4.1.74.Final"))
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:2.6.1"))
+    api(platform("com.github.fmjsjx:libcommon-bom:2.6.2"))
     // junit-bom
     testImplementation(platform("org.junit:junit-bom:5.8.2"))
     // jackson2-bom
     api(platform("com.fasterxml.jackson:jackson-bom:2.13.1"))
 
     constraints {
-        implementation("org.slf4j:slf4j-api:1.7.32")
+        implementation("org.slf4j:slf4j-api:1.7.36")
         implementation("ch.qos.logback:logback-classic:1.2.10")
-        api("com.dslplatform:dsl-json-java8:1.9.9")
         api("com.jsoniter:jsoniter:0.9.23")
-        api("org.mongodb:bson:4.4.1")
-        api("org.mongodb:mongodb-driver-core:4.4.1")
-        api("org.mongodb:mongodb-driver-sync:4.4.1")
-        api("org.mongodb:mongodb-driver-reactivestreams:4.4.1")
-        api("org.mongodb:mongodb-driver-legacy:4.4.1")
-        implementation("org.jruby:jruby-complete:9.3.2.0")
-        implementation("org.jruby:jruby:9.3.2.0")
-        implementation("org.jruby:jruby-core:9.3.2.0")
-        implementation("org.jruby:jruby-stdlib:9.3.2.0")
+        api("org.mongodb:bson:4.5.0")
+        api("org.mongodb:mongodb-driver-core:4.5.0")
+        api("org.mongodb:mongodb-driver-sync:4.5.0")
+        api("org.mongodb:mongodb-driver-reactivestreams:4.5.0")
+        api("org.mongodb:mongodb-driver-legacy:4.5.0")
+        implementation("org.jruby:jruby-complete:9.3.3.0")
+        implementation("org.jruby:jruby:9.3.3.0")
+        implementation("org.jruby:jruby-core:9.3.3.0")
+        implementation("org.jruby:jruby-stdlib:9.3.3.0")
         implementation("org.yaml:snakeyaml:1.30")
     }
     // log4j2
