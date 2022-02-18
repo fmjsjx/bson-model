@@ -255,6 +255,14 @@ def fill_fields(code, cfg, parent=nil)
     when 'list-set'
       value_type = boxed_jtype(field['value'])
       code << tabs(1, "private ListSet<#{value_type}> #{field['name']};\n")
+    when 'string'
+      if field.has_key?('default-lambda')
+        code << tabs(1, "private String #{field['name']} = #{field['default-lambda']};\n")
+      elsif field['default'].nil?
+        code << tabs(1, "private String #{field['name']} = \"\";\n")
+      else
+        code << tabs(1, "private String #{field['name']} = \"#{field['default']}\";\n")
+      end
     else
       code << tabs(1, "private #{jtype(field_type)} #{field['name']};\n")
     end
