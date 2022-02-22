@@ -196,6 +196,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
         }
         removedKeys.remove(key);
         updatedKeys.add(key);
+        emitUpdated();
         return Optional.ofNullable(old);
     }
 
@@ -205,6 +206,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
         if (value != null) {
             updatedKeys.remove(key);
             removedKeys.add(key);
+            emitUpdated();
             return Optional.of(value);
         }
         return Optional.empty();
@@ -215,6 +217,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
         if (map.remove(key, value)) {
             updatedKeys.remove(key);
             removedKeys.add(key);
+            emitUpdated();
             return true;
         }
         return false;

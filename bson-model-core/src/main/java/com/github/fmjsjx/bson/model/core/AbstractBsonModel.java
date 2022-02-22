@@ -32,7 +32,17 @@ abstract class AbstractBsonModel implements BsonModel {
      * @return the number of the deleted field size on this model
      */
     protected abstract int deletedSize();
-    
+
+    /**
+     * Emit updated event of this model.
+     */
+    protected void emitUpdated() {
+        var parent = parent();
+        if (parent instanceof AbstractBsonModel) {
+            ((AbstractBsonModel) (parent)).emitUpdated();
+        }
+    }
+
     @Override
     public boolean deleted() {
         return deletedSize() > 0;

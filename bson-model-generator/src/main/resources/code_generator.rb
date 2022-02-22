@@ -361,10 +361,10 @@ def fill_xetters(code, cfg)
       code << tabs(2, "} else {\n")
       code << tabs(3, "this.#{name} = List.copyOf(#{name});\n")
       code << tabs(2, "}\n")
-      code << tabs(2, "updatedFields.set(#{index + 1});\n")
+      code << tabs(2, "fieldUpdated(#{index + 1});\n")
       if field.has_key? 'relations'
         field['relations'].each do |i|
-          code << tabs(2, "updatedFields.set(#{i});\n")
+          code << tabs(2, "fieldUpdated(#{i});\n")
         end
       end
       code << tabs(1, "}\n\n")
@@ -380,10 +380,10 @@ def fill_xetters(code, cfg)
         code << tabs(2, "} else {\n")
         code << tabs(3, "this.#{name} = List.of(#{name});\n")
         code << tabs(2, "}\n")
-        code << tabs(2, "updatedFields.set(#{index + 1});\n")
+        code << tabs(2, "fieldUpdated(#{index + 1});\n")
         if field.has_key? 'relations'
           field['relations'].each do |i|
-            code << tabs(2, "updatedFields.set(#{i});\n")
+            code << tabs(2, "fieldUpdated(#{i});\n")
           end
         end
         code << tabs(1, "}\n\n")
@@ -405,10 +405,10 @@ def fill_xetters(code, cfg)
       code << tabs(2, "} else {\n")
       code << tabs(3, "this.#{name} = ListSet.copyOf(#{name});\n")
       code << tabs(2, "}\n")
-      code << tabs(2, "updatedFields.set(#{index + 1});\n")
+      code << tabs(2, "fieldUpdated(#{index + 1});\n")
       if field.has_key? 'relations'
         field['relations'].each do |i|
-          code << tabs(2, "updatedFields.set(#{i});\n")
+          code << tabs(2, "fieldUpdated(#{i});\n")
         end
       end
       code << tabs(1, "}\n\n")
@@ -434,10 +434,10 @@ def fill_xetters(code, cfg)
       code << tabs(2, "} else {\n")
       code << tabs(3, "this.#{name} = ListSet.copyOf(#{name});\n")
       code << tabs(2, "}\n")
-      code << tabs(2, "updatedFields.set(#{index + 1});\n")
+      code << tabs(2, "fieldUpdated(#{index + 1});\n")
       if field.has_key? 'relations'
         field['relations'].each do |i|
-          code << tabs(2, "updatedFields.set(#{i});\n")
+          code << tabs(2, "fieldUpdated(#{i});\n")
         end
       end
       code << tabs(1, "}\n\n")
@@ -467,28 +467,22 @@ def fill_xetters(code, cfg)
         code << tabs(2, "if (ObjectUtil.isNotEquals(this.#{name}, #{name})) {\n")
       end
       code << tabs(3, "this.#{name} = #{name};\n")
-      code << tabs(3, "updatedFields.set(#{index + 1});\n")
+      code << tabs(3, "fieldUpdated(#{index + 1});\n")
       if field.has_key? 'relations'
         field['relations'].each do |i|
-          code << tabs(3, "updatedFields.set(#{i});\n")
+          code << tabs(3, "fieldUpdated(#{i});\n")
         end
-      end
-      if ['map-value', 'list-value'].include?(cfg['type'])
-        code << tabs(3, "emitUpdated();\n")
       end
       code << tabs(2, "}\n")
       code << tabs(1, "}\n\n")
       if field['increase'] == true
         code << tabs(1, "public #{value_type} increase#{camcel}() {\n")
         code << tabs(2, "var #{name} = this.#{name} += 1;\n")
-        code << tabs(2, "updatedFields.set(#{index + 1});\n")
+        code << tabs(2, "fieldUpdated(#{index + 1});\n")
         if field.has_key? 'relations'
           field['relations'].each do |i|
-            code << tabs(2, "updatedFields.set(#{i});\n")
+            code << tabs(2, "fieldUpdated(#{i});\n")
           end
-        end
-        if ['map-value', 'list-value'].include?(cfg['type'])
-          code << tabs(2, "emitUpdated();\n")
         end
         code << tabs(2, "return #{name};\n")
         code << tabs(1, "}\n\n")
@@ -500,14 +494,11 @@ def fill_xetters(code, cfg)
         end
         code << tabs(1, "public #{value_type} add#{camcel}(#{value_type} #{arg_name}) {\n")
         code << tabs(2, "var #{name} = this.#{name} += #{arg_name};\n")
-        code << tabs(2, "updatedFields.set(#{index + 1});\n")
+        code << tabs(2, "fieldUpdated(#{index + 1});\n")
         if field.has_key? 'relations'
           field['relations'].each do |i|
-            code << tabs(2, "updatedFields.set(#{i});\n")
+            code << tabs(2, "fieldUpdated(#{i});\n")
           end
-        end
-        if ['map-value', 'list-value'].include?(cfg['type'])
-          code << tabs(2, "emitUpdated();\n")
         end
         code << tabs(2, "return #{name};\n")
         code << tabs(1, "}\n\n")

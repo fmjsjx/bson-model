@@ -1,6 +1,5 @@
 package com.github.fmjsjx.bson.model.generator.model;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,26 +9,20 @@ import org.bson.BsonInt32;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model.core.DefaultListValueModel;
-import com.github.fmjsjx.libcommon.util.DateTimeUtil;
-import com.github.fmjsjx.libcommon.util.ObjectUtil;
+import com.github.fmjsjx.bson.model.core.DefaultMapValueModel;
 import com.jsoniter.ValueType;
 import com.jsoniter.any.Any;
 import com.mongodb.client.model.Updates;
 
-public class GiftInfo extends DefaultListValueModel<GiftInfo> {
+public class TestSub1 extends DefaultMapValueModel<Integer, TestSub1> {
 
     public static final String BNAME_ID = "id";
-    public static final String BNAME_PRICE = "prc";
-    public static final String BNAME_CREATE_TIME = "ct";
+    public static final String BNAME_TEST_SUB2 = "ts2";
 
     private int id;
-    private int price;
-    @JsonIgnore
-    private LocalDateTime createTime;
+    private final TestSub2 testSub2 = new TestSub2(this);
 
     public int getId() {
         return id;
@@ -42,37 +35,15 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
         }
     }
 
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        if (this.price != price) {
-            this.price = price;
-            fieldUpdated(2);
-        }
-    }
-
-    @JsonIgnore
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        if (ObjectUtil.isNotEquals(this.createTime, createTime)) {
-            this.createTime = createTime;
-            fieldUpdated(3);
-        }
+    public TestSub2 getTestSub2() {
+        return testSub2;
     }
 
     @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append("id", new BsonInt32(id));
-        bson.append("prc", new BsonInt32(price));
-        if (createTime != null) {
-            bson.append("ct", BsonUtil.toBsonDateTime(createTime));
-        }
+        bson.append("ts2", testSub2.toBson());
         return bson;
     }
 
@@ -80,10 +51,7 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
     public Document toDocument() {
         var doc = new Document();
         doc.append("id", id);
-        doc.append("prc", price);
-        if (createTime != null) {
-            doc.append("ct", DateTimeUtil.toLegacyDate(createTime));
-        }
+        doc.append("ts2", testSub2.toDocument());
         return doc;
     }
 
@@ -91,25 +59,20 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
     public Map<String, ?> toData() {
         var data = new LinkedHashMap<String, Object>();
         data.put("id", id);
-        data.put("prc", price);
-        if (createTime != null) {
-            data.put("ct", DateTimeUtil.toEpochMilli(createTime));
-        }
+        data.put("ts2", testSub2.toData());
         return data;
     }
 
     @Override
     public void load(Document src) {
         id = BsonUtil.intValue(src, "id").orElse(0);
-        price = BsonUtil.intValue(src, "prc").orElse(0);
-        createTime = BsonUtil.dateTimeValue(src, "ct").orElse(null);
+        BsonUtil.documentValue(src, "ts2").ifPresentOrElse(testSub2::load, testSub2::reset);
     }
 
     @Override
     public void load(BsonDocument src) {
         id = BsonUtil.intValue(src, "id").orElse(0);
-        price = BsonUtil.intValue(src, "prc").orElse(0);
-        createTime = BsonUtil.dateTimeValue(src, "ct").orElse(null);
+        BsonUtil.documentValue(src, "ts2").ifPresentOrElse(testSub2::load, testSub2::reset);
     }
 
     @Override
@@ -119,8 +82,7 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
             return;
         }
         id = BsonUtil.intValue(src, "id").orElse(0);
-        price = BsonUtil.intValue(src, "prc").orElse(0);
-        createTime = BsonUtil.dateTimeValue(src, "ct").orElse(null);
+        BsonUtil.objectValue(src, "ts2").ifPresentOrElse(testSub2::load, testSub2::reset);
     }
 
     @Override
@@ -130,20 +92,15 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
             return;
         }
         id = BsonUtil.intValue(src, "id").orElse(0);
-        price = BsonUtil.intValue(src, "prc").orElse(0);
-        createTime = BsonUtil.dateTimeValue(src, "ct").orElse(null);
+        BsonUtil.objectValue(src, "ts2").ifPresentOrElse(testSub2::load, testSub2::reset);
     }
 
     public boolean idUpdated() {
         return updatedFields.get(1);
     }
 
-    public boolean priceUpdated() {
-        return updatedFields.get(2);
-    }
-
-    public boolean createTimeUpdated() {
-        return updatedFields.get(3);
+    public boolean testSub2Updated() {
+        return testSub2.updated();
     }
 
     @Override
@@ -152,16 +109,15 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
         if (updatedFields.get(1)) {
             updates.add(Updates.set(xpath().resolve("id").value(), id));
         }
-        if (updatedFields.get(2)) {
-            updates.add(Updates.set(xpath().resolve("prc").value(), price));
-        }
-        if (updatedFields.get(3)) {
-            updates.add(Updates.set(xpath().resolve("ct").value(), BsonUtil.toBsonDateTime(createTime)));
+        var testSub2 = this.testSub2;
+        if (testSub2.updated()) {
+            testSub2.appendUpdates(updates);
         }
     }
 
     @Override
     protected void resetChildren() {
+        testSub2.reset();
     }
 
     @Override
@@ -171,25 +127,34 @@ public class GiftInfo extends DefaultListValueModel<GiftInfo> {
         if (updatedFields.get(1)) {
             update.put("id", id);
         }
-        if (updatedFields.get(2)) {
-            update.put("price", price);
+        if (testSub2.updated()) {
+            update.put("testSub2", testSub2.toUpdate());
         }
         return update;
     }
 
     @Override
     public Map<Object, Object> toDelete() {
-        return Map.of();
+        var delete = new LinkedHashMap<>();
+        var testSub2 = this.testSub2;
+        if (testSub2.deletedSize() > 0) {
+            delete.put("testSub2", testSub2.toDelete());
+        }
+        return delete;
     }
 
     @Override
     protected int deletedSize() {
-        return 0;
+        var n = 0;
+        if (testSub2.deletedSize() > 0) {
+            n++;
+        }
+        return n;
     }
 
     @Override
     public String toString() {
-        return "GiftInfo(" + "id=" + id + ", " + "price=" + price + ", " + "createTime=" + createTime + ")";
+        return "TestSub1(" + "id=" + id + ", " + "testSub2=" + testSub2 + ")";
     }
 
 }

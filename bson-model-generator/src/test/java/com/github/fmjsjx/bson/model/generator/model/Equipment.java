@@ -26,7 +26,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public static final String BNAME_DEF = "def";
     public static final String BNAME_HP = "hp";
 
-    private String id;
+    private String id = "";
     private int refId;
     private int atk;
     private int def;
@@ -39,8 +39,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public void setId(String id) {
         if (ObjectUtil.isNotEquals(this.id, id)) {
             this.id = id;
-            updatedFields.set(1);
-            emitUpdated();
+            fieldUpdated(1);
         }
     }
 
@@ -51,8 +50,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public void setRefId(int refId) {
         if (this.refId != refId) {
             this.refId = refId;
-            updatedFields.set(2);
-            emitUpdated();
+            fieldUpdated(2);
         }
     }
 
@@ -63,8 +61,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public void setAtk(int atk) {
         if (this.atk != atk) {
             this.atk = atk;
-            updatedFields.set(3);
-            emitUpdated();
+            fieldUpdated(3);
         }
     }
 
@@ -75,8 +72,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public void setDef(int def) {
         if (this.def != def) {
             this.def = def;
-            updatedFields.set(4);
-            emitUpdated();
+            fieldUpdated(4);
         }
     }
 
@@ -87,8 +83,7 @@ public class Equipment extends DefaultMapValueModel<String, Equipment> {
     public void setHp(int hp) {
         if (this.hp != hp) {
             this.hp = hp;
-            updatedFields.set(5);
-            emitUpdated();
+            fieldUpdated(5);
         }
     }
 

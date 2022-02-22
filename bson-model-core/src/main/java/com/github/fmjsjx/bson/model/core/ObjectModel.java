@@ -74,7 +74,11 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
      */
     @SuppressWarnings("unchecked")
     public Self fullyUpdate(boolean fullyUpdate) {
-        updatedFields.set(FULL, fullyUpdate);
+        if (fullyUpdate) {
+            fieldUpdated(FULL);
+        } else {
+            updatedFields.clear(FULL);
+        }
         return (Self) this;
     }
 
@@ -84,6 +88,19 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
             return this;
         }
         return toSubUpdate();
+    }
+
+    /**
+     * Set updated of the field at the index.
+     * 
+     * @param index the field index, begin with {@code 1}
+     * @return this model
+     */
+    @SuppressWarnings("unchecked")
+    protected Self fieldUpdated(int index) {
+        updatedFields.set(index);
+        emitUpdated();
+        return (Self) this;
     }
 
     /**

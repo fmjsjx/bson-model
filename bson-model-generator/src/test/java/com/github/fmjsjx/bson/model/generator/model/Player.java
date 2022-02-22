@@ -35,6 +35,7 @@ public class Player extends RootModel<Player> {
     public static final String BNAME_UPDATE_VERSION = "_uv";
     public static final String BNAME_CREATE_TIME = "_ct";
     public static final String BNAME_UPDATE_TIME = "_ut";
+    public static final String BNAME_TEST_SUB1 = "ts1";
 
     private int uid;
     private final Wallet wallet = new Wallet(this);
@@ -48,6 +49,7 @@ public class Player extends RootModel<Player> {
     private LocalDateTime createTime;
     @JsonIgnore
     private LocalDateTime updateTime;
+    private final DefaultMapModel<Integer, TestSub1, Player> testSub1 = DefaultMapModel.integerKeys(this, "ts1", TestSub1::new);
 
     public int getUid() {
         return uid;
@@ -56,7 +58,7 @@ public class Player extends RootModel<Player> {
     public void setUid(int uid) {
         if (this.uid != uid) {
             this.uid = uid;
-            updatedFields.set(1);
+            fieldUpdated(1);
         }
     }
 
@@ -88,13 +90,13 @@ public class Player extends RootModel<Player> {
     public void setUpdateVersion(int updateVersion) {
         if (this.updateVersion != updateVersion) {
             this.updateVersion = updateVersion;
-            updatedFields.set(7);
+            fieldUpdated(7);
         }
     }
 
     public int increaseUpdateVersion() {
         var updateVersion = this.updateVersion += 1;
-        updatedFields.set(7);
+        fieldUpdated(7);
         return updateVersion;
     }
 
@@ -106,7 +108,7 @@ public class Player extends RootModel<Player> {
     public void setCreateTime(LocalDateTime createTime) {
         if (ObjectUtil.isNotEquals(this.createTime, createTime)) {
             this.createTime = createTime;
-            updatedFields.set(8);
+            fieldUpdated(8);
         }
     }
 
@@ -118,13 +120,17 @@ public class Player extends RootModel<Player> {
     public void setUpdateTime(LocalDateTime updateTime) {
         if (ObjectUtil.isNotEquals(this.updateTime, updateTime)) {
             this.updateTime = updateTime;
-            updatedFields.set(9);
+            fieldUpdated(9);
         }
+    }
+
+    public DefaultMapModel<Integer, TestSub1, Player> getTestSub1() {
+        return testSub1;
     }
 
     @Override
     public boolean updated() {
-        if (wallet.updated() || equipments.updated() || items.updated() || cash.updated() || gifts.updated()) {
+        if (wallet.updated() || equipments.updated() || items.updated() || cash.updated() || gifts.updated() || testSub1.updated()) {
             return true;
         }
         return super.updated();
@@ -147,6 +153,7 @@ public class Player extends RootModel<Player> {
         if (updateTime != null) {
             bson.append("_ut", BsonUtil.toBsonDateTime(updateTime));
         }
+        bson.append("ts1", testSub1.toBson());
         return bson;
     }
 
@@ -167,6 +174,7 @@ public class Player extends RootModel<Player> {
         if (updateTime != null) {
             doc.append("_ut", DateTimeUtil.toLegacyDate(updateTime));
         }
+        doc.append("ts1", testSub1.toDocument());
         return doc;
     }
 
@@ -184,6 +192,7 @@ public class Player extends RootModel<Player> {
         if (updateTime != null) {
             data.put("_ut", DateTimeUtil.toEpochMilli(updateTime));
         }
+        data.put("ts1", testSub1.toData());
         return data;
     }
 
@@ -198,6 +207,7 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, "_uv").orElse(0);
         createTime = BsonUtil.dateTimeValue(src, "_ct").get();
         updateTime = BsonUtil.dateTimeValue(src, "_ut").orElseGet(LocalDateTime::now);
+        BsonUtil.documentValue(src, "ts1").ifPresentOrElse(testSub1::load, testSub1::clear);
         reset();
     }
 
@@ -212,6 +222,7 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, "_uv").orElse(0);
         createTime = BsonUtil.dateTimeValue(src, "_ct").get();
         updateTime = BsonUtil.dateTimeValue(src, "_ut").orElseGet(LocalDateTime::now);
+        BsonUtil.documentValue(src, "ts1").ifPresentOrElse(testSub1::load, testSub1::clear);
         reset();
     }
 
@@ -230,6 +241,7 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, "_uv").orElse(0);
         createTime = BsonUtil.dateTimeValue(src, "_ct").get();
         updateTime = BsonUtil.dateTimeValue(src, "_ut").orElseGet(LocalDateTime::now);
+        BsonUtil.objectValue(src, "ts1").ifPresentOrElse(testSub1::load, testSub1::clear);
         reset();
     }
 
@@ -248,6 +260,7 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, "_uv").orElse(0);
         createTime = BsonUtil.dateTimeValue(src, "_ct").get();
         updateTime = BsonUtil.dateTimeValue(src, "_ut").orElseGet(LocalDateTime::now);
+        BsonUtil.objectValue(src, "ts1").ifPresentOrElse(testSub1::load, testSub1::clear);
         reset();
     }
 
@@ -287,6 +300,10 @@ public class Player extends RootModel<Player> {
         return updatedFields.get(9);
     }
 
+    public boolean testSub1Updated() {
+        return testSub1.updated();
+    }
+
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var updatedFields = this.updatedFields;
@@ -322,6 +339,10 @@ public class Player extends RootModel<Player> {
         if (updatedFields.get(9)) {
             updates.add(Updates.set("_ut", BsonUtil.toBsonDateTime(updateTime)));
         }
+        var testSub1 = this.testSub1;
+        if (testSub1.updated()) {
+            testSub1.appendUpdates(updates);
+        }
     }
 
     @Override
@@ -331,6 +352,7 @@ public class Player extends RootModel<Player> {
         items.reset();
         cash.reset();
         gifts.reset();
+        testSub1.reset();
     }
 
     @Override
@@ -354,6 +376,9 @@ public class Player extends RootModel<Player> {
         }
         if (gifts.updated()) {
             update.put("gifts", gifts.toUpdate());
+        }
+        if (testSub1.updated()) {
+            update.put("testSub1", testSub1.toUpdate());
         }
         return update;
     }
@@ -381,6 +406,10 @@ public class Player extends RootModel<Player> {
         if (gifts.deletedSize() > 0) {
             delete.put("gifts", gifts.toDelete());
         }
+        var testSub1 = this.testSub1;
+        if (testSub1.deletedSize() > 0) {
+            delete.put("testSub1", testSub1.toDelete());
+        }
         return delete;
     }
 
@@ -402,12 +431,15 @@ public class Player extends RootModel<Player> {
         if (gifts.deletedSize() > 0) {
             n++;
         }
+        if (testSub1.deletedSize() > 0) {
+            n++;
+        }
         return n;
     }
 
     @Override
     public String toString() {
-        return "Player(" + "uid=" + uid + ", " + "wallet=" + wallet + ", " + "equipments=" + equipments + ", " + "items=" + items + ", " + "cash=" + cash + ", " + "gifts=" + gifts + ", " + "updateVersion=" + updateVersion + ", " + "createTime=" + createTime + ", " + "updateTime=" + updateTime + ")";
+        return "Player(" + "uid=" + uid + ", " + "wallet=" + wallet + ", " + "equipments=" + equipments + ", " + "items=" + items + ", " + "cash=" + cash + ", " + "gifts=" + gifts + ", " + "updateVersion=" + updateVersion + ", " + "createTime=" + createTime + ", " + "updateTime=" + updateTime + ", " + "testSub1=" + testSub1 + ")";
     }
 
 }

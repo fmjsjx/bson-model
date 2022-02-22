@@ -59,14 +59,13 @@ public abstract class DefaultMapValueModel<K, Self extends DefaultMapValueModel<
         return key != null && parent != null;
     }
 
-    @SuppressWarnings("unchecked")
-    protected Self emitUpdated() {
+    protected void emitUpdated() {
         var key = this.key;
         var parent = this.parent;
         if (key != null && parent != null) {
             parent.updatedKeys.add(key);
         }
-        return (Self) this;
+        super.emitUpdated();
     }
 
     @Override

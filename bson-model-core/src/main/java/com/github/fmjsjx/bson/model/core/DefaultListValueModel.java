@@ -60,14 +60,13 @@ public abstract class DefaultListValueModel<Self extends DefaultListValueModel<S
         return index >= 0 & parent != null;
     }
 
-    @SuppressWarnings("unchecked")
-    protected Self emitUpdated() {
+    protected void emitUpdated() {
         var index = this.index;
         var parent = this.parent;
         if (index >= 0 && parent != null) {
             parent.updateIndexes.add(index);
         }
-        return (Self) this;
+        super.emitUpdated();
     }
 
     @Override

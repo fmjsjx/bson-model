@@ -33,4 +33,9 @@ public abstract class RootModel<Self extends RootModel<Self>> extends ObjectMode
         return DotNotation.root();
     }
 
+    @Override
+    protected void emitUpdated() {
+        // do nothing for root model
+    }
+
 }

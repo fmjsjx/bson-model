@@ -196,6 +196,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
         value.key(key).parent(this);
         removedKeys.remove(key);
         updatedKeys.add(key);
+        emitUpdated();
         return Optional.ofNullable(old);
     }
 
@@ -206,6 +207,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
             value.unbind();
             updatedKeys.remove(key);
             removedKeys.add(key);
+            emitUpdated();
             return Optional.of(value);
         }
         return Optional.empty();
@@ -217,6 +219,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
             value.unbind();
             updatedKeys.remove(key);
             removedKeys.add(key);
+            emitUpdated();
             return true;
         }
         return false;
@@ -250,12 +253,27 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
     }
 
     @Override
-    public Map<Object, Object> toDelete() {
-        var removedKeys = this.removedKeys;
-        if (removedKeys.isEmpty()) {
-            return Map.of();
+    public int deletedSize() {
+        var deletedSize = removedKeys.size();
+        for (var key : updatedKeys) {
+            var value = map.get(key);
+            if (value.deleted()) {
+                deletedSize++;
+            }
         }
+        return deletedSize;
+    }
+    
+    @Override
+    public Map<Object, Object> toDelete() {
         var delete = new LinkedHashMap<Object, Object>();
+        for (var key : updatedKeys) {
+            var value = map.get(key);
+            var valueDelete = value.toDelete();
+            if (valueDelete.size() > 0) {
+                delete.put(key, valueDelete);
+            }
+        }
         for (var key : removedKeys) {
             delete.put(key, 1);
         }

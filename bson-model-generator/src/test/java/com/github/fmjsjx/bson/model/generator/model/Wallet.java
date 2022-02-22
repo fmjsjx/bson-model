@@ -51,15 +51,15 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setCoinTotal(long coinTotal) {
         if (this.coinTotal != coinTotal) {
             this.coinTotal = coinTotal;
-            updatedFields.set(1);
-            updatedFields.set(3);
+            fieldUpdated(1);
+            fieldUpdated(3);
         }
     }
 
     public long addCoinTotal(long n) {
         var coinTotal = this.coinTotal += n;
-        updatedFields.set(1);
-        updatedFields.set(3);
+        fieldUpdated(1);
+        fieldUpdated(3);
         return coinTotal;
     }
 
@@ -71,15 +71,15 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setCoinUsed(long coinUsed) {
         if (this.coinUsed != coinUsed) {
             this.coinUsed = coinUsed;
-            updatedFields.set(2);
-            updatedFields.set(3);
+            fieldUpdated(2);
+            fieldUpdated(3);
         }
     }
 
     public long addCoinUsed(long n) {
         var coinUsed = this.coinUsed += n;
-        updatedFields.set(2);
-        updatedFields.set(3);
+        fieldUpdated(2);
+        fieldUpdated(3);
         return coinUsed;
     }
 
@@ -94,13 +94,13 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setDiamond(long diamond) {
         if (this.diamond != diamond) {
             this.diamond = diamond;
-            updatedFields.set(4);
+            fieldUpdated(4);
         }
     }
 
     public long addDiamond(long n) {
         var diamond = this.diamond += n;
-        updatedFields.set(4);
+        fieldUpdated(4);
         return diamond;
     }
 
@@ -111,13 +111,13 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setAd(int ad) {
         if (this.ad != ad) {
             this.ad = ad;
-            updatedFields.set(5);
+            fieldUpdated(5);
         }
     }
 
     public int increaseAd() {
         var ad = this.ad += 1;
-        updatedFields.set(5);
+        fieldUpdated(5);
         return ad;
     }
 

@@ -438,6 +438,7 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
     private void markUpdated(int index) {
         if (!fullyUpdate()) {
             updateIndexes.add(index);
+            emitUpdated();
         }
     }
 

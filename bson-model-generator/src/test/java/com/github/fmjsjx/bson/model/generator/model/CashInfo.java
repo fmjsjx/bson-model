@@ -88,7 +88,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.cards = List.copyOf(cards);
         }
-        updatedFields.set(2);
+        fieldUpdated(2);
     }
 
     @JsonIgnore
@@ -102,7 +102,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.orderIds = List.copyOf(orderIds);
         }
-        updatedFields.set(3);
+        fieldUpdated(3);
     }
 
     public Optional<List<Integer>> optionalOrderIds() {
@@ -115,7 +115,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.orderIds = List.of(orderIds);
         }
-        updatedFields.set(3);
+        fieldUpdated(3);
     }
 
     @JsonIgnore
@@ -129,7 +129,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.orderDates = List.copyOf(orderDates);
         }
-        updatedFields.set(4);
+        fieldUpdated(4);
     }
 
     @JsonIgnore
@@ -143,7 +143,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.orderTimes = List.copyOf(orderTimes);
         }
-        updatedFields.set(5);
+        fieldUpdated(5);
     }
 
     @JsonIgnore
@@ -154,7 +154,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
     public void setTestDate(LocalDate testDate) {
         if (ObjectUtil.isNotEquals(this.testDate, testDate)) {
             this.testDate = testDate;
-            updatedFields.set(6);
+            fieldUpdated(6);
         }
     }
 
@@ -173,7 +173,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.testSimpleSet = ListSet.copyOf(testSimpleSet);
         }
-        updatedFields.set(8);
+        fieldUpdated(8);
     }
 
     public Set<String> getTestSimpleSet2() {
@@ -186,7 +186,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.testSimpleSet2 = ListSet.copyOf(testSimpleSet2);
         }
-        updatedFields.set(9);
+        fieldUpdated(9);
     }
 
     @JsonIgnore
@@ -200,7 +200,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.testSimpleSet3 = ListSet.copyOf(testSimpleSet3);
         }
-        updatedFields.set(10);
+        fieldUpdated(10);
     }
 
     @JsonIgnore
@@ -214,7 +214,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.testSimpleSet4 = ListSet.copyOf(testSimpleSet4);
         }
-        updatedFields.set(11);
+        fieldUpdated(11);
     }
 
     public ListSet<Integer> getTestListSet() {
@@ -227,7 +227,7 @@ public class CashInfo extends ObjectModel<CashInfo> {
         } else {
             this.testListSet = ListSet.copyOf(testListSet);
         }
-        updatedFields.set(12);
+        fieldUpdated(12);
     }
 
     @Override

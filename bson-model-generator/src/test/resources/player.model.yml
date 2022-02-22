@@ -45,6 +45,11 @@ objects:
     type: datetime
     json-ignore: true
     default-lambda: LocalDateTime::now
+  - name: testSub1
+    bname: ts1
+    type: map
+    key: int
+    value: TestSub1
 - name: Wallet
   type: object
   fields:
@@ -192,3 +197,38 @@ objects:
     bname: ct
     type: datetime
     json-ignore: true
+- name: TestSub1
+  type: map-value
+  key: int
+  fields:
+  - name: id
+    type: int
+  - name: testSub2
+    bname: ts2
+    type: object
+    model: TestSub2
+- name: TestSub2
+  type: object
+  fields:
+  - name: testSub3
+    bname: ts3
+    type: map
+    key: int
+    value: TestSub3
+- name: TestSub3
+  type: map-value
+  key: int
+  fields:
+  - name: id
+    type: int
+  - name: testSub4
+    bname: ts4
+    type: object
+    model: TestSub4
+- name: TestSub4
+  type: object
+  fields:
+  - name: test
+    bname: tst
+    type: int
+    increase: true
