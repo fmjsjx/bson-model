@@ -14,7 +14,7 @@ An ORM like object model framework for BSON/MongoDB.
       <dependency>
         <groupId>com.github.fmjsjx</groupId>
         <artifactId>bson-model-bom</artifactId>
-        <version>1.4.3</version>
+        <version>1.4.4</version>
       </dependency>
       ...
     </dependencies>
@@ -50,7 +50,7 @@ repositories {
 
 dependencies {
     // 版本控制
-    implementation platform('com.github.fmjsjx:bson-model-bom:1.4.3')
+    implementation platform('com.github.fmjsjx:bson-model-bom:1.4.4')
     // 核心库
     implementation 'com.github.fmjsjx:bson-model-core'
     // 代码生成器
@@ -68,7 +68,7 @@ repositories {
 
 dependencies {
     // 版本控制
-    implementation(platform("com.github.fmjsjx:bson-model-bom:1.4.3"))
+    implementation(platform("com.github.fmjsjx:bson-model-bom:1.4.4"))
     // 核心库
     implementation("com.github.fmjsjx:bson-model-core")
     // 代码生成器
