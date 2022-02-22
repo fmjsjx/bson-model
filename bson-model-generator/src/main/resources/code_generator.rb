@@ -1582,8 +1582,8 @@ def generate_object(cfg)
   code << "public class #{cfg['name']} extends ObjectModel<#{cfg['name']}> {\n\n"
   fill_static_fields(code, cfg)
   static_xpath = all_object(cfg)
+  parent = cfg['parent']
   if static_xpath
-    parent = cfg['parent']
     xpath = ["\"#{cfg['bname']}\""]
     p = parent
     until p['parent'].nil?
@@ -1606,7 +1606,7 @@ def generate_object(cfg)
   if static_xpath
     code << tabs(2, "return XPATH;\n")
   else
-    code << tabs(2, "return parent().xpath().resolve(\"#{bname}\");")
+    code << tabs(2, "return parent().xpath().resolve(\"#{cfg['bname']}\");")
   end
   code << tabs(1, "}\n\n")
   fill_updated(code, cfg)
