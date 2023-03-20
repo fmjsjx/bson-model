@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @param <Self> the type of the implementation class
  */
-public abstract class ObjectModel<Self extends ObjectModel<?>> extends AbstractBsonModel<Self, BsonDocument> {
+public abstract class ObjectModel<Self extends ObjectModel<Self>> extends AbstractBsonModel<BsonDocument, Self> {
 
     protected static final int FULL = 0;
 

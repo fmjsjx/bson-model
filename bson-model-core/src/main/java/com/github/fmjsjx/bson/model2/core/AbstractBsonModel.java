@@ -10,10 +10,11 @@ import org.bson.BsonValue;
  * @author MJ Fang
  * @since 2.0
  */
-abstract class AbstractBsonModel<Self extends AbstractBsonModel<?, ?>, T extends BsonValue> implements BsonModel<T> {
+abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonModel<T, Self>> implements BsonModel<T> {
 
     protected AbstractBsonModel<?, ?> parent;
     protected int listIndex = -1;
+    protected Object mapKey;
 
     @Override
     public AbstractBsonModel<?, ?> parent() {
@@ -23,6 +24,26 @@ abstract class AbstractBsonModel<Self extends AbstractBsonModel<?, ?>, T extends
     @SuppressWarnings("unchecked")
     protected Self parent(AbstractBsonModel<?, ?> parent) {
         this.parent = parent;
+        return (Self) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Self listIndex(int listIndex) {
+        this.listIndex = listIndex;
+        return (Self) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Self mapKey(Object mapKey) {
+        this.mapKey = mapKey;
+        return (Self) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Self unbind() {
+        this.parent = null;
+        this.listIndex = -1;
+        this.mapKey = null;
         return (Self) this;
     }
 
@@ -54,26 +75,15 @@ abstract class AbstractBsonModel<Self extends AbstractBsonModel<?, ?>, T extends
         return deletedSize() > 0;
     }
 
-    @SuppressWarnings("unchecked")
-    protected Self listIndex(int listIndex) {
-        this.listIndex = listIndex;
-        return (Self) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected Self unbind() {
-        this.parent = null;
-        this.listIndex = -1;
-        return (Self) this;
-    }
-
     /**
      * Emit updated event of this model.
      */
     protected void emitChanged() {
         var parent = parent();
         if (parent != null) {
-            // TODO if (parent instanceOf ListModel listModel && listIndex >= 0) {
+            // TODO if (parent instanceOf MapModel mapModel && mapKey != null) {
+            // TODO     mapModel.changedKey(mapKey);
+            // TODO } else if (parent instanceOf ListModel listModel && listIndex >= 0) {
             // TODO     listModel.changedIndex(listIndex);
             // TODO }
             parent.emitChanged();
