@@ -7,31 +7,10 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.bson.BsonArray;
-import org.bson.BsonBoolean;
-import org.bson.BsonDateTime;
-import org.bson.BsonDecimal128;
-import org.bson.BsonDocument;
-import org.bson.BsonDouble;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
-import org.bson.BsonNull;
-import org.bson.BsonNumber;
-import org.bson.BsonString;
-import org.bson.BsonTimestamp;
-import org.bson.BsonValue;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
@@ -72,28 +51,32 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return Optional.empty();
             }
             i++;
         }
-        return value == null ? Optional.empty() : Optional.of((V) value);
+        return Optional.of((V) value);
+    }
+
+    private static final Object nextValue(List<Object> keys, Object value, int i, Object key) {
+        if (value instanceof Document doc) {
+            value = doc.get(key);
+        } else if (value instanceof List<?> list) {
+            var index = key instanceof Number num ? num.intValue() : Integer.parseInt(key.toString());
+            if (index < list.size()) {
+                value = list.get(index);
+            } else {
+                value = null;
+            }
+        } else {
+            var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
+            throw new ClassCastException(
+                    String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
+                            value.getClass().getName()));
+        }
+        return value;
     }
 
     /**
@@ -140,32 +123,14 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return OptionalInt.empty();
             }
             i++;
         }
-        if (value == null) {
-            return OptionalInt.empty();
-        }
-        if (value instanceof Number) {
-            return OptionalInt.of(((Number) value).intValue());
+        if (value instanceof Number num) {
+            return OptionalInt.of(num.intValue());
         }
         throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getName()));
     }
@@ -192,29 +157,11 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return OptionalLong.empty();
             }
             i++;
-        }
-        if (value == null) {
-            return OptionalLong.empty();
         }
         if (value instanceof Number) {
             return OptionalLong.of(((Number) value).longValue());
@@ -244,29 +191,11 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return OptionalDouble.empty();
             }
             i++;
-        }
-        if (value == null) {
-            return OptionalDouble.empty();
         }
         if (value instanceof Number) {
             return OptionalDouble.of(((Number) value).doubleValue());
@@ -296,29 +225,11 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return Optional.empty();
             }
             i++;
-        }
-        if (value == null) {
-            return Optional.empty();
         }
         if (value instanceof Date) {
             return Optional.of(LocalDateTime.ofInstant(((Date) value).toInstant(), ZoneId.systemDefault()));
@@ -350,29 +261,11 @@ public class BsonUtil {
         Object value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value instanceof Document) {
-                value = ((Document) value).get(key);
-            } else if (value instanceof List) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (List<?>) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return Optional.empty();
             }
             i++;
-        }
-        if (value == null) {
-            return Optional.empty();
         }
         if (value instanceof Date) {
             return Optional.of(((Date) value).toInstant().atZone(zone));
@@ -381,7 +274,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code string} value in an document.
+     * Gets the {@code string} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -392,7 +285,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code Document} value in an document.
+     * Gets the {@code Document} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -410,7 +303,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code int} value in an document.
+     * Gets the {@code int} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -428,7 +321,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code long} value in an document.
+     * Gets the {@code long} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -446,7 +339,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code double} value in an document.
+     * Gets the {@code double} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -464,7 +357,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code LocalDateTime} value in an document.
+     * Gets the {@code LocalDateTime} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -482,7 +375,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code ZonedDateTime} value in an document.
+     * Gets the {@code ZonedDateTime} value in a document.
      * 
      * @param zone     the zone to combine with, not null
      * @param document the source document
@@ -545,30 +438,34 @@ public class BsonUtil {
         BsonValue value = Objects.requireNonNull(document, "document must not be null");
         var i = 0;
         for (var key : keys) {
-            if (value.isNull()) {
-                return Optional.empty();
-            } else if (value.isDocument()) {
-                value = ((BsonDocument) value).get(key);
-            } else if (value.isArray()) {
-                var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
-                var list = (BsonArray) value;
-                if (index < list.size()) {
-                    value = list.get(index);
-                } else {
-                    value = null;
-                }
-            } else {
-                var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
-                throw new ClassCastException(
-                        String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
-                                value.getClass().getName()));
-            }
+            value = nextValue(keys, value, i, key);
             if (value == null) {
                 return Optional.empty();
             }
             i++;
         }
-        return value == null ? Optional.empty() : Optional.of((V) value);
+        return Optional.of((V) value);
+    }
+
+    private static final BsonValue nextValue(List<Object> keys, BsonValue value, int i, Object key) {
+        if (value instanceof BsonNull) {
+            value = null;
+        } else if (value instanceof BsonDocument doc) {
+            value = doc.get(key);
+        } else if (value instanceof BsonArray list) {
+            var index = key instanceof Number ? ((Number) key).intValue() : Integer.parseInt(key.toString());
+            if (index < list.size()) {
+                value = list.get(index);
+            } else {
+                value = null;
+            }
+        } else {
+            var path = keys.stream().limit(i).map(String::valueOf).collect(Collectors.joining("."));
+            throw new ClassCastException(
+                    String.format("At dot notation \"%s\", the value is not a Document or a List (%s)", path,
+                            value.getClass().getName()));
+        }
+        return value;
     }
 
     /**
@@ -613,10 +510,7 @@ public class BsonUtil {
      */
     public static final OptionalInt embeddedInt(BsonDocument document, List<Object> keys) {
         Optional<BsonNumber> value = embedded(document, keys);
-        if (value.isPresent()) {
-            return OptionalInt.of(value.get().intValue());
-        }
-        return OptionalInt.empty();
+        return value.map(bsonNumber -> OptionalInt.of(bsonNumber.intValue())).orElseGet(OptionalInt::empty);
     }
 
     /**
@@ -639,10 +533,7 @@ public class BsonUtil {
      */
     public static final OptionalLong embeddedLong(BsonDocument document, List<Object> keys) {
         Optional<BsonNumber> value = embedded(document, keys);
-        if (value.isPresent()) {
-            return OptionalLong.of(value.get().longValue());
-        }
-        return OptionalLong.empty();
+        return value.map(bsonNumber -> OptionalLong.of(bsonNumber.longValue())).orElseGet(OptionalLong::empty);
     }
 
     /**
@@ -665,10 +556,7 @@ public class BsonUtil {
      */
     public static final OptionalDouble embeddedDouble(BsonDocument document, List<Object> keys) {
         Optional<BsonNumber> value = embedded(document, keys);
-        if (value.isPresent()) {
-            return OptionalDouble.of(value.get().doubleValue());
-        }
-        return OptionalDouble.empty();
+        return value.map(bsonNumber -> OptionalDouble.of(bsonNumber.doubleValue())).orElseGet(OptionalDouble::empty);
     }
 
     /**
@@ -719,7 +607,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code string} value in an document.
+     * Gets the {@code string} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -734,7 +622,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code BsonDocument} value in an document.
+     * Gets the {@code BsonDocument} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -749,7 +637,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code int} value in an document.
+     * Gets the {@code int} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -767,7 +655,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code long} value in an document.
+     * Gets the {@code long} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -785,7 +673,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code double} value in an document.
+     * Gets the {@code double} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -803,7 +691,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code LocalDateTime} value in an document.
+     * Gets the {@code LocalDateTime} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -818,7 +706,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code ZonedDateTime} value in an document.
+     * Gets the {@code ZonedDateTime} value in a document.
      * 
      * @param zone     the zone to combine with, not null
      * @param document the source document
@@ -841,7 +729,7 @@ public class BsonUtil {
 
     /**
      * 
-     * Gets the {@code ObjectId} value in an document with key {@code "_id"}.
+     * Gets the {@code ObjectId} value in a document with key {@code "_id"}.
      * 
      * @param document the source document
      * @return an {@code Optional<ObjectId>}
@@ -851,7 +739,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code ObjectId} value in an document.
+     * Gets the {@code ObjectId} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -863,7 +751,7 @@ public class BsonUtil {
 
     /**
      * 
-     * Gets the {@code ObjectId} value in an document with key {@code "_id"}.
+     * Gets the {@code ObjectId} value in a document with key {@code "_id"}.
      * 
      * @param document the source document
      * @return an {@code Optional<ObjectId>}
@@ -873,7 +761,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code ObjectId} value in an document.
+     * Gets the {@code ObjectId} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -956,9 +844,9 @@ public class BsonUtil {
                 try {
                     long value = Long.parseLong(str);
                     if (value <= Integer.MAX_VALUE && value >= Integer.MIN_VALUE) {
-                        return Integer.valueOf((int) value);
+                        return (int) value;
                     }
-                    return Long.valueOf(value);
+                    return value;
                 } catch (NumberFormatException e) {
                     return Decimal128.parse(str);
                 }
@@ -972,7 +860,7 @@ public class BsonUtil {
             iterator.readNull();
             return null;
         } else if (type == ValueType.BOOLEAN) {
-            return Boolean.valueOf(iterator.readBoolean());
+            return iterator.readBoolean();
         }
         iterator.skip();
         return null;
@@ -1080,7 +968,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code Document} value in an document.
+     * Gets the {@code Document} value in a document.
      * 
      * @param <E>      the type of the element in list
      * @param document the source document
@@ -1122,7 +1010,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the {@code BsonArray} value in an document.
+     * Gets the {@code BsonArray} value in a document.
      * 
      * @param document the source document
      * @param key      the key
@@ -1162,7 +1050,7 @@ public class BsonUtil {
             return DateTimeUtil.local(((BsonTimestamp) value).getTime());
         }
         throw new ClassCastException(
-                String.format("The value is not a BsonDateTime or BsonTimstamp (%s)", value.getClass().getName()));
+                String.format("The value is not a BsonDateTime or BsonTimestamp (%s)", value.getClass().getName()));
     }
 
     /**
@@ -1190,7 +1078,7 @@ public class BsonUtil {
             return DateTimeUtil.zoned(((BsonTimestamp) value).getTime(), zone);
         }
         throw new ClassCastException(
-                String.format("The value is not a BsonDateTime or BsonTimstamp (%s)", value.getClass().getName()));
+                String.format("The value is not a BsonDateTime or BsonTimestamp (%s)", value.getClass().getName()));
     }
 
     /**
@@ -1218,7 +1106,7 @@ public class BsonUtil {
             return DateTimeUtil.offset(((BsonTimestamp) value).getTime(), zone);
         }
         throw new ClassCastException(
-                String.format("The value is not a BsonDateTime or BsonTimstamp (%s)", value.getClass().getName()));
+                String.format("The value is not a BsonDateTime or BsonTimestamp (%s)", value.getClass().getName()));
     }
 
     /**
@@ -1604,6 +1492,52 @@ public class BsonUtil {
             return Optional.of(new ObjectId(value.textValue()));
         }
         throw new ClassCastException(String.format("The value is not a STRING (%s)", value.getNodeType().name()));
+    }
+
+    /**
+     * Gets the {@link UUID} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<String>}
+     * @since 2.0
+     */
+    public static final Optional<UUID> uuidValue(Document document, String key) {
+        return Optional.ofNullable(document.get(key, UUID.class));
+    }
+
+    /**
+     * Gets the {@link UUID} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<UUID>}
+     * @since 2.0
+     */
+    public static final Optional<UUID> uuidValue(BsonDocument document, String key) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        return Optional.of(value.asBinary().asUuid());
+    }
+
+    /**
+     * Gets the {@link UUID} value in a document.
+     *
+     * @param document           the source document
+     * @param key                the key
+     * @param uuidRepresentation the representation to use when converting a UUID to a BSON binary value
+     * @return an {@code Optional<UUID>}
+     * @since 2.0
+     */
+    public static final Optional<UUID> uuidValue(BsonDocument document, String key,
+                                                 UuidRepresentation uuidRepresentation) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        return Optional.of(value.asBinary().asUuid(uuidRepresentation));
     }
 
     private BsonUtil() {
