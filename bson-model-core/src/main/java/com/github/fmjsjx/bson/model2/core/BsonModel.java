@@ -1,11 +1,9 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
-
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The top interface for BSON model.
@@ -28,7 +26,7 @@ public interface BsonModel<T extends BsonValue> {
      *
      * @return the path of this model
      */
-    String path();
+    DotNotationPath path();
 
     /**
      * Convert this model to a {@link BsonValue}.
@@ -54,20 +52,11 @@ public interface BsonModel<T extends BsonValue> {
     void load(T src);
 
     /**
-     * Load data from the JSON string source data.
+     * Load data from the source data {@link JsonNode}.
      *
-     * @param src the JSON string source data
+     * @param src the source data {@code JsonNode}
      */
-    default void loadJsonString(String src) {
-        loadJsonBytes(Objects.requireNonNull(src, "src must not be null").getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Load data from the JSON bytes source data.
-     *
-     * @param src the JSON bytes source data
-     */
-    void loadJsonBytes(byte[] src);
+    void load(JsonNode src);
 
     /**
      * Appends the updates of this model into the given list.

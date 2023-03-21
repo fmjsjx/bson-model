@@ -13,8 +13,8 @@ import org.bson.BsonValue;
 abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonModel<T, Self>> implements BsonModel<T> {
 
     protected AbstractBsonModel<?, ?> parent;
-    protected int listIndex = -1;
-    protected Object mapKey;
+    protected int index = -1;
+    protected Object key;
 
     @Override
     public AbstractBsonModel<?, ?> parent() {
@@ -28,22 +28,22 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     }
 
     @SuppressWarnings("unchecked")
-    protected Self listIndex(int listIndex) {
-        this.listIndex = listIndex;
+    protected Self index(int index) {
+        this.index = index;
         return (Self) this;
     }
 
     @SuppressWarnings("unchecked")
-    protected Self mapKey(Object mapKey) {
-        this.mapKey = mapKey;
+    protected Self key(Object mapKey) {
+        this.key = mapKey;
         return (Self) this;
     }
 
     @SuppressWarnings("unchecked")
     protected Self unbind() {
         this.parent = null;
-        this.listIndex = -1;
-        this.mapKey = null;
+        this.index = -1;
+        this.key = null;
         return (Self) this;
     }
 
@@ -78,16 +78,36 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     /**
      * Emit updated event of this model.
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected void emitChanged() {
         var parent = parent();
         if (parent != null) {
-            // TODO if (parent instanceOf MapModel mapModel && mapKey != null) {
-            // TODO     mapModel.changedKey(mapKey);
-            // TODO } else if (parent instanceOf ListModel listModel && listIndex >= 0) {
-            // TODO     listModel.changedIndex(listIndex);
-            // TODO }
+            if (parent instanceof MapModel model && key != null) {
+                model.changedKeys.add(key);
+            } else if (parent instanceof ObjectModel<?> model && key != null && index > 0) {
+                model.changedFields.set(index);
+            } else if (parent instanceof ListModel model && index >= 0) {
+                model.changedIndexes.add(index);
+            }
             parent.emitChanged();
         }
     }
 
+    @Override
+    public DotNotationPath path() {
+        var parent = parent();
+        if (parent != null) {
+            if (key != null) {
+                return parent.path().resolve(key);
+            } else if (index >= 0 && parent instanceof ListModel) {
+                return parent.path().resolve(index);
+            }
+            throw new IllegalStateException("parent exists without key or index");
+        }
+        return DotNotationPath.root();
+    }
+
+    public abstract Self fullyUpdate(boolean fullyUpdate);
+
+    public abstract boolean isFullyUpdate();
 }

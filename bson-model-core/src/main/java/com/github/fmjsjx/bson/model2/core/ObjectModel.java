@@ -21,7 +21,7 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
     @Override
     public int appendUpdates(List<Bson> updates) {
         var base = updates.size();
-        if (changedFields.get(FULL)) {
+        if (isFullyUpdate()) {
             appendFullUpdate(updates);
         } else {
             appendFieldUpdates(updates);
@@ -35,7 +35,7 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
      * @param updates the list of updates
      */
     protected void appendFullUpdate(List<Bson> updates) {
-        updates.add(Updates.set(path(), toBson()));
+        updates.add(Updates.set(path().value(), toBson()));
     }
 
     /**
@@ -52,12 +52,24 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
      * @return this model
      */
     @SuppressWarnings("unchecked")
+    @Override
     public Self fullyUpdate(boolean fullyUpdate) {
         if (fullyUpdate) {
             return fieldChanged(FULL);
         }
         changedFields.clear(FULL);
         return (Self) this;
+    }
+
+    /**
+     * Returns if this model will be fully updated or not.
+     *
+     * @return {@code true} if this model will be fully updated, {@code false}
+     * otherwise
+     */
+    @Override
+    public boolean isFullyUpdate() {
+        return changedFields.get(FULL);
     }
 
     /**
@@ -73,8 +85,4 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
         return (Self) this;
     }
 
-    @Override
-    protected void emitChanged() {
-        super.emitChanged();
-    }
 }
