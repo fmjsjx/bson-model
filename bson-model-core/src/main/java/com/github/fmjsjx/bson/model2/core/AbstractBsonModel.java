@@ -12,17 +12,26 @@ import org.bson.BsonValue;
  */
 abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonModel<T, Self>> implements BsonModel<T> {
 
-    protected AbstractBsonModel<?, ?> parent;
+    protected BsonModel<?> parent;
     protected int index = -1;
     protected Object key;
 
+    protected boolean fullyUpdate;
+    protected boolean changedTriggered;
+
     @Override
-    public AbstractBsonModel<?, ?> parent() {
+    public BsonModel<?> parent() {
         return parent;
     }
 
+    /**
+     * Sets the parent {@link BsonModel}.
+     *
+     * @param parent the parent
+     * @return this model
+     */
     @SuppressWarnings("unchecked")
-    protected Self parent(AbstractBsonModel<?, ?> parent) {
+    public Self parent(BsonModel<?> parent) {
         this.parent = parent;
         return (Self) this;
     }
@@ -34,9 +43,19 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     }
 
     @SuppressWarnings("unchecked")
-    protected Self key(Object mapKey) {
-        this.key = mapKey;
+    protected Self key(Object key) {
+        this.key = key;
         return (Self) this;
+    }
+
+    protected boolean bound() {
+        return parent != null;
+    }
+
+    protected void mustUnbound() {
+        if (bound()) {
+            throw new IllegalArgumentException("the model has been already bound");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -61,7 +80,10 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     /**
      * Reset states of this model.
      */
-    protected abstract void resetStates();
+    protected void resetStates() {
+        fullyUpdate = false;
+        changedTriggered = false;
+    }
 
     /**
      * Returns the number of the deleted values on this model.
@@ -75,21 +97,28 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
         return deletedSize() > 0;
     }
 
+    protected void triggerChanged() {
+        if (!changedTriggered) {
+            emitChanged();
+            changedTriggered = true;
+        }
+    }
+
     /**
      * Emit updated event of this model.
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     protected void emitChanged() {
         var parent = parent();
         if (parent != null) {
-            if (parent instanceof MapModel model && key != null) {
+            if (parent instanceof MapModel<?, ?, ?> model && key != null) {
                 model.changedKeys.add(key);
-            } else if (parent instanceof ObjectModel<?> model && key != null && index > 0) {
+            } else if (parent instanceof ObjectModel<?> model && key != null && index >= 0) {
                 model.changedFields.set(index);
-            } else if (parent instanceof ListModel model && index >= 0) {
+            } else if (parent instanceof ListModel<?, ?> model && index >= 0) {
                 model.changedIndexes.add(index);
+            } else if (parent instanceof AbstractBsonModel<?, ?> model) {
+                model.emitChanged();
             }
-            parent.emitChanged();
         }
     }
 
@@ -97,17 +126,40 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     public DotNotationPath path() {
         var parent = parent();
         if (parent != null) {
-            if (key != null) {
-                return parent.path().resolve(key);
-            } else if (index >= 0 && parent instanceof ListModel) {
+            if (parent instanceof ListModel & index >= 0) {
                 return parent.path().resolve(index);
+            } else if (key != null) {
+                return parent.path().resolve(key);
             }
             throw new IllegalStateException("parent exists without key or index");
         }
         return DotNotationPath.root();
     }
 
-    public abstract Self fullyUpdate(boolean fullyUpdate);
+    /**
+     * Sets if the model should fully update or not.
+     *
+     * @param fullyUpdate {@code true} if the model should fully update, {@code false} otherwise
+     * @return this model
+     */
+    @SuppressWarnings("unchecked")
+    public final Self fullyUpdate(boolean fullyUpdate) {
+        if (fullyUpdate != isFullyUpdate()) {
+            this.fullyUpdate = fullyUpdate;
+            if (fullyUpdate) {
+                triggerChanged();
+            }
+        }
+        return (Self) this;
+    }
 
-    public abstract boolean isFullyUpdate();
+    /**
+     * Returns if the model should fully update or not.
+     *
+     * @return {@code true} if the model should fully update, {@code false} otherwise
+     */
+    public final boolean isFullyUpdate() {
+        return fullyUpdate;
+    }
+
 }

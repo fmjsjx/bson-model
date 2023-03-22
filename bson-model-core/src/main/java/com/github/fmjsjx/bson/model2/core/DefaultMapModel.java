@@ -64,34 +64,35 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
 
     @Override
     public void load(BsonDocument src) {
-        clearMap();
-        resetStates();
+        clean();
+        var valueFactory = this.valueFactory;
         for (var e : src.entrySet()) {
             var v = e.getValue();
             if (v instanceof BsonDocument doc) {
                 var key = parseKey(e.getKey());
                 var value = valueFactory.get();
                 value.load(doc);
-                value.parent(this).key(key);
+                map.put(key, value.parent(this).key(key));
+            } else {
+                throw new IllegalArgumentException("bson value expected be an DOCUMENT but was " + v.getBsonType());
             }
         }
     }
 
     @Override
     public void load(JsonNode src) {
-        clearMap();
-        resetStates();
+        clean();
+        var valueFactory = this.valueFactory;
         if (src.isObject()) {
             for (var iter = src.fields(); iter.hasNext(); ) {
                 var entry = iter.next();
-                var v = entry.getValue();
-                if (v.isObject()) {
-                    var key = parseKey(entry.getKey());
-                    var value = valueFactory.get();
-                    value.load(v);
-                    value.parent(this).key(key);
-                }
+                var key = parseKey(entry.getKey());
+                var value = valueFactory.get();
+                value.load(entry.getValue());
+                map.put(key, value.parent(this).key(key));
             }
+        } else {
+            throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
         }
     }
 

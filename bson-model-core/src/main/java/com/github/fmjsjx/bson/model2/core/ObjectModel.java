@@ -14,8 +14,6 @@ import java.util.List;
  */
 public abstract class ObjectModel<Self extends ObjectModel<Self>> extends AbstractBsonModel<BsonDocument, Self> {
 
-    protected static final int FULL = 0;
-
     protected final BitSet changedFields = new BitSet();
 
     @Override
@@ -46,33 +44,6 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
     protected abstract void appendFieldUpdates(List<Bson> updates);
 
     /**
-     * Sets if this model will be fully updated or not.
-     *
-     * @param fullyUpdate {@code true} if this model will be fully updated, {@code false} otherwise
-     * @return this model
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public Self fullyUpdate(boolean fullyUpdate) {
-        if (fullyUpdate) {
-            return fieldChanged(FULL);
-        }
-        changedFields.clear(FULL);
-        return (Self) this;
-    }
-
-    /**
-     * Returns if this model will be fully updated or not.
-     *
-     * @return {@code true} if this model will be fully updated, {@code false}
-     * otherwise
-     */
-    @Override
-    public boolean isFullyUpdate() {
-        return changedFields.get(FULL);
-    }
-
-    /**
      * Set changed of the field at the index.
      *
      * @param index the field index, begin with {@code 1}
@@ -81,8 +52,13 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
     @SuppressWarnings("unchecked")
     protected Self fieldChanged(int index) {
         changedFields.set(index);
-        emitChanged();
+        triggerChanged();
         return (Self) this;
     }
 
+    @Override
+    protected void resetStates() {
+        changedFields.clear();
+        super.resetStates();
+    }
 }

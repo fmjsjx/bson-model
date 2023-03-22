@@ -10,6 +10,7 @@ import org.bson.conversions.Bson;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * The abstract list implementation of {@link AbstractContainerModel}.
@@ -17,6 +18,7 @@ import java.util.function.Supplier;
  * @param <E>    the type of elements in this list
  * @param <Self> the type of the implementation class
  * @author MJ Fang
+ * @see DefaultListModel
  * @since 2.x
  */
 public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Self extends ListModel<E, Self>>
@@ -53,10 +55,123 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
     /**
      * Returns the values of this model.
      *
-     * @return an {@code Optional<List<E>>}
+     * @return the values of this model
      */
     public List<E> values() {
         return Collections.unmodifiableList(list);
+    }
+
+    /**
+     * Returns a sequential {@code Stream} over the elements in this model.
+     *
+     * @return a sequential {@code Stream} over the elements in this model
+     */
+    public Stream<E> stream() {
+        return list.stream();
+    }
+
+    /**
+     * Returns the element at the specified position in this list
+     *
+     * @param index index of the element to return
+     * @return the element at the specified position in this list
+     * @throws IndexOutOfBoundsException – if the index is out of range (index < 0 || index >= size())
+     */
+    public E get(int index) {
+        return list.get(index);
+    }
+
+    /**
+     * Returns the element at the specified position in this list
+     *
+     * @param index index of the element to return
+     * @return an {@code Optional<E>}
+     */
+    public Optional<E> value(int index) {
+        return Optional.ofNullable(get(index));
+    }
+
+    /**
+     * Replaces the element at the specified position in this list with the
+     * specified element (optional operation).
+     *
+     * @param index the index
+     * @param value the element value
+     * @return the element previously at the specified position
+     */
+    public E set(int index, E value) {
+        if (value == null) {
+            return remove(index);
+        }
+        value.mustUnbound();
+        var list = this.list;
+        var original = list.set(index, value.parent(this).index(index).fullyUpdate(true));
+        if (original != null) {
+            original.unbind();
+        }
+        triggerChanged(index);
+        return original;
+    }
+
+    /**
+     * Replaces the element at the specified position in this list with the
+     * specified element (optional operation).
+     *
+     * @param index the index
+     * @param value the element value
+     * @return the element previously at the specified position
+     */
+    public Optional<E> replace(int index, E value) {
+        return Optional.ofNullable(set(index, value));
+    }
+
+    /**
+     * Removes the element at the specified position in this list.
+     * <p>
+     * This method is equivalent to:
+     *
+     * <pre>
+     * {@code
+     * return value(index, null);
+     * }
+     * </pre>
+     *
+     * @param index the index
+     * @return the element previously at the specified position
+     */
+    public E remove(int index) {
+        var list = this.list;
+        var original = list.remove(index);
+        if (original != null) {
+            original.unbind();
+            triggerChanged(index);
+        }
+        return original;
+    }
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * @param value the element value to be appended to this list
+     * @return this model
+     */
+    @SuppressWarnings("unchecked")
+    public Self append(E value) {
+        var list = this.list;
+        var index = list.size();
+        if (value == null) {
+            list.add(null);
+        } else {
+            value.mustUnbound();
+            list.add(value.parent(this).index(index).fullyUpdate(true));
+        }
+        triggerChanged(index);
+        return (Self) this;
+    }
+
+    protected final void triggerChanged(int index) {
+        changedIndexes.add(index);
+        triggerChanged();
     }
 
     @Override
@@ -81,7 +196,7 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
     @Override
     public Object toUpdateData() {
         if (isFullyUpdate()) {
-            return list.stream().map(E::toData).toList();
+            return toData();
         }
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
@@ -95,18 +210,24 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
     @Override
     public Object toData() {
         var list = this.list;
-        var size = list.size();
-        if (size == 0) {
+        if (list.isEmpty()) {
             return List.of();
         }
-        var data = new ArrayList<>(size);
-        for (var value : list) {
-            if (value == null) {
-                data.add(null);
-            } else {
-                data.add(value.toData());
-            }
+        return list.stream().map(e -> e == null ? null : e.toData()).toList();
+    }
+
+    @Override
+    public Object toDeletedData() {
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return Map.of();
         }
+        var data = new LinkedHashMap<>();
+        changedIndexes.intStream().forEach(index -> {
+            if (list.get(index) == null) {
+                data.put(index, 1);
+            }
+        });
         return data;
     }
 
@@ -125,11 +246,11 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
 
     @Override
     protected void resetStates() {
-        fullyUpdate(false);
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.size() > 0) {
             changedIndexes.clear();
         }
+        super.resetStates();
     }
 
     @Override
@@ -168,11 +289,6 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
         return updates.size() - original;
     }
 
-    /**
-     * Removes all the values from this list.
-     *
-     * @return this list
-     */
     @SuppressWarnings("unchecked")
     @Override
     public Self clear() {
@@ -192,6 +308,14 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
             }
             list.clear();
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self clean() {
+        clearList();
+        resetStates();
+        return (Self) this;
     }
 
 }
