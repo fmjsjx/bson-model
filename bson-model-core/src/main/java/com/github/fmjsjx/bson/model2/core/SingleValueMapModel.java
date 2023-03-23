@@ -2,6 +2,7 @@ package com.github.fmjsjx.bson.model2.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
@@ -60,7 +61,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
     @Override
     public BsonDocument toBson() {
         var map = this.map;
-        var doc = new BsonDocument(Math.max(8, map.size() << 1));
+        var doc = new BsonDocument(Math.max(8, map.size()));
         var valueType = this.valueType;
         for (var e : map.entrySet()) {
             var v = e.getValue();
@@ -77,7 +78,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
         if (map.isEmpty()) {
             return Map.of();
         }
-        var data = new LinkedHashMap<>(Math.max(8, map.size() << 1));
+        var data = new LinkedHashMap<>(Math.max(8, map.size()));
         var valueType = this.valueType;
         for (var e : map.entrySet()) {
             var v = e.getValue();
@@ -118,29 +119,22 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
     }
 
     @Override
-    public void load(JsonNode src) {
+    protected void loadObjectNode(ObjectNode src) {
         clean();
         var map = this.map;
         var valueType = this.valueType;
-        if (src.isObject()) {
-            for (var iter = src.fields(); iter.hasNext(); ) {
-                var entry = iter.next();
-                var value = valueType.parse(entry.getValue());
-                if (value != null) {
-                    map.put(parseKey(entry.getKey()), value);
-                }
+        for (var iter = src.fields(); iter.hasNext(); ) {
+            var entry = iter.next();
+            var value = valueType.parse(entry.getValue());
+            if (value != null) {
+                map.put(parseKey(entry.getKey()), value);
             }
-        } else {
-            throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
+    public Object toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return Map.of();

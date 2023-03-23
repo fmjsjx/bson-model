@@ -1,6 +1,7 @@
 package com.github.fmjsjx.bson.model2.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.mongodb.client.model.Updates;
@@ -86,23 +87,20 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
     }
 
     @Override
-    public void load(JsonNode src) {
+    protected void loadArrayNode(ArrayNode src) {
         clean();
         var valueFactory = this.valueFactory;
-        if (src.isArray()) {
-            var len = src.size();
-            for (var i = 0; i < len; i++) {
-                var v = src.get(i);
-                if (v != null && !v.isNull()) {
-                    var value = valueFactory.get();
-                    value.load(v);
-                    list.add(value.parent(this).index(i));
-                } else {
-                    list.add(null);
-                }
+        var list = this.list;
+        var len = src.size();
+        for (var i = 0; i < len; i++) {
+            var v = src.get(i);
+            if (v != null && !v.isNull()) {
+                var value = valueFactory.get();
+                value.load(v);
+                list.add(value.parent(this).index(i));
+            } else {
+                list.add(null);
             }
-        } else {
-            throw new IllegalArgumentException("src expected be an ARRAY but was " + src.getNodeType());
         }
     }
 
@@ -147,10 +145,7 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
     }
 
     @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
+    protected Object toSubUpdateData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
             return Map.of();

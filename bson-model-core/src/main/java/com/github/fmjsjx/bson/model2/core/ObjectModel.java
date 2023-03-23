@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
@@ -61,4 +63,25 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
         changedFields.clear();
         super.resetStates();
     }
+
+    @Override
+    public boolean anyChanged() {
+        return isFullyUpdate() || changedFields.length() > 0;
+    }
+
+    @Override
+    public void load(JsonNode src) {
+        if (!src.isObject()) {
+            throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
+        }
+        loadObjectNode((ObjectNode) src);
+    }
+
+    /**
+     * Load data from the source data {@link ObjectNode}.
+     *
+     * @param src the source data {@code ObjectNode}
+     */
+    protected abstract void loadObjectNode(ObjectNode src);
+
 }

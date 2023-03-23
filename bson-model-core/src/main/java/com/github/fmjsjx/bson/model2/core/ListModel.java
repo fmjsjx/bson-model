@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.fmjsjx.libcommon.collection.IntHashSet;
 import com.github.fmjsjx.libcommon.collection.IntSet;
 import org.bson.BsonArray;
@@ -47,6 +49,21 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
     protected ListModel(List<E> list) {
         this.list = list;
     }
+
+    @Override
+    public void load(JsonNode src) {
+        if (!src.isArray()) {
+            throw new IllegalArgumentException("src expected be an ARRAY but was " + src.getNodeType());
+        }
+        loadArrayNode((ArrayNode) src);
+    }
+
+    /**
+     * Load data from the source data {@link ArrayNode}.
+     *
+     * @param src the source data {@code ArrayNode}
+     */
+    protected abstract void loadArrayNode(ArrayNode src);
 
     /**
      * Returns the values of this model.
@@ -201,4 +218,8 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
         return (Self) this;
     }
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + list;
+    }
 }

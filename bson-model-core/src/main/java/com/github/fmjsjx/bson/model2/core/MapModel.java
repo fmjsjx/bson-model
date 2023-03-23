@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
@@ -48,7 +50,6 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
         this.keyParser = keyParser;
     }
 
-
     /**
      * Constructs a new {@link MapModel} with the specified map given.
      *
@@ -58,6 +59,21 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
     protected MapModel(Function<String, K> keyParser, Supplier<Map<K, V>> mapFactory) {
         this(mapFactory.get(), keyParser);
     }
+
+    @Override
+    public void load(JsonNode src) {
+        if (!src.isObject()) {
+            throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
+        }
+        loadObjectNode((ObjectNode) src);
+    }
+
+    /**
+     * Load data from the source data {@link ObjectNode}.
+     *
+     * @param src the source data {@code ObjectNode}
+     */
+    protected abstract void loadObjectNode(ObjectNode src);
 
     /**
      * Parse the specified key with the {@code keyParser}.
@@ -361,5 +377,10 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
      * @param value   the value
      */
     protected abstract void appendUpdates(List<Bson> updates, Object key, V value);
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + map;
+    }
 
 }

@@ -36,14 +36,26 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
         return (Self) this;
     }
 
+    /**
+     * Set the index of this model.
+     *
+     * @param index the index
+     * @return this model
+     */
     @SuppressWarnings("unchecked")
-    protected Self index(int index) {
+    public Self index(int index) {
         this.index = index;
         return (Self) this;
     }
 
+    /**
+     * Set the key of this model.
+     *
+     * @param key the key
+     * @return this model
+     */
     @SuppressWarnings("unchecked")
-    protected Self key(Object key) {
+    public Self key(Object key) {
         this.key = key;
         return (Self) this;
     }
@@ -52,14 +64,24 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
         return parent != null;
     }
 
-    protected void mustUnbound() {
+    /**
+     * This model must be unbound.
+     *
+     * @throws IllegalArgumentException if this model has been already bound
+     */
+    public void mustUnbound() {
         if (bound()) {
             throw new IllegalArgumentException("the model has been already bound");
         }
     }
 
+    /**
+     * Unbind this model.
+     *
+     * @return this model
+     */
     @SuppressWarnings("unchecked")
-    protected Self unbind() {
+    public Self unbind() {
         this.parent = null;
         this.index = -1;
         this.key = null;
@@ -161,5 +183,20 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     public final boolean isFullyUpdate() {
         return fullyUpdate;
     }
+
+    @Override
+    public Object toUpdateData() {
+        if (isFullyUpdate()) {
+            return toData();
+        }
+        return toSubUpdateData();
+    }
+
+    /**
+     * Creates and returns a new sub update object for this model.
+     *
+     * @return a new sub update object for this model
+     */
+    protected abstract Object toSubUpdateData();
 
 }

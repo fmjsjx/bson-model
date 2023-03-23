@@ -2,6 +2,7 @@ package com.github.fmjsjx.bson.model2.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 
@@ -72,7 +73,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     @Override
     public BsonDocument toBson() {
         var map = this.map;
-        var bson = new BsonDocument(Math.max(8, map.size() << 1));
+        var bson = new BsonDocument(Math.max(8, map.size()));
         if (!map.isEmpty()) {
             for (var e : map.entrySet()) {
                 bson.append(e.getKey().toString(), e.getValue().toBson());
@@ -112,20 +113,16 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     }
 
     @Override
-    public void load(JsonNode src) {
+    protected void loadObjectNode(ObjectNode src) {
         clean();
         var valueFactory = this.valueFactory;
         var map = this.map;
-        if (src.isObject()) {
-            for (var iter = src.fields(); iter.hasNext(); ) {
-                var entry = iter.next();
-                var key = parseKey(entry.getKey());
-                var value = valueFactory.get();
-                value.load(entry.getValue());
-                map.put(key, value.parent(this).key(key));
-            }
-        } else {
-            throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
+        for (var iter = src.fields(); iter.hasNext(); ) {
+            var entry = iter.next();
+            var key = parseKey(entry.getKey());
+            var value = valueFactory.get();
+            value.load(entry.getValue());
+            map.put(key, value.parent(this).key(key));
         }
     }
 
@@ -198,7 +195,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
         if (map.isEmpty()) {
             return Map.of();
         }
-        var data = new LinkedHashMap<>(Math.max(8, map.size() << 1));
+        var data = new LinkedHashMap<>(Math.max(8, map.size()));
         for (var e : map.entrySet()) {
             var value = e.getValue();
             if (value != null) {
@@ -210,10 +207,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
+    public Object toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return Map.of();
