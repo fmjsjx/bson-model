@@ -2,11 +2,7 @@ package com.github.fmjsjx.bson.model2.core;
 
 import com.github.fmjsjx.libcommon.collection.IntHashSet;
 import com.github.fmjsjx.libcommon.collection.IntSet;
-import com.mongodb.client.model.Updates;
 import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonNull;
-import org.bson.conversions.Bson;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -21,7 +17,7 @@ import java.util.stream.Stream;
  * @see DefaultListModel
  * @since 2.x
  */
-public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Self extends ListModel<E, Self>>
+public abstract class ListModel<E, Self extends ListModel<E, Self>>
         extends AbstractContainerModel<BsonArray, Self> {
 
     protected final List<E> list;
@@ -99,19 +95,7 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
      * @param value the element value
      * @return the element previously at the specified position
      */
-    public E set(int index, E value) {
-        if (value == null) {
-            return remove(index);
-        }
-        value.mustUnbound();
-        var list = this.list;
-        var original = list.set(index, value.parent(this).index(index).fullyUpdate(true));
-        if (original != null) {
-            original.unbind();
-        }
-        triggerChanged(index);
-        return original;
-    }
+    public abstract E set(int index, E value);
 
     /**
      * Replaces the element at the specified position in this list with the
@@ -139,15 +123,7 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
      * @param index the index
      * @return the element previously at the specified position
      */
-    public E remove(int index) {
-        var list = this.list;
-        var original = list.remove(index);
-        if (original != null) {
-            original.unbind();
-            triggerChanged(index);
-        }
-        return original;
-    }
+    public abstract E remove(int index);
 
     /**
      * Appends the specified element to the end of this list.
@@ -155,19 +131,7 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
      * @param value the element value to be appended to this list
      * @return this model
      */
-    @SuppressWarnings("unchecked")
-    public Self append(E value) {
-        var list = this.list;
-        var index = list.size();
-        if (value == null) {
-            list.add(null);
-        } else {
-            value.mustUnbound();
-            list.add(value.parent(this).index(index).fullyUpdate(true));
-        }
-        triggerChanged(index);
-        return (Self) this;
-    }
+    public abstract Self append(E value);
 
     protected final void triggerChanged(int index) {
         changedIndexes.add(index);
@@ -194,54 +158,19 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
     }
 
     @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
-        var changedIndexes = this.changedIndexes;
-        if (changedIndexes.isEmpty()) {
-            return Map.of();
-        }
-        var data = new LinkedHashMap<Integer, Object>();
-        changedIndexes.intStream().mapToObj(list::get).filter(Objects::nonNull).forEach(v -> data.put(v.index, v.toUpdateData()));
-        return data;
-    }
-
-    @Override
-    public Object toData() {
-        var list = this.list;
-        if (list.isEmpty()) {
-            return List.of();
-        }
-        return list.stream().map(e -> e == null ? null : e.toData()).toList();
-    }
-
-    @Override
     public Object toDeletedData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
             return Map.of();
         }
-        var data = new LinkedHashMap<>();
+        var data = new LinkedHashMap<>(Math.max(8, changedIndexes.size() << 1));
+        var list = this.list;
         changedIndexes.intStream().forEach(index -> {
             if (list.get(index) == null) {
                 data.put(index, 1);
             }
         });
         return data;
-    }
-
-    @Override
-    protected void resetChildren() {
-        var list = this.list;
-        if (isFullyUpdate()) {
-            list.stream().filter(Objects::nonNull).forEach(E::reset);
-        } else {
-            var changedIndexes = this.changedIndexes;
-            if (changedIndexes.size() > 0) {
-                changedIndexes.intStream().mapToObj(list::get).filter(Objects::nonNull).forEach(E::reset);
-            }
-        }
     }
 
     @Override
@@ -253,42 +182,6 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
         super.resetStates();
     }
 
-    @Override
-    public BsonArray toBson() {
-        var list = this.list;
-        var size = list.size();
-        var bson = new BsonArray(size);
-        for (var v : list) {
-            if (v == null) {
-                bson.add(BsonNull.VALUE);
-            } else {
-                bson.add(v.toBson());
-            }
-        }
-        return bson;
-    }
-
-    @Override
-    public int appendUpdates(List<Bson> updates) {
-        var original = updates.size();
-        if (isFullyUpdate()) {
-            updates.add(Updates.set(path().value(), toBson()));
-        } else {
-            var changedIndexes = this.changedIndexes;
-            if (changedIndexes.size() > 0) {
-                changedIndexes.intStream().forEach(index -> {
-                    var value = list.get(index);
-                    if (value == null) {
-                        updates.add(Updates.unset(path().resolve(index).value()));
-                    } else {
-                        value.appendUpdates(updates);
-                    }
-                });
-            }
-        }
-        return updates.size() - original;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public Self clear() {
@@ -298,17 +191,7 @@ public abstract class ListModel<E extends AbstractBsonModel<BsonDocument, E>, Se
         return (Self) this;
     }
 
-    protected void clearList() {
-        var list = this.list;
-        if (list.size() > 0) {
-            for (var value : list) {
-                if (value != null) {
-                    value.unbind();
-                }
-            }
-            list.clear();
-        }
-    }
+    protected abstract void clearList();
 
     @SuppressWarnings("unchecked")
     @Override

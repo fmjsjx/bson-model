@@ -3,6 +3,7 @@ package com.github.fmjsjx.bson.model2.core;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
+
 import java.util.List;
 
 /**
@@ -36,20 +37,18 @@ public interface BsonModel<T extends BsonValue> {
     T toBson();
 
     /**
-     * Creates and returns a new data object for this model.
-     * <p>
-     * Type of the returned object may be Map or List.
-     *
-     * @return a new data object for this model
-     */
-    Object toData();
-
-    /**
      * Load data from the source {@link BsonValue}.
      *
      * @param src the source {@code BsonValue}
      */
     void load(T src);
+
+    /**
+     * Convert this model to a {@link JsonNode}.
+     *
+     * @return a {@code JsonNode}
+     */
+    JsonNode toJsonNode();
 
     /**
      * Load data from the source data {@link JsonNode}.
@@ -77,6 +76,15 @@ public interface BsonModel<T extends BsonValue> {
      * @return {@code true} if any value of this model has been changed in context, {@code false} otherwise
      */
     boolean anyChanged();
+
+    /**
+     * Creates and returns a new data object for this model.
+     * <p>
+     * Type of the returned object may be Map or List.
+     *
+     * @return a new data object for this model
+     */
+    Object toData();
 
     /**
      * Creates and returns a new update data object for this model.

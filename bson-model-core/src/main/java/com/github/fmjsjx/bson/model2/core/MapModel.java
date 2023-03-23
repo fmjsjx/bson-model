@@ -18,9 +18,10 @@ import java.util.stream.Stream;
  * @param <Self> the type of the implementation class
  * @author MJ Fang
  * @see DefaultMapModel
+ * @see SingleValueMapModel
  * @since 2.0
  */
-public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, Self extends MapModel<K, V, Self>>
+public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
         extends AbstractContainerModel<BsonDocument, Self> {
 
     protected final Map<K, V> map;
@@ -73,18 +74,6 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
         return isFullyUpdate() || changedKeys.size() > 0;
     }
 
-    @Override
-    protected int deletedSize() {
-        var n = 0;
-        for (var key : changedKeys) {
-            var value = map.get(key);
-            if (value == null || value.anyDeleted()) {
-                n++;
-            }
-        }
-        return n;
-    }
-
     /**
      * Returns the value to which the specified key is mapped.
      *
@@ -112,9 +101,7 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
      * @param value the value
      * @return the previous value associated with the key
      */
-    public Optional<V> replace(K key, V value) {
-        return Optional.ofNullable(put(key, value));
-    }
+    public abstract V put(K key, V value);
 
     /**
      * Associates the specified value with the specified key in this map.
@@ -123,17 +110,8 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
      * @param value the value
      * @return the previous value associated with the key
      */
-    public V put(K key, V value) {
-        if (value == null) {
-            return remove(key);
-        }
-        value.mustUnbound();
-        var original = map.put(key, value.key(key).parent(this).fullyUpdate(true));
-        if (original != null) {
-            original.unbind();
-        }
-        triggerChanged(key);
-        return original;
+    public Optional<V> replace(K key, V value) {
+        return Optional.ofNullable(put(key, value));
     }
 
     /**
@@ -220,14 +198,7 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
      * @param key the key
      * @return the previous value associated with the key
      */
-    public V remove(K key) {
-        var value = map.remove(key);
-        if (value != null) {
-            value.unbind();
-            triggerChanged(key);
-        }
-        return value;
-    }
+    public abstract V remove(K key);
 
     protected final void triggerChanged(K key) {
         changedKeys.add(key);
@@ -242,39 +213,7 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
      * @param value the value
      * @return {@code true} if the value was removed
      */
-    public boolean remove(K key, V value) {
-        if (map.remove(key, value)) {
-            value.unbind();
-            triggerChanged(key);
-            return true;
-        }
-        return false;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Self clear() {
-        changedKeys.addAll(map.keySet());
-        clearMap();
-        triggerChanged();
-        return (Self) this;
-    }
-
-    protected void clearMap() {
-        var map = this.map;
-        if (map.size() > 0) {
-            map.values().forEach(V::unbind);
-            map.clear();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Self clean() {
-        clearMap();
-        resetStates();
-        return (Self) this;
-    }
+    public abstract boolean remove(K key, V value);
 
     /**
      * Returns the number of key-value mappings in this map.
@@ -376,74 +315,6 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
         super.resetStates();
     }
 
-    @Override
-    public BsonDocument toBson() {
-        var bson = new BsonDocument(map.size());
-        for (var e : map.entrySet()) {
-            bson.append(e.getKey().toString(), e.getValue().toBson());
-        }
-        return bson;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void resetChildren() {
-        for (var key : changedKeys) {
-            take((K) key).ifPresent(V::reset);
-        }
-    }
-
-    @Override
-    public Object toData() {
-        var map = this.map;
-        if (map.isEmpty()) {
-            return Map.of();
-        }
-        var data = new LinkedHashMap<>();
-        for (var e : map.entrySet()) {
-            var value = e.getValue();
-            if (value != null) {
-                data.put(e.getKey(), value.toData());
-            }
-        }
-        return data;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
-        var changedKeys = this.changedKeys;
-        if (changedKeys.isEmpty()) {
-            return Map.of();
-        }
-        var data = new LinkedHashMap<>();
-        for (var key : changedKeys) {
-            var value = get((K) key);
-            if (value != null) {
-                data.put(key, value.toUpdateData());
-            }
-        }
-        return data;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object toDeletedData() {
-        var data = new LinkedHashMap<>();
-        for (var key : changedKeys) {
-            var value = get((K) key);
-            if (value == null) {
-                data.put(key, 1);
-            } else {
-                data.put(key, value.toDeletedData());
-            }
-        }
-        return data;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public int appendUpdates(List<Bson> updates) {
@@ -456,11 +327,39 @@ public abstract class MapModel<K, V extends AbstractBsonModel<BsonDocument, V>, 
                 if (value == null) {
                     updates.add(Updates.unset(path().resolve(key.toString()).value()));
                 } else {
-                    value.appendUpdates(updates);
+                    appendUpdates(updates, key, value);
                 }
             }
         }
         return updates.size() - original;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self clear() {
+        changedKeys.addAll(map.keySet());
+        clearMap();
+        triggerChanged();
+        return (Self) this;
+    }
+
+    protected abstract void clearMap();
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self clean() {
+        clearMap();
+        resetStates();
+        return (Self) this;
+    }
+
+    /**
+     * Appends the updates of specified value into the given list.
+     *
+     * @param updates updates the list of updates
+     * @param key     the key
+     * @param value   the value
+     */
+    protected abstract void appendUpdates(List<Bson> updates, Object key, V value);
 
 }
