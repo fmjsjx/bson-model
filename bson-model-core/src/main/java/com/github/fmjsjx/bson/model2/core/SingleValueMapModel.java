@@ -24,6 +24,45 @@ import java.util.function.Function;
  */
 public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueMapModel<K, V>> {
 
+    /**
+     * Constructs a new {@link SingleValueMapModel} instance with integer keys
+     * and the specified components.
+     *
+     * @param <V>       the type of the mapped values
+     * @param valueType the value type
+     * @return a new {@code SingleValueMapModel<Integer, T>} instance with
+     * integer keys and the specified components
+     */
+    public static final <V> SingleValueMapModel<Integer, V> integerKeysMap(SingleValueType<V> valueType) {
+        return new SingleValueMapModel<>(Integer::parseInt, valueType);
+    }
+
+    /**
+     * Constructs a new {@link SingleValueMapModel} instance with long keys and
+     * the specified components.
+     *
+     * @param <V>       the type of the mapped values
+     * @param valueType the value type
+     * @return a new {@code SingleValueMapModel<Long, T>} instance with long
+     * keys and the specified components
+     */
+    public static final <V> SingleValueMapModel<Long, V> longKeysMap(SingleValueType<V> valueType) {
+        return new SingleValueMapModel<>(Long::parseLong, valueType);
+    }
+
+    /**
+     * Constructs a new {@link SingleValueMapModel} instance with string keys
+     * and the specified components.
+     *
+     * @param <V>       the type of the mapped values
+     * @param valueType the value type
+     * @return a new {@code SingleValueMapModel<String, T>} instance with string
+     * keys and the specified components
+     */
+    public static final <V> SingleValueMapModel<String, V> stringKeysMap(SingleValueType<V> valueType) {
+        return new SingleValueMapModel<>(Function.identity(), valueType);
+    }
+
     private final SingleValueType<V> valueType;
 
     /**
