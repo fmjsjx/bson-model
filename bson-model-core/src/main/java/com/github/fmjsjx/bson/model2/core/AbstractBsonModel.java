@@ -199,4 +199,11 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
      */
     protected abstract Object toSubUpdateData();
 
+    /**
+     * Clean this model.
+     *
+     * @return this model
+     */
+    public abstract Self clean();
+
 }

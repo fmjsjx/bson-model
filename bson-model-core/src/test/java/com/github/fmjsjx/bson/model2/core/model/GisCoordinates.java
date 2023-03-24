@@ -20,8 +20,8 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     public static final String BNAME_LATITUDE = "la";
     public static final String BNAME_HEIGHT = "h";
 
-    private double longitude;
-    private double latitude;
+    private double longitude = Double.NaN;
+    private double latitude = Double.NaN;
     private Double height;
 
     public double getLongitude() {
@@ -64,8 +64,8 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     @Override
     protected int deletedSize() {
         var n = 0;
-        var changeFields = this.changedFields;
-        if (changeFields.get(2) && this.height == null) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(2) && this.height == null) {
             n++;
         }
         return n;
@@ -74,18 +74,27 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     @Override
     protected Object toSubUpdateData() {
         var data = new LinkedHashMap<>();
-        var changeFields = this.changedFields;
-        if (changeFields.get(0)) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
             data.put("longitude", longitude);
         }
-        if (changeFields.get(1)) {
+        if (changedFields.get(1)) {
             data.put("latitude", latitude);
         }
         var height = this.height;
-        if (changeFields.get(2) && height != null) {
+        if (changedFields.get(2) && height != null) {
             data.put("height", height);
         }
         return data;
+    }
+
+    @Override
+    public GisCoordinates clean() {
+        longitude = Double.NaN;
+        latitude = Double.NaN;
+        height = null;
+        resetStates();
+        return this;
     }
 
     @Override
@@ -140,8 +149,8 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     @Override
     public Object toDeletedData() {
         var data = new LinkedHashMap<>();
-        var changeFields = this.changedFields;
-        if (changeFields.get(2) && this.height == null) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(2) && this.height == null) {
             data.put("height", 1);
         }
         return data;
@@ -149,15 +158,15 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
 
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
-        var changeFields = this.changedFields;
-        if (changeFields.get(0)) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
             updates.add(Updates.set(path().resolve(BNAME_LONGITUDE).value(), longitude));
         }
-        if (changeFields.get(1)) {
+        if (changedFields.get(1)) {
             updates.add(Updates.set(path().resolve(BNAME_LATITUDE).value(), latitude));
         }
         var height = this.height;
-        if (changeFields.get(2)) {
+        if (changedFields.get(2)) {
             if (height == null) {
                 updates.add(Updates.unset(path().resolve(BNAME_HEIGHT).value()));
             } else {

@@ -87,7 +87,35 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
 
     @Override
     public boolean anyChanged() {
-        return isFullyUpdate() || changedKeys.size() > 0;
+        if (isFullyUpdate()) {
+            return true;
+        }
+        var changedKeys = this.changedKeys;
+        if (changedKeys.isEmpty()) {
+            return false;
+        }
+        var map = this.map;
+        for (var key : changedKeys) {
+            if (map.containsKey(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedKeys = this.changedKeys;
+        if (changedKeys.isEmpty()) {
+            return false;
+        }
+        var map = this.map;
+        for (var key : changedKeys) {
+            if (!map.containsKey(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

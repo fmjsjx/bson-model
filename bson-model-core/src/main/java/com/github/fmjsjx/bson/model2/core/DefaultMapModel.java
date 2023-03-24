@@ -210,7 +210,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     public Object toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
-            return Map.of();
+            return null;
         }
         var data = new LinkedHashMap<>(Math.max(8, changedKeys.size() << 1));
         for (var key : changedKeys) {
@@ -219,7 +219,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
                 data.put(key, value.toUpdateData());
             }
         }
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @SuppressWarnings("unchecked")
@@ -227,7 +227,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     public Object toDeletedData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
-            return Map.of();
+            return null;
         }
         var data = new LinkedHashMap<>(Math.max(8, changedKeys.size() << 1));
         for (var key : changedKeys) {
@@ -235,10 +235,13 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
             if (value == null) {
                 data.put(key, 1);
             } else {
-                data.put(key, value.toDeletedData());
+                var subData = value.toDeletedData();
+                if (subData != null) {
+                    data.put(key, subData);
+                }
             }
         }
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @Override

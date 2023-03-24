@@ -162,7 +162,15 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
 
     @Override
     public boolean anyChanged() {
-        return isFullyUpdate() || changedIndexes.size() > 0;
+        if (isFullyUpdate()) {
+            return true;
+        }
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return false;
+        }
+        var list = this.list;
+        return changedIndexes.intStream().mapToObj(list::get).anyMatch(Objects::nonNull);
     }
 
     @Override
@@ -171,14 +179,25 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
         if (changedIndexes.isEmpty()) {
             return 0;
         }
+        var list = this.list;
         return (int) changedIndexes.intStream().mapToObj(list::get).filter(Objects::isNull).count();
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return false;
+        }
+        var list = this.list;
+        return changedIndexes.intStream().mapToObj(list::get).anyMatch(Objects::isNull);
     }
 
     @Override
     public Object toDeletedData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
-            return Map.of();
+            return null;
         }
         var data = new LinkedHashMap<>(Math.max(8, changedIndexes.size() << 1));
         var list = this.list;
@@ -187,7 +206,7 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
                 data.put(index, 1);
             }
         });
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @Override

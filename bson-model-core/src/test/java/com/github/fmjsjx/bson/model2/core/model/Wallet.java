@@ -107,6 +107,16 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
+    public Wallet clean() {
+        coinTotal = 0;
+        coinUsed = 0;
+        diamond = 0;
+        ad = 0;
+        resetStates();
+        return this;
+    }
+
+    @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append(BNAME_COIN_TOTAL, new BsonInt64(coinTotal));

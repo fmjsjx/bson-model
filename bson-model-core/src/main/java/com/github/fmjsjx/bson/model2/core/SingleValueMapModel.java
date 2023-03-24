@@ -82,6 +82,10 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
 
     @Override
     protected int deletedSize() {
+        var changedKeys = this.changedKeys;
+        if (changedKeys.isEmpty()) {
+            return 0;
+        }
         var map = this.map;
         var n = 0;
         for (var key : changedKeys) {
@@ -176,7 +180,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
     public Object toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
-            return Map.of();
+            return null;
         }
         var data = new LinkedHashMap<>(Math.max(8, changedKeys.size() << 1));
         var valueType = this.valueType;
@@ -186,7 +190,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
                 data.put(key, valueType.toData(value));
             }
         }
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @SuppressWarnings("unchecked")
@@ -197,16 +201,13 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
             return Map.of();
         }
         var data = new LinkedHashMap<>(Math.max(8, changedKeys.size() << 1));
-        var valueType = this.valueType;
         for (var key : changedKeys) {
             var value = get((K) key);
             if (value == null) {
                 data.put(key, 1);
-            } else {
-                data.put(key, valueType.toData(value));
             }
         }
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @Override

@@ -13,7 +13,6 @@ import org.bson.conversions.Bson;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -148,11 +147,11 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
     protected Object toSubUpdateData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
-            return Map.of();
+            return null;
         }
         var data = new LinkedHashMap<Integer, Object>(Math.max(8, changedIndexes.size() << 1));
         changedIndexes.intStream().mapToObj(list::get).filter(Objects::nonNull).forEach(v -> data.put(v.index, v.toUpdateData()));
-        return data;
+        return data.isEmpty() ? null : data;
     }
 
     @Override

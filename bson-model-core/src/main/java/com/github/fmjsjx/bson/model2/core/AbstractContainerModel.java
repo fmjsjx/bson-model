@@ -47,6 +47,7 @@ abstract class AbstractContainerModel<T extends BsonValue, Self extends Abstract
      *
      * @return this model
      */
+    @Override
     public abstract Self clean();
 
 }

@@ -128,11 +128,25 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         }
         if (changedFields.get(4)) {
             var gis = this.gis;
-            if (gis != null) {
+            if (gis != null && gis.anyChanged()) {
                 data.put("gis", gis.toUpdateData());
             }
         }
         return data;
+    }
+
+    @Override
+    public BasicInfo clean() {
+        name = "";
+        avatar = null;
+        lastLoginTime = LocalDateTime.now();
+        var gis = this.gis;
+        if (gis != null) {
+            gis.unbind();
+            this.gis = null;
+        }
+        resetStates();
+        return this;
     }
 
     @Override
