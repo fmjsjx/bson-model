@@ -87,6 +87,11 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
 
     @Override
     public boolean anyChanged() {
+        return isFullyUpdate() || !changedKeys.isEmpty();
+    }
+
+    @Override
+    public boolean anyUpdated() {
         if (isFullyUpdate()) {
             return true;
         }

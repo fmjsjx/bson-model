@@ -12,6 +12,7 @@ import org.bson.conversions.Bson;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class GisCoordinates extends ObjectModel<GisCoordinates> {
@@ -57,8 +58,38 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
         }
     }
 
+    public boolean longitudeChanged() {
+        return changedFields.get(0);
+    }
+
+    public boolean latitudeChanged() {
+        return changedFields.get(1);
+    }
+
+    public boolean heightChanged() {
+        return changedFields.get(2);
+    }
+
     @Override
     protected void resetChildren() {
+    }
+
+    @Override
+    public boolean anyUpdated() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1)) {
+            return true;
+        }
+        if (changedFields.get(2) && height != null) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -72,8 +103,19 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    protected Object toSubUpdateData() {
-        var data = new LinkedHashMap<>();
+    public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(2) && height == null) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(0)) {
             data.put("longitude", longitude);
@@ -85,7 +127,6 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
         if (changedFields.get(2) && height != null) {
             data.put("height", height);
         }
-        return data;
     }
 
     @Override
@@ -147,13 +188,11 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    public Object toDeletedData() {
-        var data = new LinkedHashMap<>();
+    protected void appendDeletedData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(2) && this.height == null) {
             data.put("height", 1);
         }
-        return data;
     }
 
     @Override

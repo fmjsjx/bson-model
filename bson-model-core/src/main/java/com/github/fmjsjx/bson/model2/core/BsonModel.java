@@ -87,6 +87,13 @@ public interface BsonModel<T extends BsonValue> {
     Object toData();
 
     /**
+     * Returns {@code true} if any value of this model has been updated in context, {@code false} otherwise.
+     *
+     * @return {@code true} if any value of this model has been updated in context, {@code false} otherwise
+     */
+    boolean anyUpdated();
+
+    /**
      * Creates and returns a new update data object for this model.
      *
      * @return a new update data object for this model

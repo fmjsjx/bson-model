@@ -162,6 +162,11 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
 
     @Override
     public boolean anyChanged() {
+        return isFullyUpdate() || !changedIndexes.isEmpty();
+    }
+
+    @Override
+    public boolean anyUpdated() {
         if (isFullyUpdate()) {
             return true;
         }

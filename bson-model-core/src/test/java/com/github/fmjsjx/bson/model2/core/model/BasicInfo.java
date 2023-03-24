@@ -14,6 +14,7 @@ import org.bson.conversions.Bson;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class BasicInfo extends ObjectModel<BasicInfo> {
@@ -36,7 +37,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         Objects.requireNonNull(name, "name must not be null");
         if (!this.name.equals(name)) {
             this.name = name;
-            changedFields.set(0);
+            fieldChanged(0);
         }
     }
 
@@ -47,7 +48,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     public void setAvatar(String avatar) {
         if (!Objects.equals(this.avatar, avatar)) {
             this.avatar = avatar;
-            changedFields.set(1);
+            fieldChanged(1);
         }
     }
 
@@ -59,7 +60,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         Objects.requireNonNull(name, "lastLoginTime must not be null");
         if (!this.lastLoginTime.equals(lastLoginTime)) {
             this.lastLoginTime = lastLoginTime;
-            changedFields.set(2);
+            fieldsChanged(2, 3);
         }
     }
 
@@ -75,15 +76,35 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         if (gis != null) {
             gis.mustUnbound();
             this.gis = gis.parent(this).key(BNAME_GIS).index(4);
-            changedFields.set(4);
+            fieldChanged(4);
         } else {
             gis = this.gis;
             if (gis != null) {
                 gis.unbind();
                 this.gis = null;
-                changedFields.set(4);
+                fieldChanged(4);
             }
         }
+    }
+
+    public boolean nameChanged() {
+        return changedFields.get(0);
+    }
+
+    public boolean avatarChanged() {
+        return changedFields.get(1);
+    }
+
+    public boolean lastLoginTimeChanged() {
+        return changedFields.get(2);
+    }
+
+    public boolean lastLoginAtChanged() {
+        return changedFields.get(3);
+    }
+
+    public boolean gisChanged() {
+        return changedFields.get(4);
     }
 
     @Override
@@ -95,9 +116,33 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    protected int deletedSize() {
-        var n = 0;
+    public boolean anyUpdated() {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1) && avatar != null) {
+            return true;
+        }
+        if (changedFields.get(2)) {
+            return true;
+        }
+        if (changedFields.get(4) && gis != null) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected int deletedSize() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return 0;
+        }
+        var n = 0;
         if (changedFields.get(1) && avatar == null) {
             n++;
         }
@@ -111,8 +156,25 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    protected Object toSubUpdateData() {
-        var data = new LinkedHashMap<>();
+    public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(1) && avatar == null) {
+            return true;
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis == null || gis.anyDeleted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(0)) {
             data.put("name", name);
@@ -128,11 +190,32 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         }
         if (changedFields.get(4)) {
             var gis = this.gis;
-            if (gis != null && gis.anyChanged()) {
-                data.put("gis", gis.toUpdateData());
+            if (gis != null) {
+                var updateData = gis.toUpdateData();
+                if (updateData != null) {
+                    data.put("gis", updateData);
+                }
             }
         }
-        return data;
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(1) && avatar == null) {
+            data.put("avatar", 1);
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis == null) {
+                data.put("gis", 1);
+            } else {
+                var deletedData = gis.toDeletedData();
+                if (deletedData != null) {
+                    data.put("gis", deletedData);
+                }
+            }
+        }
     }
 
     @Override
@@ -142,7 +225,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         lastLoginTime = LocalDateTime.now();
         var gis = this.gis;
         if (gis != null) {
-            gis.unbind();
+            gis.clean().unbind();
             this.gis = null;
         }
         resetStates();
@@ -219,24 +302,6 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         var gis = this.gis;
         if (gis != null) {
             data.put("gis", gis.toData());
-        }
-        return data;
-    }
-
-    @Override
-    public Object toDeletedData() {
-        var data = new LinkedHashMap<>();
-        var changedFields = this.changedFields;
-        if (changedFields.get(1) && avatar == null) {
-            data.put("avatar", 1);
-        }
-        if (changedFields.get(4)) {
-            var gis = this.gis;
-            if (gis == null) {
-                data.put("gis", 1);
-            } else if (gis.anyChanged()) {
-                data.put("gis", gis.toDeletedData());
-            }
         }
         return data;
     }

@@ -34,15 +34,13 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setCoinTotal(long coinTotal) {
         if (this.coinTotal != coinTotal) {
             this.coinTotal = coinTotal;
-            fieldChanged(0);
-            fieldChanged(2);
+            fieldsChanged(0, 2);
         }
     }
 
     public long addCoinTotal(long n) {
         var coinTotal = this.coinTotal += n;
-        fieldChanged(0);
-        fieldChanged(2);
+        fieldsChanged(0, 2);
         return coinTotal;
     }
 
@@ -53,15 +51,13 @@ public class Wallet extends ObjectModel<Wallet> {
     public void setCoinUsed(long coinUsed) {
         if (this.coinUsed != coinUsed) {
             this.coinUsed = coinUsed;
-            fieldChanged(1);
-            fieldChanged(2);
+            fieldsChanged(1, 2);
         }
     }
 
     public long addCoinUsed(long n) {
         var coinUsed = this.coinUsed += n;
-        fieldChanged(1);
-        fieldChanged(2);
+        fieldsChanged(1, 2);
         return coinUsed;
     }
 
@@ -153,23 +149,23 @@ public class Wallet extends ObjectModel<Wallet> {
         ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
     }
 
-    public boolean coinTotalUpdated() {
+    public boolean coinTotalChanged() {
         return changedFields.get(0);
     }
 
-    public boolean coinUsedUpdated() {
+    public boolean coinUsedChanged() {
         return changedFields.get(1);
     }
 
-    public boolean coinUpdated() {
+    public boolean coinChanged() {
         return changedFields.get(2);
     }
 
-    public boolean diamondUpdated() {
+    public boolean diamondChanged() {
         return changedFields.get(3);
     }
 
-    public boolean adUpdated() {
+    public boolean adChanged() {
         return changedFields.get(4);
     }
 
@@ -184,8 +180,31 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    protected Object toSubUpdateData() {
-        var data = new LinkedHashMap<>();
+    public boolean anyUpdated() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1)) {
+            return true;
+        }
+        if (changedFields.get(2)) {
+            return true;
+        }
+        if (changedFields.get(3)) {
+            return true;
+        }
+        if (changedFields.get(4)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(0)) {
             data.put("coinTotal", coinTotal);
@@ -199,12 +218,20 @@ public class Wallet extends ObjectModel<Wallet> {
         if (changedFields.get(4)) {
             data.put("ad", ad);
         }
-        return data;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        return false;
     }
 
     @Override
     public Object toDeletedData() {
-        return Map.of();
+        return null;
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
     }
 
     @Override

@@ -17,6 +17,8 @@ import org.bson.conversions.Bson;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class Player extends RootModel<Player> {
 
@@ -86,9 +88,10 @@ public class Player extends RootModel<Player> {
     }
 
     public void setCreateTime(LocalDateTime createTime) {
+        Objects.requireNonNull(createTime, "createTime must not be null");
         if (!this.createTime.equals(createTime)) {
             this.createTime = createTime;
-            fieldChanged(6);
+            fieldsChanged(6, 8);
         }
     }
 
@@ -97,9 +100,10 @@ public class Player extends RootModel<Player> {
     }
 
     public void setUpdateTime(LocalDateTime updateTime) {
+        Objects.requireNonNull(updateTime, "updateTime must not be null");
         if (!this.updateTime.equals(updateTime)) {
             this.updateTime = updateTime;
-            fieldChanged(7);
+            fieldsChanged(7, 9);
         }
     }
 
@@ -111,6 +115,46 @@ public class Player extends RootModel<Player> {
         return DateTimeUtil.toEpochMilli(updateTime);
     }
 
+    public boolean uidChanged() {
+        return changedFields.get(0);
+    }
+
+    public boolean basicInfoChanged() {
+        return changedFields.get(1);
+    }
+
+    public boolean walletChanged() {
+        return changedFields.get(2);
+    }
+
+    public boolean equipmentsChanged() {
+        return changedFields.get(3);
+    }
+
+    public boolean itemsChanged() {
+        return changedFields.get(4);
+    }
+
+    public boolean updateVersionChanged() {
+        return changedFields.get(5);
+    }
+
+    public boolean createTimeChanged() {
+        return changedFields.get(6);
+    }
+
+    public boolean updateTimeChanged() {
+        return changedFields.get(7);
+    }
+
+    public boolean createdAtChanged() {
+        return changedFields.get(8);
+    }
+
+    public boolean updatedAtChanged() {
+        return changedFields.get(9);
+    }
+
     @Override
     protected void resetChildren() {
         basicInfo.reset();
@@ -120,7 +164,50 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
+    public boolean anyUpdated() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1) && basicInfo.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(2) && wallet.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(3) && equipments.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(4) && items.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(5)) {
+            return true;
+        }
+        if (changedFields.get(6)) {
+            return true;
+        }
+        if (changedFields.get(7)) {
+            return true;
+        }
+        if (changedFields.get(8)) {
+            return true;
+        }
+        if (changedFields.get(9)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     protected int deletedSize() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return 0;
+        }
         var n = 0;
         if (changedFields.get(1) && basicInfo.anyDeleted()) {
             n++;
@@ -140,6 +227,9 @@ public class Player extends RootModel<Player> {
     @Override
     public boolean anyDeleted() {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
         if (changedFields.get(1) && basicInfo.anyDeleted()) {
             return true;
         }
@@ -156,31 +246,41 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    protected Object toSubUpdateData() {
-        var data = new LinkedHashMap<>();
+    protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(0)) {
             data.put("uid", uid);
         }
         if (changedFields.get(1)) {
-            data.put("basicInfo", basicInfo.toUpdateData());
+            var updateData = basicInfo.toUpdateData();
+            if (updateData != null) {
+                data.put("basicInfo", updateData);
+            }
         }
         if (changedFields.get(2)) {
-            data.put("wallet", wallet.toUpdateData());
+            var updateData = wallet.toUpdateData();
+            if (updateData != null) {
+                data.put("wallet", updateData);
+            }
         }
         if (changedFields.get(3)) {
-            data.put("equipments", equipments.toUpdateData());
+            var updateData = equipments.toUpdateData();
+            if (updateData != null) {
+                data.put("equipments", updateData);
+            }
         }
         if (changedFields.get(4)) {
-            data.put("items", items.toUpdateData());
+            var updateData = items.toUpdateData();
+            if (updateData != null) {
+                data.put("items", updateData);
+            }
         }
-        if (changedFields.get(6)) {
+        if (changedFields.get(8)) {
             data.put("createdAt", getCreatedAt());
         }
-        if (changedFields.get(7)) {
+        if (changedFields.get(9)) {
             data.put("updatedAt", getUpdatedAt());
         }
-        return data;
     }
 
     @Override
@@ -252,26 +352,32 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    public Object toDeletedData() {
-        var data = new LinkedHashMap<>();
+    protected void appendDeletedData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
-        var basicInfo = this.basicInfo;
-        if (changedFields.get(1) && basicInfo.anyDeleted()) {
-            data.put("basicInfo", basicInfo.toDeletedData());
+        if (changedFields.get(1)) {
+            var deletedData = basicInfo.toDeletedData();
+            if (deletedData != null) {
+                data.put("basicInfo", deletedData);
+            }
         }
-        var wallet = this.wallet;
-        if (changedFields.get(2) && wallet.anyDeleted()) {
-            data.put("wallet", wallet.toDeletedData());
+        if (changedFields.get(2)) {
+            var deletedData = wallet.toDeletedData();
+            if (deletedData != null) {
+                data.put("wallet", deletedData);
+            }
         }
-        var equipments = this.equipments;
-        if (changedFields.get(3) && equipments.anyDeleted()) {
-            data.put("equipments", equipments.toDeletedData());
+        if (changedFields.get(3)) {
+            var deletedData = equipments.toDeletedData();
+            if (deletedData != null) {
+                data.put("equipments", deletedData);
+            }
         }
-        var items = this.items;
-        if (changedFields.get(3) && items.anyDeleted()) {
-            data.put("items", items.toDeletedData());
+        if (changedFields.get(4)) {
+            var deletedData = items.toDeletedData();
+            if (deletedData != null) {
+                data.put("items", deletedData);
+            }
         }
-        return data;
     }
 
     @Override
