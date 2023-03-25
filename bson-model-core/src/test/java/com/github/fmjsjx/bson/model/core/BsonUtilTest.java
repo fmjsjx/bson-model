@@ -10,12 +10,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonString;
-import org.bson.Document;
+import org.bson.*;
 import org.junit.jupiter.api.Test;
 
 public class BsonUtilTest {
@@ -36,8 +33,8 @@ public class BsonUtilTest {
             assertTrue(d2.isPresent());
             assertEquals("2", d2.get());
             Optional<List<Integer>> d3 = BsonUtil.embedded(document, "a", "b", "c1", "d3");
-            assertTrue(d2.isPresent());
-            assertArrayEquals(new int[] { 1, 2, 3 }, d3.get().stream().mapToInt(Integer::intValue).toArray());
+            assertTrue(d3.isPresent());
+            assertArrayEquals(new int[]{1, 2, 3}, d3.get().stream().mapToInt(Integer::intValue).toArray());
             Optional<Integer> c20 = BsonUtil.embedded(document, "a", "b", "c2", 0, "i");
             assertTrue(c20.isPresent());
             assertEquals(0, c20.get().intValue());
@@ -245,8 +242,8 @@ public class BsonUtilTest {
             assertTrue(d2.isPresent());
             assertEquals("2", d2.get().getValue());
             Optional<BsonArray> d3 = BsonUtil.embedded(document, "a", "b", "c1", "d3");
-            assertTrue(d2.isPresent());
-            assertArrayEquals(new int[] { 1, 2, 3 }, d3.get().stream().mapToInt(v -> v.asInt32().getValue()).toArray());
+            assertTrue(d3.isPresent());
+            assertArrayEquals(new int[]{1, 2, 3}, d3.get().stream().mapToInt(v -> v.asInt32().getValue()).toArray());
             Optional<BsonInt32> c20 = BsonUtil.embedded(document, "a", "b", "c2", 0, "i");
             assertTrue(c20.isPresent());
             assertEquals(0, c20.get().intValue());
@@ -416,6 +413,17 @@ public class BsonUtilTest {
         } catch (Exception e) {
             fail(e);
         }
+    }
+
+    @Test
+    public void testUuidValue() {
+        var uuid = UUID.randomUUID();
+        assertTrue(BsonUtil.uuidValue(new Document("uuid", uuid), "uuid").isPresent());
+        assertEquals(uuid, BsonUtil.uuidValue(new Document("uuid", uuid), "uuid").orElseThrow());
+        assertTrue(BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid)), "uuid").isPresent());
+        assertEquals(uuid, BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid)), "uuid").orElseThrow());
+        assertTrue(BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid", UuidRepresentation.JAVA_LEGACY).isPresent());
+        assertEquals(uuid, BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid", UuidRepresentation.JAVA_LEGACY).orElseThrow());
     }
 
 }
