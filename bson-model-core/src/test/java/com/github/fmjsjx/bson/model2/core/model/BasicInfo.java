@@ -75,7 +75,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     public void setGis(GisCoordinates gis) {
         if (gis != null) {
             gis.mustUnbound();
-            this.gis = gis.parent(this).key(BNAME_GIS).index(4);
+            this.gis = gis.parent(this).key(BNAME_GIS).index(4).fullyUpdate(true);
             fieldChanged(4);
         } else {
             gis = this.gis;
