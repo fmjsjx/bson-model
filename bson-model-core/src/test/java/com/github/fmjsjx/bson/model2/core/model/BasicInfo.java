@@ -108,131 +108,6 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    protected void resetChildren() {
-        var gis = this.gis;
-        if (gis != null) {
-            gis.reset();
-        }
-    }
-
-    @Override
-    public boolean anyUpdated() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(0)) {
-            return true;
-        }
-        if (changedFields.get(1) && avatar != null) {
-            return true;
-        }
-        if (changedFields.get(2)) {
-            return true;
-        }
-        if (changedFields.get(4) && gis != null) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected int deletedSize() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return 0;
-        }
-        var n = 0;
-        if (changedFields.get(1) && avatar == null) {
-            n++;
-        }
-        if (changedFields.get(4)) {
-            var gis = this.gis;
-            if (gis == null || gis.anyDeleted()) {
-                n++;
-            }
-        }
-        return n;
-    }
-
-    @Override
-    public boolean anyDeleted() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(1) && avatar == null) {
-            return true;
-        }
-        if (changedFields.get(4)) {
-            var gis = this.gis;
-            if (gis == null || gis.anyDeleted()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    protected void appendUpdateData(Map<Object, Object> data) {
-        var changedFields = this.changedFields;
-        if (changedFields.get(0)) {
-            data.put("name", name);
-        }
-        if (changedFields.get(1)) {
-            var avatar = this.avatar;
-            if (avatar != null) {
-                data.put("avatar", avatar);
-            }
-        }
-        if (changedFields.get(2)) {
-            data.put("lastLoginAt", getLastLoginAt());
-        }
-        if (changedFields.get(4)) {
-            var gis = this.gis;
-            if (gis != null) {
-                var updateData = gis.toUpdateData();
-                if (updateData != null) {
-                    data.put("gis", updateData);
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void appendDeletedData(Map<Object, Object> data) {
-        var changedFields = this.changedFields;
-        if (changedFields.get(1) && avatar == null) {
-            data.put("avatar", 1);
-        }
-        if (changedFields.get(4)) {
-            var gis = this.gis;
-            if (gis == null) {
-                data.put("gis", 1);
-            } else {
-                var deletedData = gis.toDeletedData();
-                if (deletedData != null) {
-                    data.put("gis", deletedData);
-                }
-            }
-        }
-    }
-
-    @Override
-    public BasicInfo clean() {
-        name = "";
-        avatar = null;
-        lastLoginTime = LocalDateTime.now();
-        var gis = this.gis;
-        if (gis != null) {
-            gis.clean().unbind();
-            this.gis = null;
-        }
-        resetStates();
-        return this;
-    }
-
-    @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append(BNAME_NAME, new BsonString(name));
@@ -306,6 +181,86 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
+    public boolean anyUpdated() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1) && avatar != null) {
+            return true;
+        }
+        if (changedFields.get(2)) {
+            return true;
+        }
+        if (changedFields.get(4) && gis != null) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void resetChildren() {
+        var gis = this.gis;
+        if (gis != null) {
+            gis.reset();
+        }
+    }
+
+    @Override
+    protected int deletedSize() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return 0;
+        }
+        var n = 0;
+        if (changedFields.get(1) && avatar == null) {
+            n++;
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis == null || gis.anyDeleted()) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(1) && avatar == null) {
+            return true;
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis == null || gis.anyDeleted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public BasicInfo clean() {
+        name = "";
+        avatar = null;
+        lastLoginTime = LocalDateTime.now();
+        var gis = this.gis;
+        if (gis != null) {
+            gis.clean().unbind();
+            this.gis = null;
+        }
+        resetStates();
+        return this;
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changeFields = this.changedFields;
         if (changeFields.get(0)) {
@@ -356,6 +311,60 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     }
                 }
         );
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
+            data.put("name", name);
+        }
+        if (changedFields.get(1)) {
+            var avatar = this.avatar;
+            if (avatar != null) {
+                data.put("avatar", avatar);
+            }
+        }
+        if (changedFields.get(2)) {
+            data.put("lastLoginAt", getLastLoginAt());
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis != null) {
+                var updateData = gis.toUpdateData();
+                if (updateData != null) {
+                    data.put("gis", updateData);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(1) && avatar == null) {
+            data.put("avatar", 1);
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis == null) {
+                data.put("gis", 1);
+            } else {
+                var deletedData = gis.toDeletedData();
+                if (deletedData != null) {
+                    data.put("gis", deletedData);
+                }
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "BasicInfo(" + "name=" + name +
+                ", avatar=" + avatar +
+                ", lastLoginTime=" + lastLoginTime +
+                ", gis=" + gis +
+                ")";
     }
 
 }

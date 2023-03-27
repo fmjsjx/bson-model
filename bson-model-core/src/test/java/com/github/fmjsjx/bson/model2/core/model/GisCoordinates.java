@@ -71,74 +71,6 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    protected void resetChildren() {
-    }
-
-    @Override
-    public boolean anyUpdated() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(0)) {
-            return true;
-        }
-        if (changedFields.get(1)) {
-            return true;
-        }
-        if (changedFields.get(2) && height != null) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected int deletedSize() {
-        var n = 0;
-        var changedFields = this.changedFields;
-        if (changedFields.get(2) && this.height == null) {
-            n++;
-        }
-        return n;
-    }
-
-    @Override
-    public boolean anyDeleted() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(2) && height == null) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected void appendUpdateData(Map<Object, Object> data) {
-        var changedFields = this.changedFields;
-        if (changedFields.get(0)) {
-            data.put("longitude", longitude);
-        }
-        if (changedFields.get(1)) {
-            data.put("latitude", latitude);
-        }
-        var height = this.height;
-        if (changedFields.get(2) && height != null) {
-            data.put("height", height);
-        }
-    }
-
-    @Override
-    public GisCoordinates clean() {
-        longitude = Double.NaN;
-        latitude = Double.NaN;
-        height = null;
-        resetStates();
-        return this;
-    }
-
-    @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append(BNAME_LONGITUDE, new BsonDouble(longitude));
@@ -184,11 +116,56 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    protected void appendDeletedData(Map<Object, Object> data) {
+    public boolean anyUpdated() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(0)) {
+            return true;
+        }
+        if (changedFields.get(1)) {
+            return true;
+        }
+        if (changedFields.get(2) && height != null) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void resetChildren() {
+    }
+
+    @Override
+    protected int deletedSize() {
+        var n = 0;
         var changedFields = this.changedFields;
         if (changedFields.get(2) && this.height == null) {
-            data.put("height", 1);
+            n++;
         }
+        return n;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(2) && height == null) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public GisCoordinates clean() {
+        longitude = Double.NaN;
+        latitude = Double.NaN;
+        height = null;
+        resetStates();
+        return this;
     }
 
     @Override
@@ -219,8 +196,34 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
+            data.put("longitude", longitude);
+        }
+        if (changedFields.get(1)) {
+            data.put("latitude", latitude);
+        }
+        var height = this.height;
+        if (changedFields.get(2) && height != null) {
+            data.put("height", height);
+        }
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(2) && this.height == null) {
+            data.put("height", 1);
+        }
+    }
+
+    @Override
     public String toString() {
-        return "GisCoordinates(" + "longitude=" + longitude + ", " + "latitude=" + latitude + ", " + "height=" + height + ")";
+        return "GisCoordinates(" + "longitude=" + longitude +
+                ", latitude=" + latitude +
+                ",  height=" + height +
+                ")";
     }
 
 }

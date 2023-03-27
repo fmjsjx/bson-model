@@ -107,31 +107,6 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
-    protected void resetChildren() {
-    }
-
-    @Override
-    protected int deletedSize() {
-        return 0;
-    }
-
-    @Override
-    public boolean anyDeleted() {
-        return false;
-    }
-
-    @Override
-    public Equipment clean() {
-        id = "";
-        refId = 0;
-        atk = 0;
-        def = 0;
-        hp = 0;
-        resetStates();
-        return this;
-    }
-
-    @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append(BNAME_ID, new BsonString(id));
@@ -200,6 +175,31 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
+    protected void resetChildren() {
+    }
+
+    @Override
+    protected int deletedSize() {
+        return 0;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        return false;
+    }
+
+    @Override
+    public Equipment clean() {
+        id = "";
+        refId = 0;
+        atk = 0;
+        def = 0;
+        hp = 0;
+        resetStates();
+        return this;
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.get(0)) {
@@ -256,6 +256,16 @@ public class Equipment extends ObjectModel<Equipment> {
 
     @Override
     protected void appendDeletedData(Map<Object, Object> data) {
+    }
+
+    @Override
+    public String toString() {
+        return "Equipment(" + "id=" + id +
+                ", refId=" + refId +
+                ", atk=" + atk +
+                ", def=" + def +
+                ", hp=" + hp +
+                ")";
     }
 
 }

@@ -20,9 +20,10 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     protected boolean fullyUpdate;
     protected boolean changedTriggered;
 
+    @SuppressWarnings("unchecked")
     @Override
-    public BsonModel<?> parent() {
-        return parent;
+    public <P extends BsonModel<?>> P parent() {
+        return (P) parent;
     }
 
     /**

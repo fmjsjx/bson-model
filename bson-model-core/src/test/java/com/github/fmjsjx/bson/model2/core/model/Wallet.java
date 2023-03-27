@@ -93,23 +93,24 @@ public class Wallet extends ObjectModel<Wallet> {
         return ad;
     }
 
-    @Override
-    protected void resetChildren() {
+    public boolean coinTotalChanged() {
+        return changedFields.get(0);
     }
 
-    @Override
-    protected int deletedSize() {
-        return 0;
+    public boolean coinUsedChanged() {
+        return changedFields.get(1);
     }
 
-    @Override
-    public Wallet clean() {
-        coinTotal = 0;
-        coinUsed = 0;
-        diamond = 0;
-        ad = 0;
-        resetStates();
-        return this;
+    public boolean coinChanged() {
+        return changedFields.get(2);
+    }
+
+    public boolean diamondChanged() {
+        return changedFields.get(3);
+    }
+
+    public boolean adChanged() {
+        return changedFields.get(4);
     }
 
     @Override
@@ -140,34 +141,6 @@ public class Wallet extends ObjectModel<Wallet> {
         jsonNode.put(BNAME_DIAMOND, diamond);
         jsonNode.put(BNAME_AD, ad);
         return jsonNode;
-    }
-
-    @Override
-    protected void loadObjectNode(ObjectNode src) {
-        coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
-        coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);
-        diamond = BsonUtil.longValue(src, BNAME_DIAMOND).orElse(0);
-        ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
-    }
-
-    public boolean coinTotalChanged() {
-        return changedFields.get(0);
-    }
-
-    public boolean coinUsedChanged() {
-        return changedFields.get(1);
-    }
-
-    public boolean coinChanged() {
-        return changedFields.get(2);
-    }
-
-    public boolean diamondChanged() {
-        return changedFields.get(3);
-    }
-
-    public boolean adChanged() {
-        return changedFields.get(4);
     }
 
     @Override
@@ -205,20 +178,12 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    protected void appendUpdateData(Map<Object, Object> data) {
-        var changedFields = this.changedFields;
-        if (changedFields.get(0)) {
-            data.put("coinTotal", coinTotal);
-        }
-        if (changedFields.get(2)) {
-            data.put("coin", getCoin());
-        }
-        if (changedFields.get(3)) {
-            data.put("diamond", diamond);
-        }
-        if (changedFields.get(4)) {
-            data.put("ad", ad);
-        }
+    protected void resetChildren() {
+    }
+
+    @Override
+    protected int deletedSize() {
+        return 0;
     }
 
     @Override
@@ -227,12 +192,13 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    public Object toDeletedData() {
-        return null;
-    }
-
-    @Override
-    protected void appendDeletedData(Map<Object, Object> data) {
+    public Wallet clean() {
+        coinTotal = 0;
+        coinUsed = 0;
+        diamond = 0;
+        ad = 0;
+        resetStates();
+        return this;
     }
 
     @Override
@@ -253,8 +219,47 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
+    protected void loadObjectNode(ObjectNode src) {
+        resetStates();
+        coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
+        coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);
+        diamond = BsonUtil.longValue(src, BNAME_DIAMOND).orElse(0);
+        ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
+            data.put("coinTotal", coinTotal);
+        }
+        if (changedFields.get(2)) {
+            data.put("coin", getCoin());
+        }
+        if (changedFields.get(3)) {
+            data.put("diamond", diamond);
+        }
+        if (changedFields.get(4)) {
+            data.put("ad", ad);
+        }
+    }
+
+    @Override
+    public Object toDeletedData() {
+        return null;
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
+    }
+
+    @Override
     public String toString() {
-        return "Wallet(" + "coinTotal=" + coinTotal + ", " + "coinUsed=" + coinUsed + ", " + "diamond=" + diamond + ", " + "ad=" + ad + ")";
+        return "Wallet(" + "coinTotal=" + coinTotal +
+                ", coinUsed=" + coinUsed +
+                ", diamond=" + diamond +
+                ", ad=" + ad +
+                ")";
     }
 
 }

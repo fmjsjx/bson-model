@@ -18,9 +18,10 @@ public interface BsonModel<T extends BsonValue> {
     /**
      * Returns the parent model.
      *
+     * @param <P> the type of the parent model
      * @return the parent model
      */
-    BsonModel<?> parent();
+    <P extends BsonModel<?>> P parent();
 
     /**
      * Returns the path of this model.

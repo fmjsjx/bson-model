@@ -149,7 +149,6 @@ public class BsonModelTests {
         player.getEquipments().remove(equipment.getId());
         player.getItems().remove(2001);
         updates = player.toUpdates();
-        updates.forEach(System.out::println);
         assertEquals(4, updates.size());
         assertEquals(Updates.unset("bi.g"), updates.get(0));
         assertEquals(Updates.set("w.ct", 110L), updates.get(1));

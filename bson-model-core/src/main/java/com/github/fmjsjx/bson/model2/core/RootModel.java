@@ -16,8 +16,14 @@ import java.util.List;
 public abstract class RootModel<Self extends RootModel<Self>> extends ObjectModel<Self> {
 
     @Override
-    public BsonModel<?> parent() {
+    public <P extends BsonModel<?>> P parent() {
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self parent(BsonModel<?> parent) {
+        return (Self) this;
     }
 
     /**

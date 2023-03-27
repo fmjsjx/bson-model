@@ -1,0 +1,111 @@
+java-package: com.github.fmjsjx.bson.model2.generator.model
+
+models:
+- name: Player
+  type: root
+  fields:
+  - name: uid _id
+    type: int required
+  - name: basicInfo bi
+    type: object required
+    model: BasicInfo
+  - name: wallet w
+    type: object required
+    model: Wallet
+  - name: equipments e
+    type: map required
+    key: string
+    value: object
+    model: Equipment
+  - name: items i
+    type: map required
+    key: int
+    value: int
+  - name: updateVersion _uv
+    type: int required increment-1
+    default: 0
+  - name: createTime _ct
+    type: datetime required
+  - name: updateTime _ut
+    type: datetime required
+  - name: createdAt
+    type: long required virtual
+    sources:
+    - createTime
+    lambda: DateTimeUtil.toEpochMilli(createTime)
+  - name: updatedAt
+    type: long required virtual
+    sources:
+    - updateTime
+    lambda: DateTimeUtil.toEpochMilli(updateTime)
+  - name: friends
+    type: std-list loadonly
+    value: object
+    model: Player
+- name: BasicInfo
+  type: object
+  fields:
+  - name: name n
+    type: string required
+    default: ""
+  - name: avatar a
+    type: string
+  - name: lastLoginTime llt
+    type: datetime required
+    default: now
+  - name: lastLoginAt
+    type: long required virtual
+    sources:
+    - lastLoginTime
+    lambda: DateTimeUtil.toEpochMilli(datetime)
+  - name: gis g
+    type: object
+    model: GisCoordinates
+- name: GisCoordinates
+  type: object
+  fields:
+  - name: longitude lo
+    type: double required
+  - name: latitude la
+    type: double required
+  - name: height h
+    type: double
+- name: Wallet
+  type: object
+  fields:
+  - name: coinTotal ct
+    type: long required increment-n
+    default: 0
+  - name: coinUsed cu
+    type: long required increment-n
+    default: 0
+  - name: coin
+    type: long required virtual
+    sources:
+    - coinTotal
+    - coinUsed
+    lambda: coinTotal - coinUsed
+  - name: diamond d
+    type: long required
+    default: 0
+  - name: ad
+    type: long required increment-1
+    default: 0
+- name: Equipment
+  type: object
+  fields:
+  - name: id i
+    type: string required
+    default: ""
+  - name: refId ri
+    type: int required
+    default: 0
+  - name: atk a
+    type: int required
+    default: 0
+  - name: def d
+    type: int required
+    default: 0
+  - name: hp h
+    type: int required
+    default: 0

@@ -163,148 +163,6 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    protected void resetChildren() {
-        basicInfo.reset();
-        wallet.reset();
-        equipments.reset();
-        items.reset();
-    }
-
-    @Override
-    public boolean anyUpdated() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(0)) {
-            return true;
-        }
-        if (changedFields.get(1) && basicInfo.anyUpdated()) {
-            return true;
-        }
-        if (changedFields.get(2) && wallet.anyUpdated()) {
-            return true;
-        }
-        if (changedFields.get(3) && equipments.anyUpdated()) {
-            return true;
-        }
-        if (changedFields.get(4) && items.anyUpdated()) {
-            return true;
-        }
-        if (changedFields.get(5)) {
-            return true;
-        }
-        if (changedFields.get(6)) {
-            return true;
-        }
-        if (changedFields.get(7)) {
-            return true;
-        }
-        if (changedFields.get(8)) {
-            return true;
-        }
-        if (changedFields.get(9)) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected int deletedSize() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return 0;
-        }
-        var n = 0;
-        if (changedFields.get(1) && basicInfo.anyDeleted()) {
-            n++;
-        }
-        if (changedFields.get(2) && wallet.anyDeleted()) {
-            n++;
-        }
-        if (changedFields.get(3) && equipments.anyDeleted()) {
-            n++;
-        }
-        if (changedFields.get(4) && items.anyChanged()) {
-            n++;
-        }
-        return n;
-    }
-
-    @Override
-    public boolean anyDeleted() {
-        var changedFields = this.changedFields;
-        if (changedFields.isEmpty()) {
-            return false;
-        }
-        if (changedFields.get(1) && basicInfo.anyDeleted()) {
-            return true;
-        }
-        if (changedFields.get(2) && wallet.anyDeleted()) {
-            return true;
-        }
-        if (changedFields.get(3) && equipments.anyDeleted()) {
-            return true;
-        }
-        if (changedFields.get(4) && items.anyDeleted()) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected void appendUpdateData(Map<Object, Object> data) {
-        var changedFields = this.changedFields;
-        if (changedFields.get(0)) {
-            data.put("uid", uid);
-        }
-        if (changedFields.get(1)) {
-            var updateData = basicInfo.toUpdateData();
-            if (updateData != null) {
-                data.put("basicInfo", updateData);
-            }
-        }
-        if (changedFields.get(2)) {
-            var updateData = wallet.toUpdateData();
-            if (updateData != null) {
-                data.put("wallet", updateData);
-            }
-        }
-        if (changedFields.get(3)) {
-            var updateData = equipments.toUpdateData();
-            if (updateData != null) {
-                data.put("equipments", updateData);
-            }
-        }
-        if (changedFields.get(4)) {
-            var updateData = items.toUpdateData();
-            if (updateData != null) {
-                data.put("items", updateData);
-            }
-        }
-        if (changedFields.get(8)) {
-            data.put("createdAt", getCreatedAt());
-        }
-        if (changedFields.get(9)) {
-            data.put("updatedAt", getUpdatedAt());
-        }
-    }
-
-    @Override
-    public Player clean() {
-        resetStates();
-        uid = 0;
-        basicInfo.clean();
-        wallet.clean();
-        equipments.clean();
-        items.clean();
-        updateVersion = 0;
-        createTime = LocalDateTime.MIN;
-        updateTime = LocalDateTime.MIN;
-        return this;
-    }
-
-    @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
         bson.append(BNAME_UID, new BsonInt32(uid));
@@ -361,32 +219,107 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    protected void appendDeletedData(Map<Object, Object> data) {
+    public boolean anyUpdated() {
         var changedFields = this.changedFields;
-        if (changedFields.get(1)) {
-            var deletedData = basicInfo.toDeletedData();
-            if (deletedData != null) {
-                data.put("basicInfo", deletedData);
-            }
+        if (changedFields.isEmpty()) {
+            return false;
         }
-        if (changedFields.get(2)) {
-            var deletedData = wallet.toDeletedData();
-            if (deletedData != null) {
-                data.put("wallet", deletedData);
-            }
+        if (changedFields.get(0)) {
+            return true;
         }
-        if (changedFields.get(3)) {
-            var deletedData = equipments.toDeletedData();
-            if (deletedData != null) {
-                data.put("equipments", deletedData);
-            }
+        if (changedFields.get(1) && basicInfo.anyUpdated()) {
+            return true;
         }
-        if (changedFields.get(4)) {
-            var deletedData = items.toDeletedData();
-            if (deletedData != null) {
-                data.put("items", deletedData);
-            }
+        if (changedFields.get(2) && wallet.anyUpdated()) {
+            return true;
         }
+        if (changedFields.get(3) && equipments.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(4) && items.anyUpdated()) {
+            return true;
+        }
+        if (changedFields.get(5)) {
+            return true;
+        }
+        if (changedFields.get(6)) {
+            return true;
+        }
+        if (changedFields.get(7)) {
+            return true;
+        }
+        if (changedFields.get(8)) {
+            return true;
+        }
+        if (changedFields.get(9)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void resetChildren() {
+        basicInfo.reset();
+        wallet.reset();
+        equipments.reset();
+        items.reset();
+    }
+
+    @Override
+    protected int deletedSize() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return 0;
+        }
+        var n = 0;
+        if (changedFields.get(1) && basicInfo.anyDeleted()) {
+            n++;
+        }
+        if (changedFields.get(2) && wallet.anyDeleted()) {
+            n++;
+        }
+        if (changedFields.get(3) && equipments.anyDeleted()) {
+            n++;
+        }
+        if (changedFields.get(4) && items.anyChanged()) {
+            n++;
+        }
+        return n;
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(1) && basicInfo.anyDeleted()) {
+            return true;
+        }
+        if (changedFields.get(2) && wallet.anyDeleted()) {
+            return true;
+        }
+        if (changedFields.get(3) && equipments.anyDeleted()) {
+            return true;
+        }
+        if (changedFields.get(4) && items.anyDeleted()) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Player clean() {
+        resetStates();
+        uid = 0;
+        basicInfo.clean();
+        wallet.clean();
+        equipments.clean();
+        items.clean();
+        updateVersion = 0;
+        createTime = LocalDateTime.MIN;
+        updateTime = LocalDateTime.MIN;
+        return this;
     }
 
     @Override
@@ -429,6 +362,87 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, BNAME_UPDATE_VERSION).orElse(0);
         createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
         updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
+    }
+
+    @Override
+    protected void appendUpdateData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(0)) {
+            data.put("uid", uid);
+        }
+        if (changedFields.get(1)) {
+            var updateData = basicInfo.toUpdateData();
+            if (updateData != null) {
+                data.put("basicInfo", updateData);
+            }
+        }
+        if (changedFields.get(2)) {
+            var updateData = wallet.toUpdateData();
+            if (updateData != null) {
+                data.put("wallet", updateData);
+            }
+        }
+        if (changedFields.get(3)) {
+            var updateData = equipments.toUpdateData();
+            if (updateData != null) {
+                data.put("equipments", updateData);
+            }
+        }
+        if (changedFields.get(4)) {
+            var updateData = items.toUpdateData();
+            if (updateData != null) {
+                data.put("items", updateData);
+            }
+        }
+        if (changedFields.get(8)) {
+            data.put("createdAt", getCreatedAt());
+        }
+        if (changedFields.get(9)) {
+            data.put("updatedAt", getUpdatedAt());
+        }
+    }
+
+    @Override
+    protected void appendDeletedData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(1)) {
+            var deletedData = basicInfo.toDeletedData();
+            if (deletedData != null) {
+                data.put("basicInfo", deletedData);
+            }
+        }
+        if (changedFields.get(2)) {
+            var deletedData = wallet.toDeletedData();
+            if (deletedData != null) {
+                data.put("wallet", deletedData);
+            }
+        }
+        if (changedFields.get(3)) {
+            var deletedData = equipments.toDeletedData();
+            if (deletedData != null) {
+                data.put("equipments", deletedData);
+            }
+        }
+        if (changedFields.get(4)) {
+            var deletedData = items.toDeletedData();
+            if (deletedData != null) {
+                data.put("items", deletedData);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Player(" + "uid=" + uid +
+                ", basicInfo=" + basicInfo +
+                ", wallet=" + wallet +
+                ", equipments=" + equipments +
+                ", items=" + items +
+                ", updateVersion=" + updateVersion +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                ", friends=" + friends +
+                ")";
     }
 
 }
