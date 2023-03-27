@@ -53,7 +53,7 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
     }
 
     @Override
-    public void load(BsonArray src) {
+    public DefaultListModel<E> load(BsonArray src) {
         clean();
         for (var v : src) {
             if (v != null && v.getBsonType() != BsonType.NULL) {
@@ -67,6 +67,7 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
                 list.add(null);
             }
         }
+        return this;
     }
 
     @Override

@@ -123,12 +123,13 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public Wallet load(BsonDocument src) {
         resetStates();
         coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
         coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);
         diamond = BsonUtil.longValue(src, BNAME_DIAMOND).orElse(0);
         ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
+        return this;
     }
 
     @Override

@@ -143,13 +143,14 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public Equipment load(BsonDocument src) {
         resetStates();
         id = BsonUtil.stringValue(src, BNAME_ID).orElse("");
         refId = BsonUtil.intValue(src, BNAME_REF_ID).orElse(0);
         atk = BsonUtil.intValue(src, BNAME_ATK).orElse(0);
         def = BsonUtil.intValue(src, BNAME_DEF).orElse(0);
         hp = BsonUtil.intValue(src, BNAME_HP).orElse(0);
+        return this;
     }
 
     @Override

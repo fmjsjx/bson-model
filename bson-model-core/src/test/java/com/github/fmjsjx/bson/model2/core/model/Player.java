@@ -15,10 +15,7 @@ import org.bson.BsonInt32;
 import org.bson.conversions.Bson;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class Player extends RootModel<Player> {
 
@@ -30,6 +27,7 @@ public class Player extends RootModel<Player> {
     public static final String BNAME_UPDATE_VERSION = "_uv";
     public static final String BNAME_CREATE_TIME = "_ct";
     public static final String BNAME_UPDATE_TIME = "_ut";
+    public static final String BNAME_FRIENDS = "f";
 
     private int uid;
     private final BasicInfo basicInfo = new BasicInfo().parent(this).key(BNAME_BASIC_INFO).index(1);
@@ -39,6 +37,7 @@ public class Player extends RootModel<Player> {
     private int updateVersion;
     private LocalDateTime createTime = LocalDateTime.MIN;
     private LocalDateTime updateTime = LocalDateTime.MIN;
+    private List<Player> friends;
 
     public int getUid() {
         return uid;
@@ -113,6 +112,14 @@ public class Player extends RootModel<Player> {
 
     public long getUpdatedAt() {
         return DateTimeUtil.toEpochMilli(updateTime);
+    }
+
+    public List<Player> getFriends() {
+        return friends;
+    }
+
+    public void setFriends(List<Player> friends) {
+        this.friends = friends;
     }
 
     public boolean uidChanged() {
@@ -312,7 +319,7 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public Player load(BsonDocument src) {
         resetStates();
         uid = BsonUtil.intValue(src, BNAME_UID).orElseThrow();
         BsonUtil.documentValue(src, BNAME_BASIC_INFO).ifPresentOrElse(basicInfo::load, basicInfo::clean);
@@ -322,6 +329,8 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, BNAME_UPDATE_VERSION).orElse(0);
         createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
         updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
+        BsonUtil.arrayValue(src, BNAME_FRIENDS, (BsonDocument v) -> new Player().load(v));
+        return this;
     }
 
     @Override

@@ -60,12 +60,14 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
         this(mapFactory.get(), keyParser);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void load(JsonNode src) {
+    public Self load(JsonNode src) {
         if (!src.isObject()) {
             throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
         }
         loadObjectNode((ObjectNode) src);
+        return (Self) this;
     }
 
     /**

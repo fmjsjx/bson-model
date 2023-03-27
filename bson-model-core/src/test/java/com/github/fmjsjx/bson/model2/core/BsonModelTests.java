@@ -16,13 +16,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 
-public class RootModelTests {
+public class BsonModelTests {
 
     @Test
     public void test() {
         var player = testPlayer1();
-        var e = testEquipment1();
-        player.getEquipments().put(e.getId(), e);
+        var equipment = testEquipment1();
+        player.getEquipments().put(equipment.getId(), equipment);
 
         var bson = new BsonDocument("_id", new BsonInt32(1))
                 .append("bi",
@@ -37,8 +37,8 @@ public class RootModelTests {
                                 .append("ad", new BsonInt32(0))
                 ).append("e",
                         new BsonDocument(
-                                e.getId(),
-                                new BsonDocument("i", new BsonString(e.getId()))
+                                equipment.getId(),
+                                new BsonDocument("i", new BsonString(equipment.getId()))
                                         .append("ri", new BsonInt32(1))
                                         .append("a", new BsonInt32(10))
                                         .append("d", new BsonInt32(0))
@@ -54,7 +54,7 @@ public class RootModelTests {
         var json = """
                 {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":0,"coin":0,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
-        json = json.replace("${equipment.id}", e.getId());
+        json = json.replace("${equipment.id}", equipment.getId());
         assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(player.toData()));
     }
 
@@ -85,8 +85,8 @@ public class RootModelTests {
     @Test
     public void testToUpdates() {
         var player = testPlayer1();
-        var e = testEquipment1();
-        player.getEquipments().put(e.getId(), e);
+        var equipment = testEquipment1();
+        player.getEquipments().put(equipment.getId(), equipment);
         var updates = player.toUpdates();
         assertEquals(10, updates.size());
         assertEquals(Updates.set("_id", 1), updates.get(0));
@@ -96,8 +96,8 @@ public class RootModelTests {
         assertEquals(Updates.set("bi.g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832))), updates.get(4));
         assertEquals(
                 Updates.set(
-                        "e." + e.getId(),
-                        new BsonDocument("i", new BsonString(e.getId()))
+                        "e." + equipment.getId(),
+                        new BsonDocument("i", new BsonString(equipment.getId()))
                                 .append("ri", new BsonInt32(1))
                                 .append("a", new BsonInt32(10))
                                 .append("d", new BsonInt32(0))
@@ -125,8 +125,8 @@ public class RootModelTests {
                                 .append("ad", new BsonInt32(0))
                 ).append("e",
                         new BsonDocument(
-                                e.getId(),
-                                new BsonDocument("i", new BsonString(e.getId()))
+                                equipment.getId(),
+                                new BsonDocument("i", new BsonString(equipment.getId()))
                                         .append("ri", new BsonInt32(1))
                                         .append("a", new BsonInt32(10))
                                         .append("d", new BsonInt32(0))
@@ -139,6 +139,22 @@ public class RootModelTests {
                 .append("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())))
                 .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
         assertEquals(Updates.set("", bson), updates.get(0));
+
+        player.reset();
+        updates = player.toUpdates();
+        assertEquals(0, updates.size());
+
+        player.getBasicInfo().setGis(null);
+        player.getWallet().addCoinTotal(110);
+        player.getEquipments().remove(equipment.getId());
+        player.getItems().remove(2001);
+        updates = player.toUpdates();
+        updates.forEach(System.out::println);
+        assertEquals(4, updates.size());
+        assertEquals(Updates.unset("bi.g"), updates.get(0));
+        assertEquals(Updates.set("w.ct", 110L), updates.get(1));
+        assertEquals(Updates.unset("e." + equipment.getId()), updates.get(2));
+        assertEquals(Updates.unset("i.2001"), updates.get(3));
     }
 
 }

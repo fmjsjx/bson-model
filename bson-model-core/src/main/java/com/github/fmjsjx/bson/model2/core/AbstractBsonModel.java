@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.BsonValue;
 
 /**
@@ -87,6 +88,12 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
         this.key = null;
         return (Self) this;
     }
+
+    @Override
+    public abstract Self load(T src);
+
+    @Override
+    public abstract Self load(JsonNode src);
 
     @Override
     public void reset() {

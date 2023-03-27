@@ -89,12 +89,14 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
         return isFullyUpdate() || changedFields.length() > 0;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void load(JsonNode src) {
+    public Self load(JsonNode src) {
         if (!src.isObject()) {
             throw new IllegalArgumentException("src expected be an OBJECT but was " + src.getNodeType());
         }
         loadObjectNode((ObjectNode) src);
+        return (Self) this;
     }
 
     /**

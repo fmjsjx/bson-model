@@ -83,7 +83,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public DefaultMapModel<K, V> load(BsonDocument src) {
         clean();
         var valueFactory = this.valueFactory;
         var map = this.map;
@@ -98,6 +98,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
                 throw new IllegalArgumentException("bson value expected be an DOCUMENT but was " + v.getBsonType());
             }
         }
+        return this;
     }
 
     @Override

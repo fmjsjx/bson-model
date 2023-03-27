@@ -151,16 +151,12 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public GisCoordinates load(BsonDocument src) {
         resetStates();
         longitude = BsonUtil.doubleValue(src, BNAME_LONGITUDE).orElseThrow();
         latitude = BsonUtil.doubleValue(src, BNAME_LATITUDE).orElseThrow();
-        var height = BsonUtil.doubleValue(src, BNAME_HEIGHT);
-        if (height.isPresent()) {
-            this.height = height.getAsDouble();
-        } else {
-            this.height = null;
-        }
+        height = BsonUtil.boxedDoubleValue(src, BNAME_HEIGHT).orElse(null);
+        return this;
     }
 
     @Override
@@ -219,8 +215,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
         resetStates();
         longitude = BsonUtil.doubleValue(src, BNAME_LONGITUDE).orElseThrow();
         latitude = BsonUtil.doubleValue(src, BNAME_LATITUDE).orElseThrow();
-        var height = BsonUtil.doubleValue(src, BNAME_HEIGHT);
-        this.height = height.isPresent() ? height.getAsDouble() : null;
+        height = BsonUtil.boxedDoubleValue(src, BNAME_HEIGHT).orElse(null);
     }
 
     @Override

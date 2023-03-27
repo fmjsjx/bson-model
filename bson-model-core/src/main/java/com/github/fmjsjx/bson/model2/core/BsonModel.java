@@ -40,8 +40,9 @@ public interface BsonModel<T extends BsonValue> {
      * Load data from the source {@link BsonValue}.
      *
      * @param src the source {@code BsonValue}
+     * @return this model
      */
-    void load(T src);
+    BsonModel<?> load(T src);
 
     /**
      * Convert this model to a {@link JsonNode}.
@@ -54,8 +55,9 @@ public interface BsonModel<T extends BsonValue> {
      * Load data from the source data {@link JsonNode}.
      *
      * @param src the source data {@code JsonNode}
+     * @return this model
      */
-    void load(JsonNode src);
+    BsonModel<?> load(JsonNode src);
 
     /**
      * Appends the updates of this model into the given list.

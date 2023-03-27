@@ -133,7 +133,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public SingleValueMapModel<K, V> load(BsonDocument src) {
         clean();
         var map = this.map;
         var valueType = this.valueType;
@@ -143,6 +143,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
                 map.put(parseKey(e.getKey()), value);
             }
         }
+        return this;
     }
 
     @Override
@@ -223,12 +224,18 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
 
     @Override
     public V remove(K key) {
-        return map.remove(key);
+        var original = map.remove(key);
+        triggerChanged(key);
+        return original;
     }
 
     @Override
     public boolean remove(K key, V value) {
-        return map.remove(key, value);
+        var removed = map.remove(key, value);
+        if (removed) {
+            triggerChanged(key);
+        }
+        return removed;
     }
 
     @Override

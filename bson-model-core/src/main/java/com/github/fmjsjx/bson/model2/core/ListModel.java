@@ -50,12 +50,14 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
         this.list = list;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void load(JsonNode src) {
+    public Self load(JsonNode src) {
         if (!src.isArray()) {
             throw new IllegalArgumentException("src expected be an ARRAY but was " + src.getNodeType());
         }
         loadArrayNode((ArrayNode) src);
+        return (Self) this;
     }
 
     /**

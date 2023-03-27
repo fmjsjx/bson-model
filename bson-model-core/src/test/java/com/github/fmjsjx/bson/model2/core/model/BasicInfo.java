@@ -249,7 +249,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    public void load(BsonDocument src) {
+    public BasicInfo load(BsonDocument src) {
         resetStates();
         name = BsonUtil.stringValue(src, BNAME_NAME).orElse("");
         avatar = BsonUtil.stringValue(src, BNAME_AVATAR).orElse(null);
@@ -260,9 +260,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     if (gis != null) {
                         gis.unbind();
                     }
-                    gis = new GisCoordinates();
-                    gis.load(v);
-                    this.gis = gis.parent(this).key(BNAME_GIS).index(4);
+                    this.gis = new GisCoordinates().load(v).parent(this).key(BNAME_GIS).index(4);
                 },
                 () -> {
                     var gis = this.gis;
@@ -272,6 +270,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     }
                 }
         );
+        return this;
     }
 
     @Override
@@ -358,4 +357,5 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 }
         );
     }
+
 }
