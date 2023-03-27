@@ -1727,6 +1727,72 @@ public class BsonUtil {
         return documentValue(document, key, Function.identity(), valueMapper);
     }
 
+    /**
+     * Convert the specified {@link Iterable} to {@link BsonArray}.
+     *
+     * @param iterable the iterable
+     * @param mapper   the mapper for each value
+     * @param <T>      the type of the element
+     * @return a {@code BsonArray}
+     * @since 2.0
+     */
+    public static final <T> BsonArray toBsonArray(Iterable<T> iterable, Function<T, BsonValue> mapper) {
+        var bsonArray = new BsonArray(iterable instanceof Collection<T> collection ? collection.size() : 10);
+        for (var e : iterable) {
+            if (e == null) {
+                bsonArray.add(BsonNull.VALUE);
+            } else {
+                bsonArray.add(mapper.apply(e));
+            }
+        }
+        return bsonArray;
+    }
+
+    /**
+     * Convert the specified {@code int} array to {@link BsonArray}.
+     *
+     * @param array the array
+     * @return a {@code BsonArray}
+     * @since 2.0
+     */
+    public static final BsonArray toBsonArray(int[] array) {
+        var bsonArray = new BsonArray(array.length);
+        for (var i : array) {
+            bsonArray.add(new BsonInt32(i));
+        }
+        return bsonArray;
+    }
+
+    /**
+     * Convert the specified {@code long} array to {@link BsonArray}.
+     *
+     * @param array the array
+     * @return a {@code BsonArray}
+     * @since 2.0
+     */
+    public static final BsonArray toBsonArray(long[] array) {
+        var bsonArray = new BsonArray(array.length);
+        for (var i : array) {
+            bsonArray.add(new BsonInt64(i));
+        }
+        return bsonArray;
+    }
+
+    /**
+     * Convert the specified {@code double} array to {@link BsonArray}.
+     *
+     * @param array the array
+     * @return a {@code BsonArray}
+     * @since 2.0
+     */
+    public static final BsonArray toBsonArray(double[] array) {
+        var bsonArray = new BsonArray(array.length);
+        for (var i : array) {
+            bsonArray.add(new BsonDouble(i));
+        }
+        return bsonArray;
+    }
+
     private BsonUtil() {
     }
 

@@ -1,19 +1,17 @@
 package com.github.fmjsjx.bson.model.core;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.github.fmjsjx.bson.model2.core.SingleValueTypes;
 import org.bson.*;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BsonUtilTest {
 
@@ -424,6 +422,51 @@ public class BsonUtilTest {
         assertEquals(uuid, BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid)), "uuid").orElseThrow());
         assertTrue(BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid", UuidRepresentation.JAVA_LEGACY).isPresent());
         assertEquals(uuid, BsonUtil.uuidValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid", UuidRepresentation.JAVA_LEGACY).orElseThrow());
+    }
+
+    @Test
+    public void testToBsonArray() {
+        var list = List.of("a", "b", "c", "d", "e");
+        var array = BsonUtil.toBsonArray(list, SingleValueTypes.STRING::toBsonValue);
+        assertNotNull(array);
+        assertEquals(5, array.size());
+        assertEquals(new BsonString("a"), array.get(0));
+        assertEquals(new BsonString("b"), array.get(1));
+        assertEquals(new BsonString("c"), array.get(2));
+        assertEquals(new BsonString("d"), array.get(3));
+        assertEquals(new BsonString("e"), array.get(4));
+
+        var list2 = new ArrayList<Integer>();
+        list2.add(1);
+        list2.add(null);
+        list2.add(3);
+        array = BsonUtil.toBsonArray(list2, SingleValueTypes.INTEGER::toBsonValue);
+        assertNotNull(array);
+        assertEquals(3, array.size());
+        assertEquals(new BsonInt32(1), array.get(0));
+        assertEquals(BsonNull.VALUE, array.get(1));
+        assertEquals(new BsonInt32(3), array.get(2));
+
+        array = BsonUtil.toBsonArray(new int[]{1, 2, 3});
+        assertNotNull(array);
+        assertEquals(3, array.size());
+        assertEquals(new BsonInt32(1), array.get(0));
+        assertEquals(new BsonInt32(2), array.get(1));
+        assertEquals(new BsonInt32(3), array.get(2));
+
+        array = BsonUtil.toBsonArray(new long[]{1, 2, 3});
+        assertNotNull(array);
+        assertEquals(3, array.size());
+        assertEquals(new BsonInt64(1), array.get(0));
+        assertEquals(new BsonInt64(2), array.get(1));
+        assertEquals(new BsonInt64(3), array.get(2));
+
+        array = BsonUtil.toBsonArray(new double[]{1, 2, 3});
+        assertNotNull(array);
+        assertEquals(3, array.size());
+        assertEquals(new BsonDouble(1), array.get(0));
+        assertEquals(new BsonDouble(2), array.get(1));
+        assertEquals(new BsonDouble(3), array.get(2));
     }
 
 }
