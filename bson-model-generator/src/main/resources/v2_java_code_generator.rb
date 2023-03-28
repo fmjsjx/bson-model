@@ -420,6 +420,11 @@ class FieldConf
   def generate_accessors_code
     code = generate_getter_code
     code << "\n"
+    setter_code = generate_setter_code
+    unless setter_code.nil?
+      doce << setter_code
+      code << "\n"
+    end
   end
 
   def generate_getter_code
@@ -434,6 +439,17 @@ class FieldConf
     else
       code << "        return #@name;\n"
     end
+    code << "    }\n"
+  end
+
+  def generate_setter_code
+    if virtual?
+      return nil
+    elsif required? and %w(object map list).member?(@type)
+      return nil
+    end
+    code = "    public void set#{camcel_name}(#{generic_type} #@name) {\n"
+    # TODO
     code << "    }\n"
   end
 
