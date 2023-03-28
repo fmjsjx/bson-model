@@ -2,19 +2,13 @@ package com.github.fmjsjx.bson.model2.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model2.core.ObjectModel;
+import com.github.fmjsjx.bson.model2.core.*;
 import com.mongodb.client.model.Updates;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonString;
+import org.bson.*;
 import org.bson.conversions.Bson;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class Equipment extends ObjectModel<Equipment> {
 
@@ -220,7 +214,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
-    protected void loadObjectNode(ObjectNode src) {
+    protected void loadObjectNode(JsonNode src) {
         resetStates();
         id = BsonUtil.stringValue(src, BNAME_ID).orElse("");
         refId = BsonUtil.intValue(src, BNAME_REF_ID).orElse(0);

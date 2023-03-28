@@ -2,18 +2,13 @@ package com.github.fmjsjx.bson.model2.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model2.core.ObjectModel;
+import com.github.fmjsjx.bson.model2.core.*;
 import com.mongodb.client.model.Updates;
-import org.bson.BsonDocument;
-import org.bson.BsonDouble;
+import org.bson.*;
 import org.bson.conversions.Bson;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class GisCoordinates extends ObjectModel<GisCoordinates> {
 
@@ -30,7 +25,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     public void setLongitude(double longitude) {
-        if (this.longitude != longitude) {
+        if (longitude != this.longitude) {
             this.longitude = longitude;
             fieldChanged(0);
         }
@@ -41,7 +36,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     public void setLatitude(double latitude) {
-        if (this.latitude != latitude) {
+        if (latitude != this.latitude) {
             this.latitude = latitude;
             fieldChanged(1);
         }
@@ -52,7 +47,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     public void setHeight(Double height) {
-        if (!Objects.equals(this.height, height)) {
+        if (!Objects.equals(height, this.height)) {
             this.height = height;
             fieldChanged(2);
         }
@@ -188,7 +183,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    protected void loadObjectNode(ObjectNode src) {
+    protected void loadObjectNode(JsonNode src) {
         resetStates();
         longitude = BsonUtil.doubleValue(src, BNAME_LONGITUDE).orElseThrow();
         latitude = BsonUtil.doubleValue(src, BNAME_LATITUDE).orElseThrow();

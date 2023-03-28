@@ -2,16 +2,11 @@ package com.github.fmjsjx.bson.model2.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model2.core.DefaultMapModel;
-import com.github.fmjsjx.bson.model2.core.RootModel;
-import com.github.fmjsjx.bson.model2.core.SingleValueMapModel;
-import com.github.fmjsjx.bson.model2.core.SingleValueTypes;
+import com.github.fmjsjx.bson.model2.core.*;
 import com.github.fmjsjx.libcommon.util.DateTimeUtil;
 import com.mongodb.client.model.Updates;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
+import org.bson.*;
 import org.bson.conversions.Bson;
 
 import java.time.LocalDateTime;
@@ -35,8 +30,8 @@ public class Player extends RootModel<Player> {
     private final DefaultMapModel<String, Equipment> equipments = DefaultMapModel.stringKeysMap(Equipment::new).parent(this).key(BNAME_EQUIPMENTS).index(3);
     private final SingleValueMapModel<Integer, Integer> items = SingleValueMapModel.integerKeysMap(SingleValueTypes.INTEGER).parent(this).key(BNAME_ITEMS).index(4);
     private int updateVersion;
-    private LocalDateTime createTime = LocalDateTime.MIN;
-    private LocalDateTime updateTime = LocalDateTime.MIN;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
     private List<Player> friends;
 
     public int getUid() {
@@ -44,7 +39,7 @@ public class Player extends RootModel<Player> {
     }
 
     public void setUid(int uid) {
-        if (this.uid != uid) {
+        if (uid != this.uid) {
             this.uid = uid;
             fieldChanged(0);
         }
@@ -71,7 +66,7 @@ public class Player extends RootModel<Player> {
     }
 
     public void setUpdateVersion(int updateVersion) {
-        if (this.updateVersion != updateVersion) {
+        if (updateVersion != this.updateVersion) {
             this.updateVersion = updateVersion;
             fieldChanged(5);
         }
@@ -88,7 +83,7 @@ public class Player extends RootModel<Player> {
 
     public void setCreateTime(LocalDateTime createTime) {
         Objects.requireNonNull(createTime, "createTime must not be null");
-        if (!this.createTime.equals(createTime)) {
+        if (!createTime.equals(this.createTime)) {
             this.createTime = createTime;
             fieldsChanged(6, 8);
         }
@@ -100,7 +95,7 @@ public class Player extends RootModel<Player> {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         Objects.requireNonNull(updateTime, "updateTime must not be null");
-        if (!this.updateTime.equals(updateTime)) {
+        if (!updateTime.equals(this.updateTime)) {
             this.updateTime = updateTime;
             fieldsChanged(7, 9);
         }
@@ -352,7 +347,7 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    protected void loadObjectNode(ObjectNode src) {
+    protected void loadObjectNode(JsonNode src) {
         resetStates();
         uid = BsonUtil.intValue(src, BNAME_UID).orElseThrow();
         BsonUtil.objectValue(src, BNAME_BASIC_INFO).ifPresentOrElse(basicInfo::load, basicInfo::clean);

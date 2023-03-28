@@ -2,20 +2,15 @@ package com.github.fmjsjx.bson.model2.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model2.core.ObjectModel;
+import com.github.fmjsjx.bson.model2.core.*;
 import com.github.fmjsjx.libcommon.util.DateTimeUtil;
 import com.mongodb.client.model.Updates;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
+import org.bson.*;
 import org.bson.conversions.Bson;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class BasicInfo extends ObjectModel<BasicInfo> {
 
@@ -35,7 +30,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
 
     public void setName(String name) {
         Objects.requireNonNull(name, "name must not be null");
-        if (!this.name.equals(name)) {
+        if (!name.equals(this.name)) {
             this.name = name;
             fieldChanged(0);
         }
@@ -58,7 +53,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
 
     public void setLastLoginTime(LocalDateTime lastLoginTime) {
         Objects.requireNonNull(name, "lastLoginTime must not be null");
-        if (!this.lastLoginTime.equals(lastLoginTime)) {
+        if (!lastLoginTime.equals(this.lastLoginTime)) {
             this.lastLoginTime = lastLoginTime;
             fieldsChanged(2, 3);
         }
@@ -288,7 +283,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    protected void loadObjectNode(ObjectNode src) {
+    protected void loadObjectNode(JsonNode src) {
         resetStates();
         name = BsonUtil.stringValue(src, BNAME_NAME).orElse("");
         avatar = BsonUtil.stringValue(src, BNAME_AVATAR).orElse(null);

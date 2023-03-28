@@ -2,13 +2,10 @@ package com.github.fmjsjx.bson.model2.core.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
 import com.github.fmjsjx.bson.model2.core.ObjectModel;
 import com.mongodb.client.model.Updates;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
+import org.bson.*;
 import org.bson.conversions.Bson;
 
 import java.util.LinkedHashMap;
@@ -219,7 +216,7 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    protected void loadObjectNode(ObjectNode src) {
+    protected void loadObjectNode(JsonNode src) {
         resetStates();
         coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
         coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);

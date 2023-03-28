@@ -38,7 +38,7 @@ models:
     sources:
     - updateTime
     lambda: DateTimeUtil.toEpochMilli(updateTime)
-  - name: friends
+  - name: friends f
     type: std-list loadonly
     value: object
     model: Player
