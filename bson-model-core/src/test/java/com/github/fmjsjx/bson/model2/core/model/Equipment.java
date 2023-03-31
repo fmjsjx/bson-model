@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core.model;
 
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -30,7 +31,7 @@ public class Equipment extends ObjectModel<Equipment> {
 
     public void setId(String id) {
         Objects.requireNonNull(id, "id must not be null");
-        if (!this.id.equals(id)) {
+        if (!id.equals(this.id)) {
             this.id = id;
             fieldChanged(0);
         }
@@ -41,7 +42,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     public void setRefId(int refId) {
-        if (this.refId != refId) {
+        if (refId != this.refId) {
             this.refId = refId;
             fieldChanged(1);
         }
@@ -52,7 +53,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     public void setAtk(int atk) {
-        if (this.atk != atk) {
+        if (atk != this.atk) {
             this.atk = atk;
             fieldChanged(2);
         }
@@ -63,7 +64,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     public void setDef(int def) {
-        if (this.def != def) {
+        if (def != this.def) {
             this.def = def;
             fieldChanged(3);
         }
@@ -74,7 +75,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     public void setHp(int hp) {
-        if (this.hp != hp) {
+        if (hp != this.hp) {
             this.hp = hp;
             fieldChanged(4);
         }
@@ -196,6 +197,9 @@ public class Equipment extends ObjectModel<Equipment> {
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             updates.add(Updates.set(path().resolve(BNAME_ID).value(), id));
         }
@@ -226,6 +230,9 @@ public class Equipment extends ObjectModel<Equipment> {
     @Override
     protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             data.put("id", id);
         }

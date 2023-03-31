@@ -1,14 +1,18 @@
-package com.github.fmjsjx.bson.model.generator;
+package com.github.fmjsjx.bson.model2.generator;
+
+import com.github.fmjsjx.bson.model.generator.JRubyCodeGenerator;
+import org.jruby.embed.ScriptingContainer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.jruby.embed.ScriptingContainer;
-
 /**
- * The main class of code generator using JRuby.
+ * The main class of v2 java code generator using JRuby.
+ *
+ * @author MJ Fang
+ * @since 2.0
  */
-public class JRubyCodeGenerator {
+public class JavaCodeJRubyGenerator {
 
     /**
      * Main method.
@@ -19,7 +23,7 @@ public class JRubyCodeGenerator {
     public static void main(String[] args) throws IOException {
         var container = new ScriptingContainer();
         container.setArgv(args);
-        try (var in = JRubyCodeGenerator.class.getResourceAsStream("/code_generator.rb")) {
+        try (var in = JRubyCodeGenerator.class.getResourceAsStream("/v2_java_code_generator.rb")) {
             assert in != null;
             var script = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             container.runScriptlet(script);

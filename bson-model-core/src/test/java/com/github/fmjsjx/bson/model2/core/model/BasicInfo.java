@@ -41,7 +41,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     public void setAvatar(String avatar) {
-        if (!Objects.equals(this.avatar, avatar)) {
+        if (!Objects.equals(avatar, this.avatar)) {
             this.avatar = avatar;
             fieldChanged(1);
         }
@@ -52,7 +52,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     public void setLastLoginTime(LocalDateTime lastLoginTime) {
-        Objects.requireNonNull(name, "lastLoginTime must not be null");
+        Objects.requireNonNull(lastLoginTime, "lastLoginTime must not be null");
         if (!lastLoginTime.equals(this.lastLoginTime)) {
             this.lastLoginTime = lastLoginTime;
             fieldsChanged(2, 3);
@@ -190,8 +190,14 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         if (changedFields.get(2)) {
             return true;
         }
-        if (changedFields.get(4) && gis != null) {
+        if (changedFields.get(3)) {
             return true;
+        }
+        if (changedFields.get(4)) {
+            var gis = this.gis;
+            if (gis != null && gis.anyUpdated()) {
+                return true;
+            }
         }
         return false;
     }
@@ -257,11 +263,14 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
 
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
-        var changeFields = this.changedFields;
-        if (changeFields.get(0)) {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
+        if (changedFields.get(0)) {
             updates.add(Updates.set(path().resolve(BNAME_NAME).value(), name));
         }
-        if (changeFields.get(1)) {
+        if (changedFields.get(1)) {
             var avatar = this.avatar;
             if (avatar == null) {
                 updates.add(Updates.unset(path().resolve(BNAME_AVATAR).value()));
@@ -269,10 +278,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 updates.add(Updates.set(path().resolve(BNAME_AVATAR).value(), avatar));
             }
         }
-        if (changeFields.get(2)) {
+        if (changedFields.get(2)) {
             updates.add(Updates.set(path().resolve(BNAME_LAST_LOGIN_TIME).value(), BsonUtil.toBsonDateTime(lastLoginTime)));
         }
-        if (changeFields.get(4)) {
+        if (changedFields.get(4)) {
             var gis = this.gis;
             if (gis == null) {
                 updates.add(Updates.unset(path().resolve(BNAME_GIS).value()));
@@ -294,9 +303,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     if (gis != null) {
                         gis.unbind();
                     }
-                    gis = new GisCoordinates();
-                    gis.load(v);
-                    this.gis = gis.parent(this).key(BNAME_GIS).index(4);
+                    this.gis = new GisCoordinates().load(v).parent(this).key(BNAME_GIS).index(4);
                 },
                 () -> {
                     var gis = this.gis;
@@ -311,6 +318,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     @Override
     protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             data.put("name", name);
         }
@@ -320,15 +330,15 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 data.put("avatar", avatar);
             }
         }
-        if (changedFields.get(2)) {
+        if (changedFields.get(3)) {
             data.put("lastLoginAt", getLastLoginAt());
         }
         if (changedFields.get(4)) {
             var gis = this.gis;
             if (gis != null) {
-                var updateData = gis.toUpdateData();
-                if (updateData != null) {
-                    data.put("gis", updateData);
+                var gisUpdateData = gis.toUpdateData();
+                if (gisUpdateData != null) {
+                    data.put("gis", gisUpdateData);
                 }
             }
         }
@@ -345,9 +355,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
             if (gis == null) {
                 data.put("gis", 1);
             } else {
-                var deletedData = gis.toDeletedData();
-                if (deletedData != null) {
-                    data.put("gis", deletedData);
+                var gisDeletedData = gis.toDeletedData();
+                if (gisDeletedData != null) {
+                    data.put("gis", 1);
                 }
             }
         }

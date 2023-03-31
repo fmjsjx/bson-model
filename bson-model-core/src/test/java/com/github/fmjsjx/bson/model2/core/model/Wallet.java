@@ -3,14 +3,12 @@ package com.github.fmjsjx.bson.model2.core.model;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
-import com.github.fmjsjx.bson.model2.core.ObjectModel;
+import com.github.fmjsjx.bson.model2.core.*;
 import com.mongodb.client.model.Updates;
 import org.bson.*;
 import org.bson.conversions.Bson;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Wallet extends ObjectModel<Wallet> {
 
@@ -22,21 +20,21 @@ public class Wallet extends ObjectModel<Wallet> {
     private long coinTotal;
     private long coinUsed;
     private long diamond;
-    private int ad;
+    private long ad;
 
     public long getCoinTotal() {
         return coinTotal;
     }
 
     public void setCoinTotal(long coinTotal) {
-        if (this.coinTotal != coinTotal) {
+        if (coinTotal != this.coinTotal) {
             this.coinTotal = coinTotal;
             fieldsChanged(0, 2);
         }
     }
 
-    public long addCoinTotal(long n) {
-        var coinTotal = this.coinTotal += n;
+    public long addCoinTotal(long coinTotal) {
+        coinTotal = this.coinTotal += coinTotal;
         fieldsChanged(0, 2);
         return coinTotal;
     }
@@ -46,14 +44,14 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     public void setCoinUsed(long coinUsed) {
-        if (this.coinUsed != coinUsed) {
+        if (coinUsed != this.coinUsed) {
             this.coinUsed = coinUsed;
             fieldsChanged(1, 2);
         }
     }
 
-    public long addCoinUsed(long n) {
-        var coinUsed = this.coinUsed += n;
+    public long addCoinUsed(long coinUsed) {
+        coinUsed = this.coinUsed += coinUsed;
         fieldsChanged(1, 2);
         return coinUsed;
     }
@@ -67,27 +65,26 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     public void setDiamond(long diamond) {
-        if (this.diamond != diamond) {
+        if (diamond != this.diamond) {
             this.diamond = diamond;
             fieldChanged(3);
         }
     }
 
-    public int getAd() {
+    public long getAd() {
         return ad;
     }
 
-    public void setAd(int ad) {
-        if (this.ad != ad) {
+    public void setAd(long ad) {
+        if (ad != this.ad) {
             this.ad = ad;
             fieldChanged(4);
         }
     }
 
-    public int increaseAd() {
-        var ad = this.ad += 1;
+    public long increaseAd() {
         fieldChanged(4);
-        return ad;
+        return ++ad;
     }
 
     public boolean coinTotalChanged() {
@@ -116,7 +113,7 @@ public class Wallet extends ObjectModel<Wallet> {
         bson.append(BNAME_COIN_TOTAL, new BsonInt64(coinTotal));
         bson.append(BNAME_COIN_USED, new BsonInt64(coinUsed));
         bson.append(BNAME_DIAMOND, new BsonInt64(diamond));
-        bson.append(BNAME_AD, new BsonInt32(ad));
+        bson.append(BNAME_AD, new BsonInt64(ad));
         return bson;
     }
 
@@ -126,7 +123,7 @@ public class Wallet extends ObjectModel<Wallet> {
         coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
         coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);
         diamond = BsonUtil.longValue(src, BNAME_DIAMOND).orElse(0);
-        ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
+        ad = BsonUtil.longValue(src, BNAME_AD).orElse(0);
         return this;
     }
 
@@ -201,6 +198,9 @@ public class Wallet extends ObjectModel<Wallet> {
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             updates.add(Updates.set(path().resolve(BNAME_COIN_TOTAL).value(), coinTotal));
         }
@@ -221,12 +221,15 @@ public class Wallet extends ObjectModel<Wallet> {
         coinTotal = BsonUtil.longValue(src, BNAME_COIN_TOTAL).orElse(0);
         coinUsed = BsonUtil.longValue(src, BNAME_COIN_USED).orElse(0);
         diamond = BsonUtil.longValue(src, BNAME_DIAMOND).orElse(0);
-        ad = BsonUtil.intValue(src, BNAME_AD).orElse(0);
+        ad = BsonUtil.longValue(src, BNAME_AD).orElse(0);
     }
 
     @Override
     protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             data.put("coinTotal", coinTotal);
         }

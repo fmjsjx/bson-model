@@ -182,7 +182,7 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, BNAME_UPDATE_VERSION).orElse(0);
         createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
         updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
-        BsonUtil.arrayValue(src, BNAME_FRIENDS, (BsonDocument v) -> new Player().load(v));
+        friends = BsonUtil.arrayValue(src, BNAME_FRIENDS, (BsonDocument v) -> new Player().load(v)).orElse(null);
         return this;
     }
 
@@ -197,6 +197,12 @@ public class Player extends RootModel<Player> {
         jsonNode.put(BNAME_UPDATE_VERSION, updateVersion);
         jsonNode.put(BNAME_CREATE_TIME, DateTimeUtil.toEpochMilli(createTime));
         jsonNode.put(BNAME_UPDATE_TIME, DateTimeUtil.toEpochMilli(updateTime));
+        var friends = this.friends;
+        if (friends != null) {
+            var friendsArrayNode = jsonNode.arrayNode(friends.size());
+            friends.stream().map(Player::toJsonNode).forEach(friendsArrayNode::add);
+            jsonNode.set(BNAME_FRIENDS, friendsArrayNode);
+        }
         return jsonNode;
     }
 
@@ -210,6 +216,10 @@ public class Player extends RootModel<Player> {
         data.put("items", items.toData());
         data.put("createdAt", getCreatedAt());
         data.put("updatedAt", getUpdatedAt());
+        var friends = this.friends;
+        if (friends != null) {
+            data.put("friends", friends.stream().map(Player::toData).toList());
+        }
         return data;
     }
 
@@ -276,7 +286,7 @@ public class Player extends RootModel<Player> {
         if (changedFields.get(3) && equipments.anyDeleted()) {
             n++;
         }
-        if (changedFields.get(4) && items.anyChanged()) {
+        if (changedFields.get(4) && items.anyDeleted()) {
             n++;
         }
         return n;
@@ -305,43 +315,46 @@ public class Player extends RootModel<Player> {
 
     @Override
     public Player clean() {
-        resetStates();
         uid = 0;
         basicInfo.clean();
         wallet.clean();
         equipments.clean();
         items.clean();
         updateVersion = 0;
-        createTime = LocalDateTime.MIN;
-        updateTime = LocalDateTime.MIN;
+        createTime = null;
+        updateTime = null;
+        resetStates();
         return this;
     }
 
     @Override
     protected void appendFieldUpdates(List<Bson> updates) {
-        var changeFields = this.changedFields;
-        if (changeFields.get(0)) {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
+        if (changedFields.get(0)) {
             updates.add(Updates.set(path().resolve(BNAME_UID).value(), uid));
         }
-        if (changeFields.get(1)) {
+        if (changedFields.get(1)) {
             basicInfo.appendUpdates(updates);
         }
-        if (changeFields.get(2)) {
+        if (changedFields.get(2)) {
             wallet.appendUpdates(updates);
         }
-        if (changeFields.get(3)) {
+        if (changedFields.get(3)) {
             equipments.appendUpdates(updates);
         }
-        if (changeFields.get(4)) {
+        if (changedFields.get(4)) {
             items.appendUpdates(updates);
         }
-        if (changeFields.get(5)) {
+        if (changedFields.get(5)) {
             updates.add(Updates.set(path().resolve(BNAME_UPDATE_VERSION).value(), updateVersion));
         }
-        if (changeFields.get(6)) {
+        if (changedFields.get(6)) {
             updates.add(Updates.set(path().resolve(BNAME_CREATE_TIME).value(), BsonUtil.toBsonDateTime(createTime)));
         }
-        if (changeFields.get(7)) {
+        if (changedFields.get(7)) {
             updates.add(Updates.set(path().resolve(BNAME_UPDATE_TIME).value(), BsonUtil.toBsonDateTime(updateTime)));
         }
     }
@@ -357,36 +370,40 @@ public class Player extends RootModel<Player> {
         updateVersion = BsonUtil.intValue(src, BNAME_UPDATE_VERSION).orElse(0);
         createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
         updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
+        friends = BsonUtil.listValue(src, BNAME_FRIENDS, v -> new Player().load(v)).orElse(null);
     }
 
     @Override
     protected void appendUpdateData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return;
+        }
         if (changedFields.get(0)) {
             data.put("uid", uid);
         }
         if (changedFields.get(1)) {
-            var updateData = basicInfo.toUpdateData();
-            if (updateData != null) {
-                data.put("basicInfo", updateData);
+            var basicInfoUpdateData = basicInfo.toUpdateData();
+            if (basicInfoUpdateData != null) {
+                data.put("basicInfo", basicInfoUpdateData);
             }
         }
         if (changedFields.get(2)) {
-            var updateData = wallet.toUpdateData();
-            if (updateData != null) {
-                data.put("wallet", updateData);
+            var walletUpdateData = wallet.toUpdateData();
+            if (walletUpdateData != null) {
+                data.put("wallet", walletUpdateData);
             }
         }
         if (changedFields.get(3)) {
-            var updateData = equipments.toUpdateData();
-            if (updateData != null) {
-                data.put("equipments", updateData);
+            var equipmentsUpdateData = equipments.toUpdateData();
+            if (equipmentsUpdateData != null) {
+                data.put("equipments", equipmentsUpdateData);
             }
         }
         if (changedFields.get(4)) {
-            var updateData = items.toUpdateData();
-            if (updateData != null) {
-                data.put("items", updateData);
+            var itemsUpdateData = items.toUpdateData();
+            if (itemsUpdateData != null) {
+                data.put("items", itemsUpdateData);
             }
         }
         if (changedFields.get(8)) {
@@ -401,27 +418,27 @@ public class Player extends RootModel<Player> {
     protected void appendDeletedData(Map<Object, Object> data) {
         var changedFields = this.changedFields;
         if (changedFields.get(1)) {
-            var deletedData = basicInfo.toDeletedData();
-            if (deletedData != null) {
-                data.put("basicInfo", deletedData);
+            var basicInfoDeletedData = basicInfo.toDeletedData();
+            if (basicInfoDeletedData != null) {
+                data.put("basicInfo", 1);
             }
         }
         if (changedFields.get(2)) {
-            var deletedData = wallet.toDeletedData();
-            if (deletedData != null) {
-                data.put("wallet", deletedData);
+            var walletDeletedData = wallet.toDeletedData();
+            if (walletDeletedData != null) {
+                data.put("wallet", 1);
             }
         }
         if (changedFields.get(3)) {
-            var deletedData = equipments.toDeletedData();
-            if (deletedData != null) {
-                data.put("equipments", deletedData);
+            var equipmentsDeletedData = equipments.toDeletedData();
+            if (equipmentsDeletedData != null) {
+                data.put("equipments", 1);
             }
         }
         if (changedFields.get(4)) {
-            var deletedData = items.toDeletedData();
-            if (deletedData != null) {
-                data.put("items", deletedData);
+            var itemsDeletedData = items.toDeletedData();
+            if (itemsDeletedData != null) {
+                data.put("items", 1);
             }
         }
     }

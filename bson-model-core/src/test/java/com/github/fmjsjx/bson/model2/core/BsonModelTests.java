@@ -50,7 +50,7 @@ public class BsonModelTests {
                 ).append("_uv", new BsonInt32(0))
                 .append("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())))
                 .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
-        assertEquals(bson, player.toBson());
+        assertEquals(bson.toBsonDocument().toJson(), player.toBson().toBsonDocument().toJson());
         var json = """
                 {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":0,"coin":0,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
@@ -138,7 +138,7 @@ public class BsonModelTests {
                 ).append("_uv", new BsonInt32(0))
                 .append("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())))
                 .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
-        assertEquals(Updates.set("", bson), updates.get(0));
+        assertEquals(Updates.set("", bson).toBsonDocument().toJson(), updates.get(0).toBsonDocument().toJson());
 
         player.reset();
         updates = player.toUpdates();

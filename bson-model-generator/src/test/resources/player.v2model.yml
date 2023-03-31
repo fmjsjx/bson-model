@@ -22,12 +22,12 @@ models:
     key: int
     value: int
   - name: updateVersion _uv
-    type: int required increment-1
+    type: int required increment-1 hidden
     default: 0
   - name: createTime _ct
-    type: datetime required
+    type: datetime required hidden
   - name: updateTime _ut
-    type: datetime required
+    type: datetime required hidden
   - name: createdAt
     type: long required virtual
     sources:
@@ -51,13 +51,13 @@ models:
   - name: avatar a
     type: string
   - name: lastLoginTime llt
-    type: datetime required
+    type: datetime required hidden
     default: now
   - name: lastLoginAt
     type: long required virtual
     sources:
     - lastLoginTime
-    lambda: DateTimeUtil.toEpochMilli(datetime)
+    lambda: DateTimeUtil.toEpochMilli(lastLoginTime)
   - name: gis g
     type: object
     model: GisCoordinates
@@ -77,7 +77,7 @@ models:
     type: long required increment-n
     default: 0
   - name: coinUsed cu
-    type: long required increment-n
+    type: long required increment-n hidden
     default: 0
   - name: coin
     type: long required virtual

@@ -1651,6 +1651,44 @@ public class BsonUtil {
     }
 
     /**
+     * Gets the {@code Boolean} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<Boolean>}
+     * @since 2.0
+     */
+    public static final Optional<Boolean> boxedBooleanValue(BsonDocument document, String key) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value instanceof BsonBoolean) {
+            return Optional.of(((BsonBoolean) value).getValue());
+        }
+        throw new ClassCastException(String.format("The value is not a BsonBoolean (%s)", value.getClass().getName()));
+    }
+
+    /**
+     * Gets the {@code Boolean} value in an {@link JsonNode}.
+     *
+     * @param node the source {@link JsonNode}
+     * @param key  the key
+     * @return an {@code Optional<Boolean>}
+     * @since 2.0
+     */
+    public static final Optional<Boolean> boxedBooleanValue(JsonNode node, String key) {
+        var value = node.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value.isBoolean()) {
+            return Optional.of(value.booleanValue());
+        }
+        throw new ClassCastException(String.format("The value is not a BOOLEAN (%s)", value.getNodeType().name()));
+    }
+
+    /**
      * Gets the {@code BsonArray} value in a document, and then convert each element.
      *
      * @param document the source document
@@ -1723,7 +1761,7 @@ public class BsonUtil {
      * @since 2.0
      */
     public static final <T extends BsonValue, V> Optional<Map<String, V>> documentValue(
-            BsonDocument document, String key,  Function<T, V> valueMapper) {
+            BsonDocument document, String key, Function<T, V> valueMapper) {
         return documentValue(document, key, Function.identity(), valueMapper);
     }
 
@@ -1791,6 +1829,182 @@ public class BsonUtil {
             bsonArray.add(new BsonDouble(i));
         }
         return bsonArray;
+    }
+
+    /**
+     * Gets the {@code int array} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<int[]>}
+     * @since 2.0
+     */
+    public static final Optional<int[]> intArrayValue(BsonDocument document, String key) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        var array = value.asArray();
+        var values = new int[array.size()];
+        for (var i = 0; i < values.length; i++) {
+            var v = array.get(i);
+            if (v instanceof BsonNumber bsonNumber) {
+                values[i] = bsonNumber.intValue();
+            } else {
+                throw new ClassCastException(String.format("The value is not a BsonNumber (%s)", v.getBsonType()));
+            }
+        }
+        return Optional.of(values);
+    }
+
+    /**
+     * Gets the {@code int array} value in a {@link JsonNode}.
+     *
+     * @param src the source {@code JsonNode}
+     * @param key the key
+     * @return an {@code Optional<int[]>}
+     * @since 2.0
+     */
+    public static final Optional<int[]> intArrayValue(JsonNode src, String key) {
+        var value = src.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value.isArray()) {
+            var values = new int[value.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = value.get(i).intValue();
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a ARRAY (%s)", value.getNodeType().name()));
+    }
+
+    /**
+     * Gets the {@code long array} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<long[]>}
+     * @since 2.0
+     */
+    public static final Optional<long[]> longArrayValue(BsonDocument document, String key) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        var array = value.asArray();
+        var values = new long[array.size()];
+        for (var i = 0; i < values.length; i++) {
+            var v = array.get(i);
+            if (v instanceof BsonNumber bsonNumber) {
+                values[i] = bsonNumber.longValue();
+            } else {
+                throw new ClassCastException(String.format("The value is not a BsonNumber (%s)", v.getBsonType()));
+            }
+        }
+        return Optional.of(values);
+    }
+
+    /**
+     * Gets the {@code long array} value in a {@link JsonNode}.
+     *
+     * @param src the source {@code JsonNode}
+     * @param key the key
+     * @return an {@code Optional<long[]>}
+     * @since 2.0
+     */
+    public static final Optional<long[]> longArrayValue(JsonNode src, String key) {
+        var value = src.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value.isArray()) {
+            var values = new long[value.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = value.get(i).longValue();
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a ARRAY (%s)", value.getNodeType().name()));
+    }
+
+    /**
+     * Gets the {@code double array} value in a document.
+     *
+     * @param document the source document
+     * @param key      the key
+     * @return an {@code Optional<double[]>}
+     * @since 2.0
+     */
+    public static final Optional<double[]> doubleArrayValue(BsonDocument document, String key) {
+        var value = document.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        var array = value.asArray();
+        var values = new double[array.size()];
+        for (var i = 0; i < values.length; i++) {
+            var v = array.get(i);
+            if (v instanceof BsonNumber bsonNumber) {
+                values[i] = bsonNumber.doubleValue();
+            } else {
+                throw new ClassCastException(String.format("The value is not a BsonNumber (%s)", v.getBsonType()));
+            }
+        }
+        return Optional.of(values);
+    }
+
+    /**
+     * Gets the {@code double array} value in a {@link JsonNode}.
+     *
+     * @param src the source {@code JsonNode}
+     * @param key the key
+     * @return an {@code Optional<double[]>}
+     * @since 2.0
+     */
+    public static final Optional<double[]> doubleArrayValue(JsonNode src, String key) {
+        var value = src.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value.isArray()) {
+            var values = new double[value.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = value.get(i).doubleValue();
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a ARRAY (%s)", value.getNodeType().name()));
+    }
+
+    /**
+     * Gets the list value from a {@link JsonNode}.
+     *
+     * @param node   the source {@link JsonNode}
+     * @param key    the key
+     * @param mapper the mapper
+     * @param <T>    the type of the return element
+     * @return an {@code Optional<List<T>>}
+     * @since 2.0
+     */
+    public static final <T> Optional<List<T>> listValue(JsonNode node, String key, Function<JsonNode, T> mapper) {
+        var value = node.get(key);
+        if (value == null || value.isNull()) {
+            return Optional.empty();
+        }
+        if (value.isArray()) {
+            var list = new ArrayList<T>(value.size());
+            for (var v : value) {
+                if (v == null || v.isNull()) {
+                    list.add(null);
+                } else {
+                    list.add(mapper.apply(v));
+                }
+            }
+            return Optional.of(list);
+        }
+        throw new ClassCastException(String.format("The value is not a ARRAY (%s)", value.getNodeType().name()));
     }
 
     private BsonUtil() {
