@@ -109,3 +109,10 @@ models:
   - name: hp h
     type: int required
     default: 0
+- name: Room
+  type: root
+  fields:
+  - name: players
+    type: std-list loadonly
+    value: object
+    model: Player
