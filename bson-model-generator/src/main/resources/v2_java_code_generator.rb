@@ -347,7 +347,7 @@ class ModelConf
   def generate_clean_code
     code = "    @Override\n"
     code << "    public #@name clean() {\n"
-    fields = reality_fields
+    fields = @fields.select { |field| not field.virtual? }
     unless fields.empty?
       fields.map do |field|
         field.generate_clean_code
@@ -356,8 +356,8 @@ class ModelConf
       end.each do |c|
         code << c
       end
+      code << "        resetStates();\n"
     end
-    code << "        resetStates();\n"
     code << "        return this;\n"
     code << "    }\n\n"
   end
