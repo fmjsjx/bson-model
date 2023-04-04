@@ -20,6 +20,8 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
     protected boolean fullyUpdate;
     protected boolean changedTriggered;
 
+    protected DotNotationPath cachedPath;
+
     @SuppressWarnings("unchecked")
     @Override
     public <P extends BsonModel<?>> P parent() {
@@ -84,9 +86,10 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
      */
     @SuppressWarnings("unchecked")
     public Self unbind() {
-        this.parent = null;
-        this.index = -1;
-        this.key = null;
+        parent = null;
+        index = -1;
+        key = null;
+        cachedPath = null;
         return (Self) this;
     }
 
@@ -154,16 +157,21 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
 
     @Override
     public DotNotationPath path() {
-        var parent = parent();
-        if (parent != null) {
-            if (parent instanceof ListModel & index >= 0) {
-                return parent.path().resolve(index);
-            } else if (key != null) {
-                return parent.path().resolve(key);
+        var cachedPath = this.cachedPath;
+        if (cachedPath == null) {
+            var parent = parent();
+            if (parent == null) {
+                return DotNotationPath.root();
             }
-            throw new IllegalStateException("parent exists without key or index");
+            if (parent instanceof ListModel & index >= 0) {
+                this.cachedPath = cachedPath = parent.path().resolve(index);
+            } else if (key != null) {
+                this.cachedPath = cachedPath =  parent.path().resolve(key);
+            } else {
+                throw new IllegalStateException("parent exists without key or index");
+            }
         }
-        return DotNotationPath.root();
+        return cachedPath;
     }
 
     /**
