@@ -4,6 +4,18 @@ models:
 - name: Player
   type: root
   fields:
+  - name: ONLINE
+    type: int const
+    value: 1
+  - name: OFFLINE
+    type: int const
+    value: 0
+  - name: ROLE_GM
+    type: string const
+    value: GM
+  - name: DOOMSDAY
+    type: datetime const
+    value: LocalDateTime.of(2038, 9, 7, 11, 38, 59)
   - name: uid _id
     type: int required
   - name: basicInfo bi

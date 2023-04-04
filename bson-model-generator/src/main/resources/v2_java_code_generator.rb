@@ -13,7 +13,11 @@ class ModelConf
       cfg = ModelConf.new(model_cfg['name'], model_cfg['type'])
       if model_cfg.has_key? 'fields'
         model_cfg['fields'].each do |field_cfg|
-          cfg.append_field(FieldConf.from(field_cfg))
+          if field_cfg['type'].index(' const').nil?
+            cfg.append_field(FieldConf.from(field_cfg))
+          else
+            cfg.append_const(ConstConf.from(field_cfg))
+          end
         end
         field_names = Set.new
         cfg.fields.each do |field|
@@ -38,14 +42,20 @@ class ModelConf
 
   attr_reader :name,
               :type,
+              :consts,
               :fields
 
   def initialize(name, type)
     @name = name
     @type = type
     @fields = []
+    @consts = []
     @imports_javas = Set.new
     @imports_others = Set.new
+  end
+
+  def append_const(const)
+    @consts << const
   end
 
   def append_field(field)
@@ -55,20 +65,23 @@ class ModelConf
   def fill_imports
     @imports_javas.clear
     @imports_others.clear
-    @imports_javas += ['java.util.*']
+    @imports_javas << 'java.util.*'
     @imports_others += ['com.fasterxml.jackson.databind.JsonNode',
                         'com.fasterxml.jackson.databind.node.JsonNodeFactory',
                         'com.github.fmjsjx.bson.model2.core.*',
                         'org.bson.*',
                         'org.bson.conversions.Bson']
     unless @fields.empty?
-      @imports_others += ['com.github.fmjsjx.bson.model.core.BsonUtil']
+      @imports_others << 'com.github.fmjsjx.bson.model.core.BsonUtil'
       unless reality_fields.empty?
-        @imports_others += ['com.mongodb.client.model.Updates']
+        @imports_others << 'com.mongodb.client.model.Updates'
       end
     end
+    if @consts.any? { |const| const.type == 'datetime' }
+      @imports_javas << 'java.time.LocalDateTime'
+    end
     if @fields.any? { |field| field.type == 'datetime' }
-      @imports_others += ['com.github.fmjsjx.libcommon.util.DateTimeUtil']
+      @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDateTime'
     end
   end
@@ -121,11 +134,19 @@ class ModelConf
   end
 
   def generate_consts_code
-    @fields.map do |field|
+    code = ''
+    unless @consts.empty?
+      @consts.each do |const|
+        code << const.generate_declare_code
+      end
+      code << "\n"
+    end
+    code << @fields.map do |field|
       field.generate_const_code
     end.select do |c|
       not c.nil?
-    end.join << "\n"
+    end.join
+    code << "\n"
   end
 
   def generate_fields_code
@@ -451,6 +472,43 @@ class ModelConf
       code << "                \")\";\n"
     end
     code << "    }\n\n"
+  end
+
+end
+
+class ConstConf
+
+  class << self
+    def from(field_cfg)
+      name = field_cfg['name']
+      if name.start_with?('BNAME_')
+        raise "const field must not be started with 'BNAME_'"
+      end
+      type = field_cfg['type'].split(' ')[0]
+      value = field_cfg['value']
+      ConstConf.new(name, type, value)
+    end
+  end
+
+  attr_reader :name, :type, :value
+
+  def initialize(name, type, value)
+    @name = name
+    @type = type
+    @value = value
+  end
+
+  def generate_declare_code
+    case @type
+    when 'int', 'long', 'double', 'boolean'
+      "    public static final #@type #@name = #@value;\n"
+    when 'string'
+      "    public static final String #@name = \"#@value\";\n"
+    when 'datetime'
+      "    public static final LocalDateTime #@name = #@value;\n"
+    else
+      raise "unsupported const type #@type"
+    end
   end
 
 end
