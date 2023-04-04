@@ -62,8 +62,10 @@ class ModelConf
                         'org.bson.*',
                         'org.bson.conversions.Bson']
     unless @fields.empty?
-      @imports_others += ['com.github.fmjsjx.bson.model.core.BsonUtil',
-                          'com.mongodb.client.model.Updates']
+      @imports_others += ['com.github.fmjsjx.bson.model.core.BsonUtil']
+      unless reality_fields.empty?
+        @imports_others += ['com.mongodb.client.model.Updates']
+      end
     end
     if @fields.any? { |field| field.type == 'datetime' }
       @imports_others += ['com.github.fmjsjx.libcommon.util.DateTimeUtil']
@@ -152,15 +154,20 @@ class ModelConf
     bson_var = variable_name('bson')
     code = "    @Override\n"
     code << "    public BsonDocument toBson() {\n"
-    code << "        var bson = new BsonDocument();\n"
-    @fields.map do |field|
-      field.generate_append_to_bson_code(bson_var)
-    end.select do |c|
-      not c.nil?
-    end.each do |c|
-      code << c
+    fields = reality_fields
+    if fields.empty?
+      code << "        return new BsonDocument();\n"
+    else
+      code << "        var bson = new BsonDocument();\n"
+      fields.map do |field|
+        field.generate_append_to_bson_code(bson_var)
+      end.select do |c|
+        not c.nil?
+      end.each do |c|
+        code << c
+      end
+      code << "        return bson;\n"
     end
-    code << "        return bson;\n"
     code << "    }\n\n"
   end
 
@@ -223,12 +230,13 @@ class ModelConf
   def generate_any_updated_code
     code = "    @Override\n"
     code << "    public boolean anyUpdated() {\n"
-    unless @fields.empty?
+    fields = @fields.select { |field| not field.loadonly? and not field.transient? }
+    unless fields.empty?
       code << "        var changedFields = this.changedFields;\n"
       code << "        if (changedFields.isEmpty()) {\n"
       code << "            return false;\n"
       code << "        }\n"
-      @fields.map do |field|
+      fields.map do |field|
         field.generate_any_updated_code
       end.select do |c|
         not c.nil?
@@ -811,13 +819,6 @@ class FieldConf
   end
 
   def generate_append_to_bson_code(bson_var)
-    if virtual? or loadonly? or transient?
-      return nil
-    end
-    generate_reality_append_to_bson_code(bson_var)
-  end
-
-  def generate_reality_append_to_bson_code(bson_var)
     raise "unsupported type `#@type`"
   end
 
@@ -1088,7 +1089,7 @@ class IntFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonInt32(#@name)")
   end
 
@@ -1123,7 +1124,7 @@ class LongFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonInt64(#@name)")
   end
 
@@ -1176,7 +1177,7 @@ class DoubleFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonDouble(#@name)")
   end
 
@@ -1241,7 +1242,7 @@ class BooleanFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonBoolean(#@name)")
   end
 
@@ -1293,7 +1294,7 @@ class StringFieldConf < FieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonString(#@name)")
   end
 
@@ -1354,7 +1355,7 @@ class DateTimeFieldConf < FieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonDateTime(#@name)")
   end
 
@@ -1460,7 +1461,7 @@ class ObjectIdFieldConf < FieldConf
     "    private #{generic_type} #@name;\n"
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "new BsonObjectId(#@name)")
   end
 
@@ -1566,7 +1567,7 @@ class PrimitiveArrayFieldConf < FieldConf
     code << "        }\n"
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name)")
   end
 
@@ -1662,7 +1663,7 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})")
   end
 
@@ -1928,7 +1929,7 @@ class ModelFieldConf < FieldConf
     code << "        }\n"
   end
 
-  def generate_reality_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bson_var)
     generate_append_value_to_bson_code(bson_var, "#@name.toBson()")
   end
 
