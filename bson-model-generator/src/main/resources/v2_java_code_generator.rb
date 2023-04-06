@@ -1924,7 +1924,7 @@ class StdListFieldConf < FieldConf
     when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id'
       code << "        var #@name = src.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            #@name = new ArrayList<>(src.#@name);\n"
+      code << "            this.#@name = new ArrayList<>(src.#@name);\n"
       code << "        }\n"
     when 'object'
       var_copy = variable_name('Copy')
