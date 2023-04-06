@@ -366,6 +366,12 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         return Optional.of(Collections.unmodifiableList(list));
     }
 
+    /**
+     * Returns the element at the specified position in this list.
+     *
+     * @param index the index
+     * @return an {@code Optional<E>}
+     */
     public Optional<E> value(int index) {
         var list = this.list;
         if (list == null) {
@@ -374,6 +380,12 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         return Optional.ofNullable(list.get(index));
     }
 
+    /**
+     * Set the values.
+     *
+     * @param values the values
+     * @return this model
+     */
     public DefaultListModel<E, P> values(List<E> values) {
         clear();
         var len = values.size();

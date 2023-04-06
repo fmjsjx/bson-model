@@ -10,50 +10,53 @@ repositories {
 }
 
 dependencies {
-    // netty-bom
-    api(platform("io.netty:netty-bom:4.1.74.Final"))
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:2.6.2"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.3.0"))
     // junit-bom
-    testImplementation(platform("org.junit:junit-bom:5.8.2"))
+    testImplementation(platform("org.junit:junit-bom:5.9.2"))
     // jackson2-bom
-    api(platform("com.fasterxml.jackson:jackson-bom:2.13.1"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.14.2"))
 
     constraints {
         implementation("org.slf4j:slf4j-api:1.7.36")
         implementation("ch.qos.logback:logback-classic:1.2.10")
         api("com.jsoniter:jsoniter:0.9.23")
-        api("org.mongodb:bson:4.5.0")
-        api("org.mongodb:mongodb-driver-core:4.5.0")
-        api("org.mongodb:mongodb-driver-sync:4.5.0")
-        api("org.mongodb:mongodb-driver-reactivestreams:4.5.0")
-        api("org.mongodb:mongodb-driver-legacy:4.5.0")
-        implementation("org.jruby:jruby-complete:9.3.3.0")
-        implementation("org.jruby:jruby:9.3.3.0")
-        implementation("org.jruby:jruby-core:9.3.3.0")
-        implementation("org.jruby:jruby-stdlib:9.3.3.0")
-        implementation("org.yaml:snakeyaml:1.30")
+        val mongodbVersion = "4.9.0"
+        api("org.mongodb:bson:$mongodbVersion")
+        api("org.mongodb:mongodb-driver-core:$mongodbVersion")
+        api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
+        api("org.mongodb:mongodb-driver-reactivestreams:$mongodbVersion")
+        api("org.mongodb:mongodb-driver-legacy:$mongodbVersion")
+        val jrubyVersion = "9.4.2.0"
+        implementation("org.jruby:jruby-complete:$jrubyVersion")
+        implementation("org.jruby:jruby:$jrubyVersion")
+        implementation("org.jruby:jruby-core:$jrubyVersion")
+        implementation("org.jruby:jruby-stdlib:$jrubyVersion")
+        implementation("org.yaml:snakeyaml:2.0")
     }
     // log4j2
-    implementation(platform("org.apache.logging.log4j:log4j-bom:2.17.1"))
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
 
 }
+
+val javaVersion = 17
 
 java {
     withSourcesJar()
     withJavadocJar()
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
 }
 
 tasks.compileJava {
     options.encoding = "UTF-8"
-    options.release.set(11)
+    options.release.set(javaVersion)
 }
 
 tasks.javadoc {
     if (JavaVersion.current().isJava9Compatible) {
         (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
+    options.memberLevel = JavadocMemberLevel.PUBLIC
 }
