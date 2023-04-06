@@ -273,7 +273,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         name = src.name;
         avatar = src.avatar;
         lastLoginTime = src.lastLoginTime;
-        gis = src.gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
+        var gis = src.gis;
+        if (gis != null) {
+            this.gis = src.gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
+        }
     }
 
     @Override

@@ -344,6 +344,18 @@ public class Player extends RootModel<Player> {
         updateVersion = src.updateVersion;
         createTime = src.createTime;
         updateTime = src.updateTime;
+        var friends = src.friends;
+        if (friends != null) {
+            var friendsCopy = new ArrayList<Player>(friends.size());
+            for (var friendsCopyValue : friends) {
+                if (friendsCopyValue == null) {
+                    friendsCopy.add(null);
+                } else {
+                    friendsCopy.add(friendsCopyValue.deepCopy());
+                }
+            }
+            this.friends = friendsCopy;
+        }
     }
 
     @Override

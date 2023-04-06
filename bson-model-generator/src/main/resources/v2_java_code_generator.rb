@@ -121,6 +121,8 @@ class ModelConf
     code << generate_deleted_size_code
     code << generate_any_deleted_code
     code << generate_clean_code
+    code << generate_deep_copy_code
+    code << generate_deep_copy_from_code
     code << generate_append_field_updates_code
     code << generate_load_object_node_code
     code << generate_append_update_data_code
@@ -380,6 +382,32 @@ class ModelConf
       code << "        resetStates();\n"
     end
     code << "        return this;\n"
+    code << "    }\n\n"
+  end
+
+  def generate_deep_copy_code
+    var_copy = variable_name('copy')
+    code = "    @Override\n"
+    code << "    public #@name deepCopy() {\n"
+    code << "        var #{var_copy} = new #@name();\n"
+    code << "        deepCopyTo(#{var_copy}, false);\n"
+    code << "        return #{var_copy};\n"
+    code << "    }\n\n"
+  end
+
+  def generate_deep_copy_from_code
+    code = "    @Override\n"
+    code << "    public void deepCopyFrom(#@name src) {\n"
+    fields = @fields.select { |field| not field.virtual? }
+    unless fields.empty?
+      fields.map do |field|
+        field.generate_deep_copy_from_code
+      end.select do |c|
+        not c.nil?
+      end.each do |c|
+        code << c
+      end
+    end
     code << "    }\n\n"
   end
 
@@ -978,6 +1006,10 @@ class FieldConf
 
   def generate_clean_code
     nil
+  end
+
+  def generate_deep_copy_from_code
+    "        #@name = src.#@name;\n"
   end
 
   def generate_append_updates_code
@@ -1669,6 +1701,16 @@ class PrimitiveArrayFieldConf < FieldConf
     end
   end
 
+  def generate_deep_copy_from_code
+    code = ''
+    code << "        var #@name = src.#@name;\n"
+    code << "        if (#@name == null) {\n"
+    code << "            this.#@name = null;\n"
+    code << "        } else {\n"
+    code << "            this.#@name = Arrays.copyOf(#@name, #@name.length);\n"
+    code << "        }\n"
+  end
+
   def generate_append_updates_code
     generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name)))")
   end
@@ -1876,6 +1918,34 @@ class StdListFieldConf < FieldConf
     end
   end
 
+  def generate_deep_copy_from_code
+    code = ''
+    case @value
+    when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id'
+      code << "        var #@name = src.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #@name = new ArrayList<>(src.#@name);\n"
+      code << "        }\n"
+    when 'object'
+      var_copy = variable_name('Copy')
+      var_copy_value = variable_name('CopyValue')
+      code << "        var #@name = src.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            var #{var_copy} = new ArrayList<#@model>(#@name.size());\n"
+      code << "            for (var #{var_copy_value} : #@name) {\n"
+      code << "                if (#{var_copy_value} == null) {\n"
+      code << "                    #{var_copy}.add(null);\n"
+      code << "                } else {\n"
+      code << "                    #{var_copy}.add(#{var_copy_value}.deepCopy());\n"
+      code << "                }\n"
+      code << "            }\n"
+      code << "            this.#@name = #{var_copy};\n"
+      code << "        }\n"
+    else
+      raise "unsupport value type `@value` for std-list"
+    end
+  end
+
   def generate_append_updates_code
     generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
   end
@@ -2071,6 +2141,17 @@ class ModelFieldConf < FieldConf
       code << "        if (#@name != null) {\n"
       code << "            #@name.clean().unbind();\n"
       code << "            this.#@name = null;\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_deep_copy_from_code
+    if required?
+      "        src.#@name.deepCopyTo(#@name, false);\n"
+    else
+      code = "        var #@name = src.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            this.#@name = #@name.deepCopy().parent(this).key(#{bname_const_field_name}).index(#@index);\n"
       code << "        }\n"
     end
   end
