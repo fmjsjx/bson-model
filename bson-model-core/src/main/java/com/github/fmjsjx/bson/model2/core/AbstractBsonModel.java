@@ -166,7 +166,7 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
             if (parent instanceof ListModel & index >= 0) {
                 this.cachedPath = cachedPath = parent.path().resolve(index);
             } else if (key != null) {
-                this.cachedPath = cachedPath =  parent.path().resolve(key);
+                this.cachedPath = cachedPath = parent.path().resolve(key);
             } else {
                 throw new IllegalStateException("parent exists without key or index");
             }
@@ -221,5 +221,42 @@ abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonM
      * @return this model
      */
     public abstract Self clean();
+
+    @Override
+    public abstract Self deepCopy();
+
+    /**
+     * Deep copy values from this model to the {@code dest} model.
+     *
+     * @param dest the destination model
+     * @return this model
+     */
+    public Self deepCopyTo(Self dest) {
+        return deepCopyTo(dest, true);
+    }
+
+    /**
+     * Deep copy values from this model to the {@code dest} model.
+     *
+     * @param dest  the destination model
+     * @param clean whether the destination model should be clean or not
+     * @return this model
+     */
+    @SuppressWarnings("unchecked")
+    public Self deepCopyTo(Self dest, boolean clean) {
+        if (clean) {
+            dest.clean();
+        }
+        var self = (Self) this;
+        dest.deepCopyFrom(self);
+        return self;
+    }
+
+    /**
+     * Deep copy values from the {@code src} model.
+     *
+     * @param src the source model
+     */
+    protected abstract void deepCopyFrom(Self src);
 
 }

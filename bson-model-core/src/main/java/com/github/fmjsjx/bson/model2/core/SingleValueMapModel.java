@@ -243,4 +243,16 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
         updates.add(Updates.set(path().resolve(key.toString()).value(), valueType.toBsonValue(value)));
     }
 
+    @Override
+    public SingleValueMapModel<K, V> deepCopy() {
+        var copy = new SingleValueMapModel<>(keyParser, valueType);
+        deepCopyTo(copy);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(SingleValueMapModel<K, V> src) {
+        map.putAll(src.map);
+    }
+
 }

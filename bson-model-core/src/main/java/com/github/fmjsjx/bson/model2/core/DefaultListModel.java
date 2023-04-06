@@ -211,4 +211,23 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
         }
     }
 
+    @Override
+    public DefaultListModel<E> deepCopy() {
+        var copy = new DefaultListModel<>(valueFactory);
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(DefaultListModel<E> src) {
+        var list = this.list;
+        for (var value : src.list) {
+            if (value == null) {
+                list.add(null);
+            } else {
+                list.add(value.deepCopy().parent(this).index(index));
+            }
+        }
+    }
+
 }

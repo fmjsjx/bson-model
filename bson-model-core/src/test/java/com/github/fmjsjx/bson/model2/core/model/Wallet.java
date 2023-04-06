@@ -196,6 +196,21 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
+    public Wallet deepCopy() {
+        var copy = new Wallet();
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(Wallet src) {
+        coinTotal = src.coinTotal;
+        coinUsed = src.coinUsed;
+        diamond = src.diamond;
+        ad = src.ad;
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.isEmpty()) {

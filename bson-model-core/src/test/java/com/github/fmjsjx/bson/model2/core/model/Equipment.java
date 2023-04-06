@@ -195,6 +195,22 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
+    public Equipment deepCopy() {
+        var copy = new Equipment();
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(Equipment src) {
+        id = src.id;
+        refId = src.refId;
+        atk = src.atk;
+        def = src.def;
+        hp = src.hp;
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.isEmpty()) {

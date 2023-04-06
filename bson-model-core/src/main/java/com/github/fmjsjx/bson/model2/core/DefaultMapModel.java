@@ -249,4 +249,21 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     protected void appendUpdates(List<Bson> updates, Object key, V value) {
         value.appendUpdates(updates);
     }
+
+    @Override
+    public DefaultMapModel<K, V> deepCopy() {
+        var copy = new DefaultMapModel<>(keyParser, valueFactory);
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(DefaultMapModel<K, V> src) {
+        var map = this.map;
+        for (var entry : src.map.entrySet()) {
+            var key = entry.getKey();
+            map.put(key, entry.getValue().deepCopy().parent(this).key(key));
+        }
+    }
+
 }
