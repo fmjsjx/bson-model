@@ -253,7 +253,7 @@ class ModelConf
   def generate_any_updated_code
     code = "    @Override\n"
     code << "    public boolean anyUpdated() {\n"
-    fields = @fields.select { |field| not field.loadonly? and not field.transient? }
+    fields = reality_fields
     unless fields.empty?
       code << "        var changedFields = this.changedFields;\n"
       code << "        if (changedFields.isEmpty()) {\n"
