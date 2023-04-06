@@ -167,6 +167,20 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
+    public GisCoordinates deepCopy() {
+        var copy = new GisCoordinates();
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(GisCoordinates src) {
+        longitude = src.longitude;
+        latitude = src.latitude;
+        height = src.height;
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.isEmpty()) {

@@ -262,6 +262,24 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
+    public BasicInfo deepCopy() {
+        var copy = new BasicInfo();
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(BasicInfo src) {
+        name = src.name;
+        avatar = src.avatar;
+        lastLoginTime = src.lastLoginTime;
+        var gis = src.gis;
+        if (gis != null) {
+            this.gis = src.gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
+        }
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.isEmpty()) {

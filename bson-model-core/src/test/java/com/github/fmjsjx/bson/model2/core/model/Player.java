@@ -328,6 +328,37 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
+    public Player deepCopy() {
+        var copy = new Player();
+        deepCopyTo(copy, false);
+        return copy;
+    }
+
+    @Override
+    protected void deepCopyFrom(Player src) {
+        uid = src.uid;
+        src.basicInfo.deepCopyTo(basicInfo, false);
+        src.wallet.deepCopyTo(wallet, false);
+        src.equipments.deepCopyTo(equipments, false);
+        src.items.deepCopyTo(items, false);
+        updateVersion = src.updateVersion;
+        createTime = src.createTime;
+        updateTime = src.updateTime;
+        var friends = src.friends;
+        if (friends != null) {
+            var friendsCopy = new ArrayList<Player>(friends.size());
+            for (var friendsCopyValue : friends) {
+                if (friendsCopyValue == null) {
+                    friendsCopy.add(null);
+                } else {
+                    friendsCopy.add(friendsCopyValue.deepCopy());
+                }
+            }
+            this.friends = friendsCopy;
+        }
+    }
+
+    @Override
     protected void appendFieldUpdates(List<Bson> updates) {
         var changedFields = this.changedFields;
         if (changedFields.isEmpty()) {

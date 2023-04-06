@@ -117,4 +117,11 @@ public interface BsonModel<T extends BsonValue> {
      */
     Object toDeletedData();
 
+    /**
+     * Deep copy.
+     *
+     * @return a new model
+     */
+    BsonModel<T> deepCopy();
+
 }

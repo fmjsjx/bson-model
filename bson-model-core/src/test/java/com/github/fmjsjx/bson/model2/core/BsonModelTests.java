@@ -156,4 +156,46 @@ public class BsonModelTests {
         assertEquals(Updates.unset("i.2001"), updates.get(3));
     }
 
+    @Test
+    public void testDeepCopy() {
+        var player = testPlayer1();
+        var equipment = testEquipment1();
+        player.getEquipments().put(equipment.getId(), equipment);
+
+        var copy = player.deepCopy();
+
+        var bson = new BsonDocument("_id", new BsonInt32(1))
+                .append("bi",
+                        new BsonDocument("n", new BsonString("test"))
+                                .append("a", new BsonString(""))
+                                .append("llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime())))
+                                .append("g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832)))
+                ).append("w",
+                        new BsonDocument("ct", new BsonInt64(0))
+                                .append("cu", new BsonInt64(0))
+                                .append("d", new BsonInt64(0))
+                                .append("ad", new BsonInt32(0))
+                ).append("e",
+                        new BsonDocument(
+                                equipment.getId(),
+                                new BsonDocument("i", new BsonString(equipment.getId()))
+                                        .append("ri", new BsonInt32(1))
+                                        .append("a", new BsonInt32(10))
+                                        .append("d", new BsonInt32(0))
+                                        .append("h", new BsonInt32(0))
+                        )
+                ).append("i",
+                        new BsonDocument("1001", new BsonInt32(3))
+                                .append("2001", new BsonInt32(1))
+                ).append("_uv", new BsonInt32(0))
+                .append("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())))
+                .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
+        assertEquals(bson.toBsonDocument().toJson(), copy.toBson().toBsonDocument().toJson());
+        var json = """
+                {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":0,"coin":0,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
+        json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
+        json = json.replace("${equipment.id}", equipment.getId());
+        assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(copy.toData()));
+    }
+
 }
