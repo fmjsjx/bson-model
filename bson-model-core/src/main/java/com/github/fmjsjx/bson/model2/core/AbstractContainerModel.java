@@ -14,7 +14,7 @@ import org.bson.BsonValue;
  * @see DefaultMapModel
  * @since 2.0
  */
-abstract class AbstractContainerModel<T extends BsonValue, Self extends AbstractContainerModel<T, Self>> extends AbstractBsonModel<T, Self> {
+public abstract class AbstractContainerModel<T extends BsonValue, Self extends AbstractContainerModel<T, Self>> extends AbstractBsonModel<T, Self> {
 
     /**
      * Returns the number of elements in this container.
