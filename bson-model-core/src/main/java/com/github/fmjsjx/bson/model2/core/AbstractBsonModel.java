@@ -11,7 +11,7 @@ import org.bson.BsonValue;
  * @author MJ Fang
  * @since 2.0
  */
-abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonModel<T, Self>> implements BsonModel<T> {
+public abstract class AbstractBsonModel<T extends BsonValue, Self extends AbstractBsonModel<T, Self>> implements BsonModel<T> {
 
     protected BsonModel<?> parent;
     protected int index = -1;
