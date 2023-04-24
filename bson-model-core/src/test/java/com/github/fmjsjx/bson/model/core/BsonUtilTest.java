@@ -425,6 +425,13 @@ public class BsonUtilTest {
     }
 
     @Test
+    public void testUuidLegacyValue() {
+        var uuid = UUID.randomUUID();
+        assertTrue(BsonUtil.uuidLegacyValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid").isPresent());
+        assertEquals(uuid, BsonUtil.uuidLegacyValue(new BsonDocument("uuid", new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY)), "uuid").orElseThrow());
+    }
+
+    @Test
     public void testToBsonArray() {
         var list = List.of("a", "b", "c", "d", "e");
         var array = BsonUtil.toBsonArray(list, SingleValueTypes.STRING::toBsonValue);
@@ -467,6 +474,18 @@ public class BsonUtilTest {
         assertEquals(new BsonDouble(1), array.get(0));
         assertEquals(new BsonDouble(2), array.get(1));
         assertEquals(new BsonDouble(3), array.get(2));
+    }
+
+    @Test
+    public void testToBsonBinary() {
+        var uuid = UUID.randomUUID();
+        assertEquals(new BsonBinary(uuid, UuidRepresentation.STANDARD), BsonUtil.toBsonBinary(uuid));
+    }
+
+    @Test
+    public void toBsonBinaryUuidLegacy() {
+        var uuid = UUID.randomUUID();
+        assertEquals(new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY), BsonUtil.toBsonBinaryUuidLegacy(uuid));
     }
 
 }

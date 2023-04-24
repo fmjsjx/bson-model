@@ -563,6 +563,10 @@ class FieldConf
         DateTimeFieldConf.new(name, bname)
       when 'object-id'
         ObjectIdFieldConf.new(name, bname)
+      when 'uuid'
+        UUIDFieldConf.new(name, bname)
+      when 'uuid-legacy'
+        UUIDLegacyFieldConf.new(name, bname)
       when 'int-array'
         IntArrayFieldConf.new(name, bname)
       when 'long-array'
@@ -1621,6 +1625,198 @@ class ObjectIdFieldConf < FieldConf
 
 end
 
+class UUIDFieldConf < FieldConf
+
+  def initialize(name, bname)
+    super(name, bname, 'uuid')
+  end
+
+  def generic_type
+    'UUID'
+  end
+
+  def generate_reality_declare_code
+    "    private #{generic_type} #@name;\n"
+  end
+
+  def generate_append_to_bson_code(bson_var)
+    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinary(#@name)")
+  end
+
+  def generate_reality_load_code
+    if required?
+      "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElse(null);\n"
+    end
+  end
+
+  def generate_reality_append_to_json_node_code(json_node_var)
+    generate_put_value_to_json_node_code(json_node_var, "#@name.toString()")
+  end
+
+  def generate_virtual_put_to_data_code(data_var)
+    if required?
+      "        data.put(\"#@name\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "        var #@name = #{getter_name}();\n"
+      code << "        if (#@name != null) {\n"
+      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_visiable_put_to_data_code(data_var)
+    if required?
+      "        data.put(\"#@name\", #@name.toString());\n"
+    else
+      code = ''
+      code << "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_clean_code
+    "        #@name = null;\n"
+  end
+
+  def generate_append_updates_code
+    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinary(#@name)))")
+  end
+
+  def generate_reality_load_object_node_code
+    if required?
+      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElse(null);\n"
+    end
+  end
+
+  def generate_virtual_append_value_to_update_data_code
+    if required?
+      "            data.put(\"#@name\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "            var #@name = #{getter_name}();\n"
+      code << "            if (#@name != null) {\n"
+      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+  def generate_reality_append_value_to_update_data_code
+    if required?
+      "            data.put(\"#@name\", #@name.toString());\n"
+    else
+      code = ''
+      code << "            var #@name = this.#@name;\n"
+      code << "            if (#@name != null) {\n"
+      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+end
+
+class UUIDLegacyFieldConf < FieldConf
+
+  def initialize(name, bname)
+    super(name, bname, 'uuid-legacy')
+  end
+
+  def generic_type
+    'UUID'
+  end
+
+  def generate_reality_declare_code
+    "    private #{generic_type} #@name;\n"
+  end
+
+  def generate_append_to_bson_code(bson_var)
+    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinaryUuidLegacy(#@name)")
+  end
+
+  def generate_reality_load_code
+    if required?
+      "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElse(null);\n"
+    end
+  end
+
+  def generate_reality_append_to_json_node_code(json_node_var)
+    generate_put_value_to_json_node_code(json_node_var, "#@name.toString()")
+  end
+
+  def generate_virtual_put_to_data_code(data_var)
+    if required?
+      "        data.put(\"#@name\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "        var #@name = #{getter_name}();\n"
+      code << "        if (#@name != null) {\n"
+      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_visiable_put_to_data_code(data_var)
+    if required?
+      "        data.put(\"#@name\", #@name.toString());\n"
+    else
+      code = ''
+      code << "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_clean_code
+    "        #@name = null;\n"
+  end
+
+  def generate_append_updates_code
+    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinaryUuidLegacy(#@name)))")
+  end
+
+  def generate_reality_load_object_node_code
+    if required?
+      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID:fromString).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID:fromString).orElse(null);\n"
+    end
+  end
+
+  def generate_virtual_append_value_to_update_data_code
+    if required?
+      "            data.put(\"#@name\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "            var #@name = #{getter_name}();\n"
+      code << "            if (#@name != null) {\n"
+      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+  def generate_reality_append_value_to_update_data_code
+    if required?
+      "            data.put(\"#@name\", #@name.toString());\n"
+    else
+      code = ''
+      code << "            var #@name = this.#@name;\n"
+      code << "            if (#@name != null) {\n"
+      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+end
+
 class PrimitiveArrayFieldConf < FieldConf
 
   attr_reader :primitive_value_type
@@ -1747,6 +1943,27 @@ class StdListFieldConf < FieldConf
     super(name, bname, 'std-list')
   end
 
+  def value_type
+    case @value
+    when 'int'
+      'Integer'
+    when 'long'
+      'Long'
+    when 'double'
+      'Double'
+    when 'string'
+      'String'
+    when 'uuid', 'uuid-legacy'
+      'UUID'
+    when 'datetime'
+      'LocalDateTime'
+    when 'object-id'
+      'ObjectId'
+    else
+      raise "unsupported value type `#@value`"
+    end
+  end
+
   def generic_type
     if @value == 'object'
       "List<#@model>"
@@ -1781,6 +1998,10 @@ class StdListFieldConf < FieldConf
       'BsonString::new'
     when 'datetime'
       'BsonUtil::toBsonDateTime'
+    when 'object-id'
+      'BsonObjectId::new'
+    when 'uuid'
+      'BsonUtil::toBsonBinary'
     when 'object'
       raise 'std-list must be either `loadonly` or `transient` when has object values'
     else
@@ -1832,6 +2053,18 @@ class StdListFieldConf < FieldConf
       else
         "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonObjectId::getValue).orElse(null);\n"
       end
+    when 'uuid'
+      if required?
+        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElse(null);\n"
+      end
+    when 'uuid-legacy'
+      if required?
+        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElse(null);\n"
+      end
     when 'object'
       if required?
         "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElseGet(List::of);\n"
@@ -1852,6 +2085,8 @@ class StdListFieldConf < FieldConf
       "#@name.stream().mapToInt(DateTimeUtil::toEpochMilli).forEach(#{array_node_var}::add);"
     when 'object-id'
       "#@name.stream().map(ObjectId::toHexString).forEach(#{array_node_var}::add);"
+    when 'uuid', 'uuid-legacy'
+      "#@name.stream().map(UUID::toString).forEach(#{array_node_var}::add);"
     when 'object'
       "#@name.stream().map(#@model::toJsonNode).forEach(#{array_node_var}::add);"
     else
@@ -1881,6 +2116,8 @@ class StdListFieldConf < FieldConf
       '.stream().map(LocalDateTime::toString).toList()'
     when 'object-id'
       '.stream().map(ObjectId::toHexString).toList()'
+    when 'uuid', 'uuid-legacy'
+      '.stream().map(UUID::toString).toList()'
     else
       raise "unsupport value type `@value` for std-list"
     end
@@ -1921,7 +2158,7 @@ class StdListFieldConf < FieldConf
   def generate_deep_copy_from_code
     code = ''
     case @value
-    when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id'
+    when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id', 'uuid', 'uuid-legacy'
       code << "        var #@name = src.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            this.#@name = new ArrayList<>(src.#@name);\n"
@@ -1984,15 +2221,21 @@ class StdListFieldConf < FieldConf
       end
     when 'datetime'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(value.longValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(value.longValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElse(null);\n"
       end
     when 'object-id'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(value.textValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(value.textValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElse(null);\n"
+      end
+    when 'uuid', 'uuid-legacy'
+      if required?
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElse(null);\n"
       end
     when 'object'
       if required?

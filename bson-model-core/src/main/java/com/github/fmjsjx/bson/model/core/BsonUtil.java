@@ -1511,11 +1511,7 @@ public class BsonUtil {
      * @since 2.0
      */
     public static final Optional<UUID> uuidValue(BsonDocument document, String key) {
-        var value = document.get(key);
-        if (value == null || value.isNull()) {
-            return Optional.empty();
-        }
-        return Optional.of(value.asBinary().asUuid());
+        return uuidValue(document, key, UuidRepresentation.STANDARD);
     }
 
     /**
@@ -2005,6 +2001,40 @@ public class BsonUtil {
             return Optional.of(list);
         }
         throw new ClassCastException(String.format("The value is not a ARRAY (%s)", value.getNodeType().name()));
+    }
+
+    /**
+     * Convert the specified {@link UUID} to {@link BsonBinary}.
+     *
+     * @param uuid the {@code UUID} to be converted
+     * @return a {@code BsonBinary}
+     * @since 2.0
+     */
+    public static final BsonBinary toBsonBinary(UUID uuid) {
+        return new BsonBinary(uuid, UuidRepresentation.STANDARD);
+    }
+
+    /**
+     * Convert the specified {@link UUID} to {@link BsonBinary} with binary subtype {@code 3} .
+     *
+     * @param uuid the {@code UUID} to be converted
+     * @return a {@code BsonBinary}
+     * @since 2.0
+     */
+    public static final BsonBinary toBsonBinaryUuidLegacy(UUID uuid) {
+        return new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY);
+    }
+
+    /**
+     * Gets the {@link UUID} value in a document.
+     *
+     * @param document           the source document
+     * @param key                the key
+     * @return an {@code Optional<UUID>}
+     * @since 2.0
+     */
+    public static final Optional<UUID> uuidLegacyValue(BsonDocument document, String key) {
+       return uuidValue(document, key, UuidRepresentation.JAVA_LEGACY);
     }
 
     private BsonUtil() {
