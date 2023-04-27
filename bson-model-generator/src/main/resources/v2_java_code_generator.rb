@@ -566,7 +566,7 @@ class FieldConf
       when 'uuid'
         UUIDFieldConf.new(name, bname)
       when 'uuid-legacy'
-        UUIDLegacyFieldConf.new(name, bname)
+        UUIDFieldConf.new(name, bname, true)
       when 'int-array'
         IntArrayFieldConf.new(name, bname)
       when 'long-array'
@@ -820,7 +820,21 @@ class FieldConf
     if virtual?
       return nil
     end
+    if transient?
+      generate_transient_declare_code
+    elsif loadonly?
+      generate_loadonly_declare_code
+    else
+      generate_reality_declare_code
+    end
+  end
+
+  def generate_transient_declare_code
     generate_reality_declare_code
+  end
+
+  def generate_loadonly_declare_code
+    generate_transient_declare_code
   end
 
   def generate_reality_declare_code
@@ -1317,7 +1331,7 @@ class BooleanFieldConf < PrimitiveFieldConf
 
   def required_default_value_code
     case @default.to_s.downcase
-    when 'true', 1
+    when 'true', '1'
       'true'
     else
       'false'
@@ -1343,9 +1357,9 @@ class BooleanFieldConf < PrimitiveFieldConf
   def generate_reality_load_code
     if required?
       if has_default?
-        "        #@name = BsonUtil.booleanValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.booleanValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
       "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElse(null);\n"
@@ -1627,8 +1641,11 @@ end
 
 class UUIDFieldConf < FieldConf
 
-  def initialize(name, bname)
-    super(name, bname, 'uuid')
+  attr_reader :legacy
+
+  def initialize(name, bname, legacy = false)
+    super(name, bname, legacy ? 'uuid-legacy' : 'uuid')
+    @legacy = legacy
   end
 
   def generic_type
@@ -1640,14 +1657,26 @@ class UUIDFieldConf < FieldConf
   end
 
   def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinary(#@name)")
+    if @legacy
+      generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinaryUuidLegacy(#@name)")
+    else
+      generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinary(#@name)")
+    end
   end
 
   def generate_reality_load_code
-    if required?
-      "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElseThrow();\n"
+    if @legacy
+      if required?
+        "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElseThrow();\n"
+      else
+        "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElse(null);\n"
+      end
     else
-      "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElse(null);\n"
+      if required?
+        "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElseThrow();\n"
+      else
+        "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElse(null);\n"
+      end
     end
   end
 
@@ -1692,102 +1721,6 @@ class UUIDFieldConf < FieldConf
       "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
     else
       "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElse(null);\n"
-    end
-  end
-
-  def generate_virtual_append_value_to_update_data_code
-    if required?
-      "            data.put(\"#@name\", #{getter_name}().toString());\n"
-    else
-      code = ''
-      code << "            var #@name = #{getter_name}();\n"
-      code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
-      code << "            }\n"
-    end
-  end
-
-  def generate_reality_append_value_to_update_data_code
-    if required?
-      "            data.put(\"#@name\", #@name.toString());\n"
-    else
-      code = ''
-      code << "            var #@name = this.#@name;\n"
-      code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
-      code << "            }\n"
-    end
-  end
-
-end
-
-class UUIDLegacyFieldConf < FieldConf
-
-  def initialize(name, bname)
-    super(name, bname, 'uuid-legacy')
-  end
-
-  def generic_type
-    'UUID'
-  end
-
-  def generate_reality_declare_code
-    "    private #{generic_type} #@name;\n"
-  end
-
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinaryUuidLegacy(#@name)")
-  end
-
-  def generate_reality_load_code
-    if required?
-      "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElseThrow();\n"
-    else
-      "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElse(null);\n"
-    end
-  end
-
-  def generate_reality_append_to_json_node_code(json_node_var)
-    generate_put_value_to_json_node_code(json_node_var, "#@name.toString()")
-  end
-
-  def generate_virtual_put_to_data_code(data_var)
-    if required?
-      "        data.put(\"#@name\", #{getter_name}().toString());\n"
-    else
-      code = ''
-      code << "        var #@name = #{getter_name}();\n"
-      code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
-      code << "        }\n"
-    end
-  end
-
-  def generate_visiable_put_to_data_code(data_var)
-    if required?
-      "        data.put(\"#@name\", #@name.toString());\n"
-    else
-      code = ''
-      code << "        var #@name = this.#@name;\n"
-      code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
-      code << "        }\n"
-    end
-  end
-
-  def generate_clean_code
-    "        #@name = null;\n"
-  end
-
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinaryUuidLegacy(#@name)))")
-  end
-
-  def generate_reality_load_object_node_code
-    if required?
-      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID:fromString).orElseThrow();\n"
-    else
-      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID:fromString).orElse(null);\n"
     end
   end
 
@@ -2522,6 +2455,14 @@ class ObjectFieldConf < ModelFieldConf
     @model
   end
 
+  def generate_transient_declare_code
+    if required?
+      "    private final #{generic_type} #@name = new #{generic_type}();\n"
+    else
+      "    private #{generic_type} #@name;\n"
+    end
+  end
+
   def generate_reality_declare_code
     if required?
       "    private final #{generic_type} #@name = new #{generic_type}().parent(this).key(#{bname_const_field_name}).index(#@index);\n"
@@ -2554,6 +2495,14 @@ class MapFieldConf < ModelFieldConf
     end
   end
 
+  def generate_transient_declare_code
+    if required?
+      "    private final #{generic_type} #@name = #{map_init_code};\n"
+    else
+      "    private #{generic_type} #@name;\n"
+    end
+  end
+
   def generate_reality_declare_code
     if required?
       "    private final #{generic_type} #@name = #{map_init_code}.parent(this).key(#{bname_const_field_name}).index(#@index);\n"
@@ -2575,18 +2524,6 @@ class MapFieldConf < ModelFieldConf
         raise "unsupported key type `#@key`"
       end
     else
-      single_value_type = case @value
-      when 'int'
-        'SingleValueTypes.INTEGER'
-      when 'long'
-        'SingleValueTypes.LONG'
-      when 'double'
-        'SingleValueTypes.DOUBLE'
-      when 'string'
-        'SingleValueTypes.STRING'
-      else
-        raise "unsupported value type `#@value`"
-      end
       case @key
       when 'int'
         "SingleValueMapModel.integerKeysMap(#{single_value_type})"
@@ -2597,6 +2534,21 @@ class MapFieldConf < ModelFieldConf
       else
         raise "unsupported key type `#@key`"
       end
+    end
+  end
+
+  def single_value_type
+    case @value
+    when 'int'
+      'SingleValueTypes.INTEGER'
+    when 'long'
+      'SingleValueTypes.LONG'
+    when 'double'
+      'SingleValueTypes.DOUBLE'
+    when 'string'
+      'SingleValueTypes.STRING'
+    else
+      raise "unsupported value type `#@value`"
     end
   end
 
@@ -2622,6 +2574,10 @@ class ListFieldConf < ModelFieldConf
     else
       raise "unsupported value type `#@value` for list"
     end
+  end
+
+  def generate_transient_declare_code
+    raise "list field can't be neither transient nor loadonly"
   end
 
   def generate_reality_declare_code
