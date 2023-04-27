@@ -2404,7 +2404,7 @@ class ModelFieldConf < FieldConf
     if required?
       code << "            var #{var_deleted_data} = #{getter_name}().toDeletedData();\n"
       code << "            if (#{var_deleted_data} != null) {\n"
-      code << "                data.put(\"#@name\", 1);\n"
+      code << "                data.put(\"#@name\", #{var_deleted_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = #{getter_name}();\n"
@@ -2413,7 +2413,7 @@ class ModelFieldConf < FieldConf
       code << "            } else {\n"
       code << "                var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "                if (#{var_deleted_data} != null) {\n"
-      code << "                    data.put(\"#@name\", 1);\n"
+      code << "                    data.put(\"#@name\", #{var_deleted_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
@@ -2427,7 +2427,7 @@ class ModelFieldConf < FieldConf
     if required?
       code << "            var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "            if (#{var_deleted_data} != null) {\n"
-      code << "                data.put(\"#@name\", 1);\n"
+      code << "                data.put(\"#@name\", #{var_deleted_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = this.#@name;\n"
@@ -2436,7 +2436,7 @@ class ModelFieldConf < FieldConf
       code << "            } else {\n"
       code << "                var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "                if (#{var_deleted_data} != null) {\n"
-      code << "                    data.put(\"#@name\", 1);\n"
+      code << "                    data.put(\"#@name\", #{var_deleted_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
