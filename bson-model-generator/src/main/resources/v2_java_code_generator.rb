@@ -1395,8 +1395,12 @@ class StringFieldConf < FieldConf
   end
 
   def generate_reality_declare_code
-    if required? and has_default?
-      "    private #{generic_type} #@name = #{default_value_code};\n"
+    if required?
+      if has_default?
+        "    private #{generic_type} #@name = #{default_value_code};\n"
+      else
+        "    private #{generic_type} #@name = \"\";\n"
+      end
     else
       "    private #{generic_type} #@name;\n"
     end
@@ -1423,8 +1427,12 @@ class StringFieldConf < FieldConf
   end
 
   def generate_clean_code
-    if required? and has_default?
-      "        #@name = #{default_value_code};\n"
+    if required?
+      if has_default?
+        "        #@name = #{default_value_code};\n"
+      else
+        "        #@name = \"\";\n"
+      end
     else
       "        #@name = null;\n"
     end
@@ -1518,8 +1526,12 @@ class DateTimeFieldConf < FieldConf
   end
 
   def generate_clean_code
-    if required? and has_default?
-      "        #@name = #{default_value_code};\n"
+    if required?
+      if has_default?
+        "        #@name = #{default_value_code};\n"
+      else
+        "        #@name = \"\";\n"
+      end
     else
       "        #@name = null;\n"
     end
@@ -1768,8 +1780,12 @@ class PrimitiveArrayFieldConf < FieldConf
   end
 
   def generate_reality_declare_code
-    if required? and has_default?
-      "    private #{generic_type} #@name = #{default_value_code};\n"
+    if required?
+      if has_default?
+        "    private #{generic_type} #@name = #{default_value_code};\n"
+      else
+        "    private #{generic_type} #@name = new #@primitive_value_type[] {};\n"
+      end
     else
       "    private #{generic_type} #@name;\n"
     end
@@ -1823,8 +1839,12 @@ class PrimitiveArrayFieldConf < FieldConf
   end
 
   def generate_clean_code
-    if required? and has_default?
-      "        #@name = #{default_value_code};\n"
+    if required?
+      if has_default?
+        "        #@name = #{default_value_code};\n"
+      else
+        "        #@name = new #@primitive_value_type[]{};\n"
+      end
     else
       "        #@name = null;\n"
     end
@@ -2081,7 +2101,7 @@ class StdListFieldConf < FieldConf
   end
 
   def generate_clean_code
-    if required? and has_default?
+    if required?
       "        #@name = List.of();\n"
     else
       "        #@name = null;\n"
