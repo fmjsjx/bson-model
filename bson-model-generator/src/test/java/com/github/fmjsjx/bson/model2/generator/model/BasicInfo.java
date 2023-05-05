@@ -1,4 +1,4 @@
-package com.github.fmjsjx.bson.model2.core.model;
+package com.github.fmjsjx.bson.model2.generator.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -190,9 +190,6 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         if (changedFields.get(2)) {
             return true;
         }
-        if (changedFields.get(3)) {
-            return true;
-        }
         if (changedFields.get(4)) {
             var gis = this.gis;
             if (gis != null && gis.anyUpdated()) {
@@ -269,13 +266,13 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    protected void deepCopyFrom(BasicInfo src) {
+    public void deepCopyFrom(BasicInfo src) {
         name = src.name;
         avatar = src.avatar;
         lastLoginTime = src.lastLoginTime;
         var gis = src.gis;
         if (gis != null) {
-            this.gis = src.gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
+            this.gis = gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
         }
     }
 
@@ -375,7 +372,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
             } else {
                 var gisDeletedData = gis.toDeletedData();
                 if (gisDeletedData != null) {
-                    data.put("gis", 1);
+                    data.put("gis", gisDeletedData);
                 }
             }
         }

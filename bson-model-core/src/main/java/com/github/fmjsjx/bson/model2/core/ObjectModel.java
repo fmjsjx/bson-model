@@ -83,6 +83,11 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
         super.resetStates();
     }
 
+    protected final void triggerChanged(int index) {
+        changedFields.set(index);
+        triggerChanged();
+    }
+
     @Override
     public boolean anyChanged() {
         return isFullyUpdate() || changedFields.length() > 0;

@@ -140,17 +140,18 @@ public abstract class AbstractBsonModel<T extends BsonValue, Self extends Abstra
     /**
      * Emit updated event of this model.
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected void emitChanged() {
         var parent = parent();
         if (parent != null) {
-            if (parent instanceof MapModel<?, ?, ?> model && key != null) {
-                model.changedKeys.add(key);
+            if (parent instanceof MapModel model && key != null) {
+                model.triggerChanged(key);
             } else if (parent instanceof ObjectModel<?> model && key != null && index >= 0) {
-                model.changedFields.set(index);
+                model.triggerChanged(index);
             } else if (parent instanceof ListModel<?, ?> model && index >= 0) {
-                model.changedIndexes.add(index);
+                model.triggerChanged(index);
             } else if (parent instanceof AbstractBsonModel<?, ?> model) {
-                model.emitChanged();
+                model.triggerChanged();
             }
         }
     }

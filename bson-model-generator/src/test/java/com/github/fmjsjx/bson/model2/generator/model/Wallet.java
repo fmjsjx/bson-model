@@ -1,4 +1,4 @@
-package com.github.fmjsjx.bson.model2.core.model;
+package com.github.fmjsjx.bson.model2.generator.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -159,9 +159,6 @@ public class Wallet extends ObjectModel<Wallet> {
         if (changedFields.get(1)) {
             return true;
         }
-        if (changedFields.get(2)) {
-            return true;
-        }
         if (changedFields.get(3)) {
             return true;
         }
@@ -203,7 +200,7 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    protected void deepCopyFrom(Wallet src) {
+    public void deepCopyFrom(Wallet src) {
         coinTotal = src.coinTotal;
         coinUsed = src.coinUsed;
         diamond = src.diamond;

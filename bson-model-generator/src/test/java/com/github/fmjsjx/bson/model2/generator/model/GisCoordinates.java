@@ -1,4 +1,4 @@
-package com.github.fmjsjx.bson.model2.core.model;
+package com.github.fmjsjx.bson.model2.generator.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -174,7 +174,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    protected void deepCopyFrom(GisCoordinates src) {
+    public void deepCopyFrom(GisCoordinates src) {
         longitude = src.longitude;
         latitude = src.latitude;
         height = src.height;
