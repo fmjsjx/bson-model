@@ -19,7 +19,7 @@ public class Player extends RootModel<Player> {
     public static final String ROLE_GM = "GM";
     public static final LocalDateTime DOOMSDAY = LocalDateTime.of(2038, 9, 7, 11, 38, 59);
 
-    public static final String BNAME_UID = "_id";
+    public static final String BNAME_ID = "_id";
     public static final String BNAME_BASIC_INFO = "bi";
     public static final String BNAME_WALLET = "w";
     public static final String BNAME_EQUIPMENTS = "e";
@@ -29,7 +29,7 @@ public class Player extends RootModel<Player> {
     public static final String BNAME_UPDATE_TIME = "_ut";
     public static final String BNAME_FRIENDS = "f";
 
-    private int uid;
+    private int id;
     private final BasicInfo basicInfo = new BasicInfo().parent(this).key(BNAME_BASIC_INFO).index(1);
     private final Wallet wallet = new Wallet().parent(this).key(BNAME_WALLET).index(2);
     private final DefaultMapModel<String, Equipment> equipments = DefaultMapModel.stringKeysMap(Equipment::new).parent(this).key(BNAME_EQUIPMENTS).index(3);
@@ -39,13 +39,13 @@ public class Player extends RootModel<Player> {
     private LocalDateTime updateTime;
     private List<Player> friends;
 
-    public int getUid() {
-        return uid;
+    public int getId() {
+        return id;
     }
 
-    public void setUid(int uid) {
-        if (uid != this.uid) {
-            this.uid = uid;
+    public void setId(int id) {
+        if (id != this.id) {
+            this.id = id;
             fieldChanged(0);
         }
     }
@@ -122,7 +122,7 @@ public class Player extends RootModel<Player> {
         this.friends = friends;
     }
 
-    public boolean uidChanged() {
+    public boolean idChanged() {
         return changedFields.get(0);
     }
 
@@ -165,7 +165,7 @@ public class Player extends RootModel<Player> {
     @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
-        bson.append(BNAME_UID, new BsonInt32(uid));
+        bson.append(BNAME_ID, new BsonInt32(id));
         bson.append(BNAME_BASIC_INFO, basicInfo.toBson());
         bson.append(BNAME_WALLET, wallet.toBson());
         bson.append(BNAME_EQUIPMENTS, equipments.toBson());
@@ -179,7 +179,7 @@ public class Player extends RootModel<Player> {
     @Override
     public Player load(BsonDocument src) {
         resetStates();
-        uid = BsonUtil.intValue(src, BNAME_UID).orElseThrow();
+        id = BsonUtil.intValue(src, BNAME_ID).orElseThrow();
         BsonUtil.documentValue(src, BNAME_BASIC_INFO).ifPresentOrElse(basicInfo::load, basicInfo::clean);
         BsonUtil.documentValue(src, BNAME_WALLET).ifPresentOrElse(wallet::load, wallet::clean);
         BsonUtil.documentValue(src, BNAME_EQUIPMENTS).ifPresentOrElse(equipments::load, equipments::clean);
@@ -194,7 +194,7 @@ public class Player extends RootModel<Player> {
     @Override
     public JsonNode toJsonNode() {
         var jsonNode = JsonNodeFactory.instance.objectNode();
-        jsonNode.put(BNAME_UID, uid);
+        jsonNode.put(BNAME_ID, id);
         jsonNode.set(BNAME_BASIC_INFO, basicInfo.toJsonNode());
         jsonNode.set(BNAME_WALLET, wallet.toJsonNode());
         jsonNode.set(BNAME_EQUIPMENTS, equipments.toJsonNode());
@@ -214,7 +214,7 @@ public class Player extends RootModel<Player> {
     @Override
     public Object toData() {
         var data = new LinkedHashMap<>();
-        data.put("uid", uid);
+        data.put("uid", id);
         data.put("basicInfo", basicInfo.toData());
         data.put("wallet", wallet.toData());
         data.put("equipments", equipments.toData());
@@ -314,7 +314,7 @@ public class Player extends RootModel<Player> {
 
     @Override
     public Player clean() {
-        uid = 0;
+        id = 0;
         basicInfo.clean();
         wallet.clean();
         equipments.clean();
@@ -336,7 +336,7 @@ public class Player extends RootModel<Player> {
 
     @Override
     public void deepCopyFrom(Player src) {
-        uid = src.uid;
+        id = src.id;
         src.basicInfo.deepCopyTo(basicInfo, false);
         src.wallet.deepCopyTo(wallet, false);
         src.equipments.deepCopyTo(equipments, false);
@@ -365,7 +365,7 @@ public class Player extends RootModel<Player> {
             return;
         }
         if (changedFields.get(0)) {
-            updates.add(Updates.set(path().resolve(BNAME_UID).value(), uid));
+            updates.add(Updates.set(path().resolve(BNAME_ID).value(), id));
         }
         if (changedFields.get(1)) {
             basicInfo.appendUpdates(updates);
@@ -393,7 +393,7 @@ public class Player extends RootModel<Player> {
     @Override
     protected void loadObjectNode(JsonNode src) {
         resetStates();
-        uid = BsonUtil.intValue(src, BNAME_UID).orElseThrow();
+        id = BsonUtil.intValue(src, BNAME_ID).orElseThrow();
         BsonUtil.objectValue(src, BNAME_BASIC_INFO).ifPresentOrElse(basicInfo::load, basicInfo::clean);
         BsonUtil.objectValue(src, BNAME_WALLET).ifPresentOrElse(wallet::load, wallet::clean);
         BsonUtil.objectValue(src, BNAME_EQUIPMENTS).ifPresentOrElse(equipments::load, equipments::clean);
@@ -411,7 +411,7 @@ public class Player extends RootModel<Player> {
             return;
         }
         if (changedFields.get(0)) {
-            data.put("uid", uid);
+            data.put("uid", id);
         }
         if (changedFields.get(1)) {
             var basicInfoUpdateData = basicInfo.toUpdateData();
@@ -476,7 +476,7 @@ public class Player extends RootModel<Player> {
 
     @Override
     public String toString() {
-        return "Player(" + "uid=" + uid +
+        return "Player(" + "id=" + id +
                 ", basicInfo=" + basicInfo +
                 ", wallet=" + wallet +
                 ", equipments=" + equipments +

@@ -20,7 +20,7 @@ public class TestModel {
     private static Player testPlayer1() {
         var now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         var player = new Player();
-        player.setUid(1);
+        player.setId(1);
         player.getBasicInfo().setName("test");
         player.getBasicInfo().setAvatar("");
         player.getBasicInfo().setLastLoginTime(now);
