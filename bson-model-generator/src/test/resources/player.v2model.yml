@@ -16,7 +16,7 @@ models:
   - name: DOOMSDAY
     type: datetime const
     value: LocalDateTime.of(2038, 9, 7, 11, 38, 59)
-  - name: uid _id
+  - name: id _id uid
     type: int required
   - name: basicInfo bi
     type: object required

@@ -247,7 +247,7 @@ class ModelConf
     end.each do |c|
       code << c
     end
-    code << "        return data;\n"
+    code << "        return #{data_var};\n"
     code << "    }\n\n"
   end
 
@@ -397,12 +397,13 @@ class ModelConf
   end
 
   def generate_deep_copy_from_code
+    src_var = variable_name('src')
     code = "    @Override\n"
-    code << "    public void deepCopyFrom(#@name src) {\n"
+    code << "    public void deepCopyFrom(#@name #{src_var}) {\n"
     fields = @fields.select { |field| not field.virtual? }
     unless fields.empty?
       fields.map do |field|
-        field.generate_deep_copy_from_code
+        field.generate_deep_copy_from_code(src_var)
       end.select do |c|
         not c.nil?
       end.each do |c|
@@ -413,8 +414,9 @@ class ModelConf
   end
 
   def generate_append_field_updates_code
+    updates_var = variable_name('updates')
     code = "    @Override\n"
-    code << "    protected void appendFieldUpdates(List<Bson> updates) {\n"
+    code << "    protected void appendFieldUpdates(List<Bson> #{updates_var}) {\n"
     fields = reality_fields
     unless fields.empty?
       code << "        var changedFields = this.changedFields;\n"
@@ -422,7 +424,7 @@ class ModelConf
       code << "            return;\n"
       code << "        }\n"
       fields.each do |field|
-        code << field.generate_append_updates_code
+        code << field.generate_append_updates_code(updates_var)
       end
     end
     code << "    }\n\n"
@@ -444,8 +446,9 @@ class ModelConf
   end
 
   def generate_append_update_data_code
+    data_var = variable_name('data')
     code = "    @Override\n"
-    code << "    protected void appendUpdateData(Map<Object, Object> data) {\n" 
+    code << "    protected void appendUpdateData(Map<Object, Object> #{data_var}) {\n" 
     fields = @fields.select { |field| not field.hidden? and not field.loadonly? and not field.transient? }
     unless fields.empty?
       code << "        var changedFields = this.changedFields;\n"
@@ -453,7 +456,7 @@ class ModelConf
       code << "            return;\n"
       code << "        }\n"
       fields.map do |field|
-        field.generate_append_update_data_code
+        field.generate_append_update_data_code(data_var)
       end.select do |c|
         not c.nil?
       end.each do |c|
@@ -471,13 +474,14 @@ class ModelConf
   end
 
   def generate_append_deleted_data_code
+    data_var = variable_name('data')
     code = "    @Override\n"
-    code << "    protected void appendDeletedData(Map<Object, Object> data) {\n"
+    code << "    protected void appendDeletedData(Map<Object, Object> #{data_var}) {\n"
     fields = @fields.select { |field| not field.hidden? and not field.loadonly? and not field.transient? }
     if fields.any? { |field| not field.required? or not field.single_value? }
       code << "        var changedFields = this.changedFields;\n"
       fields.map do |field|
-        field.generate_append_deleted_data_code
+        field.generate_append_deleted_data_code(data_var)
       end.select do |c|
         not c.nil?
       end.each do |c|
@@ -547,42 +551,47 @@ class FieldConf
 
   class << self
     def from(field_cfg)
-      name, bname = field_cfg['name'].split(' ')
-      bname = if bname.nil? then name else bname end
+      name, bname, dname = field_cfg['name'].split(' ')
+      if bname.nil?
+        bname = name
+      end
+      if dname.nil?
+        dname = name
+      end
       type = field_cfg['type'].split(' ')[0]
       cfg = case type
       when 'int'
-        IntFieldConf.new(name, bname)
+        IntFieldConf.new(name, bname, dname)
       when 'long'
-        LongFieldConf.new(name, bname)
+        LongFieldConf.new(name, bname, dname)
       when 'double'
-        DoubleFieldConf.new(name, bname)
+        DoubleFieldConf.new(name, bname, dname)
       when 'boolean'
-        BooleanFieldConf.new(name, bname)
+        BooleanFieldConf.new(name, bname, dname)
       when 'string'
-        StringFieldConf.new(name, bname)
+        StringFieldConf.new(name, bname, dname)
       when 'datetime'
-        DateTimeFieldConf.new(name, bname)
+        DateTimeFieldConf.new(name, bname, dname)
       when 'object-id'
-        ObjectIdFieldConf.new(name, bname)
+        ObjectIdFieldConf.new(name, bname, dname)
       when 'uuid'
-        UUIDFieldConf.new(name, bname)
+        UUIDFieldConf.new(name, bname, dname)
       when 'uuid-legacy'
-        UUIDFieldConf.new(name, bname, true)
+        UUIDFieldConf.new(name, bname, dname, true)
       when 'int-array'
-        IntArrayFieldConf.new(name, bname)
+        IntArrayFieldConf.new(name, bname, dname)
       when 'long-array'
-        LongArrayFieldConf.new(name, bname)
+        LongArrayFieldConf.new(name, bname, dname)
       when 'double-array'
-        DoubleArrayFieldConf.new(name, bname)
+        DoubleArrayFieldConf.new(name, bname, dname)
       when 'std-list'
-        StdListFieldConf.new(name, bname)
+        StdListFieldConf.new(name, bname, dname)
       when 'object'
-        ObjectFieldConf.new(name, bname)
+        ObjectFieldConf.new(name, bname, dname)
       when 'map'
-        MapFieldConf.new(name, bname)
+        MapFieldConf.new(name, bname, dname)
       when 'list'
-        ListFieldConf.new(name, bname)
+        ListFieldConf.new(name, bname, dname)
       else
         raise "unsupported field type `#{type}`"
       end
@@ -628,6 +637,7 @@ class FieldConf
 
   attr_reader :name,
               :bname,
+              :dname,
               :type,
               :parent_model,
               :index,
@@ -640,9 +650,10 @@ class FieldConf
                 :sources,
                 :lambda_expression
 
-  def initialize(name, bname, type)
+  def initialize(name, bname, dname, type)
     @name = name
     @bname = bname
+    @dname = dname
     @type = type
     @required = false
     @virtual = false
@@ -985,24 +996,24 @@ class FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}());\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}());\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name);\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name);\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name);\n"
+      "        #{data_var}.put(\"#@dname\", #@name);\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name);\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name);\n"
       code << "        }\n"
     end
   end
@@ -1028,22 +1039,22 @@ class FieldConf
     nil
   end
 
-  def generate_deep_copy_from_code
-    "        #@name = src.#@name;\n"
+  def generate_deep_copy_from_code(src_var)
+    "        #@name = #{src_var}.#@name;\n"
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), #@name))")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), #@name))")
   end
   
-  def generate_reality_append_updates_code(append_code)
+  def generate_reality_append_updates_code(updates_var, append_code)
     code = "        if (changedFields.get(#@index)) {\n"
     if required?
       code << "            #{append_code};\n"
     else
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name == null) {\n"
-      code << "                updates.add(Updates.unset(path().resolve(#{bname_const_field_name}).value()));\n"
+      code << "                #{updates_var}.add(Updates.unset(path().resolve(#{bname_const_field_name}).value()));\n"
       code << "            } else {\n"
       code << "                #{append_code};\n"
       code << "            }\n"
@@ -1062,62 +1073,62 @@ class FieldConf
     generate_reality_load_code(src_var)
   end
   
-  def generate_append_update_data_code
+  def generate_append_update_data_code(data_var)
     code = "        if (changedFields.get(#@index)) {\n"
     if virtual?
-      code << generate_virtual_append_value_to_update_data_code
+      code << generate_virtual_append_value_to_update_data_code(data_var)
     else
-      code << generate_reality_append_value_to_update_data_code
+      code << generate_reality_append_value_to_update_data_code(data_var)
     end
     code << "        }\n"
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #{getter_name}());\n"
+      "            #{data_var}.put(\"#@dname\", #{getter_name}());\n"
     else
       code = ''
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name);\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name);\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #@name);\n"
+      "            #{data_var}.put(\"#@dname\", #@name);\n"
     else
       code = ''
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name);\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name);\n"
       code << "            }\n"
     end
   end
 
-  def generate_append_deleted_data_code
+  def generate_append_deleted_data_code(data_var)
     if required? and single_value?
       return nil
     end
     if virtual?
-      generate_virtual_append_deleted_data_code
+      generate_virtual_append_deleted_data_code(data_var)
     else
-      generate_reality_append_deleted_data_code
+      generate_reality_append_deleted_data_code(data_var)
     end
   end
   
-  def generate_virtual_append_deleted_data_code
+  def generate_virtual_append_deleted_data_code(data_var)
     code = ''
     code << "        if (changedFields.get(#@index) && #{getter_name}() == null) {\n"
-    code << "            data.put(\"#@name\", 1);\n"
+    code << "            #{data_var}.put(\"#@dname\", 1);\n"
     code << "        }\n"
   end
 
-  def generate_reality_append_deleted_data_code
+  def generate_reality_append_deleted_data_code(data_var)
     code = ''
     code << "        if (changedFields.get(#@index) && #@name == null) {\n"
-    code << "            data.put(\"#@name\", 1);\n"
+    code << "            #{data_var}.put(\"#@dname\", 1);\n"
     code << "        }\n"
   end
 
@@ -1127,8 +1138,8 @@ class PrimitiveFieldConf < FieldConf
 
   attr_reader :boxed_type
 
-  def initialize(name, bname, type, boxed_type)
-    super(name, bname, type)
+  def initialize(name, bname, dname, type, boxed_type)
+    super(name, bname, dname, type)
     @boxed_type = boxed_type
   end
 
@@ -1184,8 +1195,8 @@ end
 
 class IntFieldConf < PrimitiveFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'int', 'Integer')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'int', 'Integer')
   end
 
   def required_default_value_code
@@ -1219,8 +1230,8 @@ end
 
 class LongFieldConf < PrimitiveFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'long', 'Long')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'long', 'Long')
   end
 
   def required_default_value_code
@@ -1254,8 +1265,8 @@ end
 
 class DoubleFieldConf < PrimitiveFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'double', 'Double')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'double', 'Double')
   end
 
   def required_default_value_code
@@ -1319,8 +1330,8 @@ end
 
 class BooleanFieldConf < PrimitiveFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'boolean', 'Boolean')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'boolean', 'Boolean')
   end
 
   def getter_name
@@ -1384,8 +1395,8 @@ end
 
 class StringFieldConf < FieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'string')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'string')
   end
 
   def generic_type
@@ -1444,8 +1455,8 @@ end
 
 class DateTimeFieldConf < FieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'datetime')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'datetime')
   end
 
   def generic_type
@@ -1505,24 +1516,24 @@ class DateTimeFieldConf < FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}().toString());\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name.toString());\n"
+      "        #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "        }\n"
     end
   end
@@ -1535,30 +1546,30 @@ class DateTimeFieldConf < FieldConf
     end
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonDateTime(#@name)))")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonDateTime(#@name)))")
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #{getter_name}().toString());\n"
+      "            #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
     else
       code = ''
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #@name.toString());\n"
+      "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
       code = ''
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "            }\n"
     end
   end
@@ -1567,8 +1578,8 @@ end
 
 class ObjectIdFieldConf < FieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'object-id')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'object-id')
   end
 
   def generic_type
@@ -1597,24 +1608,24 @@ class ObjectIdFieldConf < FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}().toHexString());\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}().toHexString());\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toHexString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name.toHexString());\n"
+      "        #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toHexString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
       code << "        }\n"
     end
   end
@@ -1623,26 +1634,26 @@ class ObjectIdFieldConf < FieldConf
     "        #@name = null;\n"
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #{getter_name}().toHexString());\n"
+      "            #{data_var}.put(\"#@dname\", #{getter_name}().toHexString());\n"
     else
       code = ''
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toHexString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #@name.toHexString());\n"
+      "            #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
     else
       code = ''
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toHexString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
       code << "            }\n"
     end
   end
@@ -1653,8 +1664,8 @@ class UUIDFieldConf < FieldConf
 
   attr_reader :legacy
 
-  def initialize(name, bname, legacy = false)
-    super(name, bname, legacy ? 'uuid-legacy' : 'uuid')
+  def initialize(name, bname, dname, legacy = false)
+    super(name, bname, dname, legacy ? 'uuid-legacy' : 'uuid')
     @legacy = legacy
   end
 
@@ -1696,24 +1707,24 @@ class UUIDFieldConf < FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}().toString());\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name.toString());\n"
+      "        #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toString());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "        }\n"
     end
   end
@@ -1722,8 +1733,8 @@ class UUIDFieldConf < FieldConf
     "        #@name = null;\n"
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinary(#@name)))")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinary(#@name)))")
   end
 
   def generate_reality_load_object_node_code(src_var)
@@ -1734,26 +1745,26 @@ class UUIDFieldConf < FieldConf
     end
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #{getter_name}().toString());\n"
+      "            #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
     else
       code = ''
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #@name.toString());\n"
+      "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
       code = ''
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name.toString());\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
       code << "            }\n"
     end
   end
@@ -1764,8 +1775,8 @@ class PrimitiveArrayFieldConf < FieldConf
 
   attr_reader :primitive_value_type
 
-  def initialize(name, bname, primitive_value_type)
-    super(name, bname, "#{primitive_value_type}-array")
+  def initialize(name, bname, dname, primitive_value_type)
+    super(name, bname, dname, "#{primitive_value_type}-array")
     @primitive_value_type = primitive_value_type
   end
 
@@ -1848,9 +1859,9 @@ class PrimitiveArrayFieldConf < FieldConf
     end
   end
 
-  def generate_deep_copy_from_code
+  def generate_deep_copy_from_code(src_var)
     code = ''
-    code << "        var #@name = src.#@name;\n"
+    code << "        var #@name = #{src_var}.#@name;\n"
     code << "        if (#@name == null) {\n"
     code << "            this.#@name = null;\n"
     code << "        } else {\n"
@@ -1858,40 +1869,40 @@ class PrimitiveArrayFieldConf < FieldConf
     code << "        }\n"
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name)))")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name)))")
   end
 
 end
 
 class IntArrayFieldConf < PrimitiveArrayFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'int')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'int')
   end
 
 end
 
 class LongArrayFieldConf < PrimitiveArrayFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'long')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'long')
   end
 
 end
 
 class DoubleArrayFieldConf < PrimitiveArrayFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'double')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'double')
   end
 
 end
 
 class StdListFieldConf < FieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'std-list')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'std-list')
   end
 
   def value_type
@@ -2076,24 +2087,24 @@ class StdListFieldConf < FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}()#{data_value_convert_code});\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}()#{data_value_convert_code});\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      "        #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
       code << "        }\n"
     end
   end
@@ -2106,18 +2117,18 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_deep_copy_from_code
+  def generate_deep_copy_from_code(src_var)
     code = ''
     case @value
     when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id', 'uuid', 'uuid-legacy'
-      code << "        var #@name = src.#@name;\n"
+      code << "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            this.#@name = new ArrayList<>(src.#@name);\n"
+      code << "            this.#@name = new ArrayList<>(#{src_var}.#@name);\n"
       code << "        }\n"
     when 'object'
       var_copy = variable_name('Copy')
       var_copy_value = variable_name('CopyValue')
-      code << "        var #@name = src.#@name;\n"
+      code << "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            var #{var_copy} = new ArrayList<#@model>(#@name.size());\n"
       code << "            for (var #{var_copy_value} : #@name) {\n"
@@ -2134,8 +2145,8 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code("#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
   end
 
   def generate_reality_load_object_node_code(src_var)
@@ -2199,26 +2210,26 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #{getter_name}()#{data_value_convert_code});\n"
+      "            #{data_var}.put(\"#@dname\", #{getter_name}()#{data_value_convert_code});\n"
     else
       code = ''
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     if required?
-      "            data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      "            #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
     else
       code = ''
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
-      code << "                data.put(\"#@name\", #@name#{data_value_convert_code});\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
       code << "            }\n"
     end
   end
@@ -2227,8 +2238,8 @@ end
 
 class ModelFieldConf < FieldConf
   
-  def initialize(name, bname, type)
-    super(name, bname, type)
+  def initialize(name, bname, dname, type)
+    super(name, bname, dname, type)
   end
 
   def single_value?
@@ -2291,24 +2302,24 @@ class ModelFieldConf < FieldConf
 
   def generate_virtual_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #{getter_name}().toData());\n"
+      "        #{data_var}.put(\"#@dname\", #{getter_name}().toData());\n"
     else
       code = ''
       code << "        var #@name = #{getter_name}();\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toData());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toData());\n"
       code << "        }\n"
     end
   end
 
   def generate_visiable_put_to_data_code(data_var)
     if required?
-      "        data.put(\"#@name\", #@name.toData());\n"
+      "        #{data_var}.put(\"#@dname\", #@name.toData());\n"
     else
       code = ''
       code << "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            data.put(\"#@name\", #@name.toData());\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toData());\n"
       code << "        }\n"
     end
   end
@@ -2339,19 +2350,19 @@ class ModelFieldConf < FieldConf
     end
   end
 
-  def generate_deep_copy_from_code
+  def generate_deep_copy_from_code(src_var)
     if required?
-      "        src.#@name.deepCopyTo(#@name, false);\n"
+      "        #{src_var}.#@name.deepCopyTo(#@name, false);\n"
     else
-      code = "        var #@name = src.#@name;\n"
+      code = "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            this.#@name = #@name.deepCopy().parent(this).key(#{bname_const_field_name}).index(#@index);\n"
       code << "        }\n"
     end
   end
 
-  def generate_append_updates_code
-    generate_reality_append_updates_code("#@name.appendUpdates(updates)")
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#@name.appendUpdates(#{updates_var})")
   end
   
   def generate_load_model_object_node_code(src_var, factor)
@@ -2377,39 +2388,39 @@ class ModelFieldConf < FieldConf
     end
   end
 
-  def generate_virtual_append_value_to_update_data_code
+  def generate_virtual_append_value_to_update_data_code(data_var)
     code = ''
     var_update_data = variable_name("UpdateData")
     if required?
       code << "            var #{var_update_data} = #{getter_name}().toUpdateData();\n"
       code << "            if (#{var_update_data} != null) {\n"
-      code << "                data.put(\"#@name\", #{var_update_data});\n"
+      code << "                #{data_var}.put(\"#@dname\", #{var_update_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name != null) {\n"
       code << "                var #{var_update_data} = #@name.toUpdateData();\n"
       code << "                if (#{var_update_data} != null) {\n"
-      code << "                    data.put(\"#@name\", #{var_update_data});\n"
+      code << "                    #{data_var}.put(\"#@dname\", #{var_update_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
   end
 
-  def generate_reality_append_value_to_update_data_code
+  def generate_reality_append_value_to_update_data_code(data_var)
     code = ''
     var_update_data = variable_name("UpdateData")
     if required?
       code << "            var #{var_update_data} = #@name.toUpdateData();\n"
       code << "            if (#{var_update_data} != null) {\n"
-      code << "                data.put(\"#@name\", #{var_update_data});\n"
+      code << "                #{data_var}.put(\"#@dname\", #{var_update_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name != null) {\n"
       code << "                var #{var_update_data} = #@name.toUpdateData();\n"
       code << "                if (#{var_update_data} != null) {\n"
-      code << "                    data.put(\"#@name\", #{var_update_data});\n"
+      code << "                    #{data_var}.put(\"#@dname\", #{var_update_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
@@ -2422,39 +2433,39 @@ class ModelFieldConf < FieldConf
     if required?
       code << "            var #{var_deleted_data} = #{getter_name}().toDeletedData();\n"
       code << "            if (#{var_deleted_data} != null) {\n"
-      code << "                data.put(\"#@name\", #{var_deleted_data});\n"
+      code << "                #{data_var}.put(\"#@dname\", #{var_deleted_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = #{getter_name}();\n"
       code << "            if (#@name == null) {\n"
-      code << "                data.put(\"#@name\", 1);\n"
+      code << "                #{data_var}.put(\"#@dname\", 1);\n"
       code << "            } else {\n"
       code << "                var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "                if (#{var_deleted_data} != null) {\n"
-      code << "                    data.put(\"#@name\", #{var_deleted_data});\n"
+      code << "                    #{data_var}.put(\"#@dname\", #{var_deleted_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
     code << "        }\n"
   end
 
-  def generate_reality_append_deleted_data_code
+  def generate_reality_append_deleted_data_code(data_var)
     var_deleted_data = variable_name('DeletedData')
     code = ''
     code << "        if (changedFields.get(#@index)) {\n"
     if required?
       code << "            var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "            if (#{var_deleted_data} != null) {\n"
-      code << "                data.put(\"#@name\", #{var_deleted_data});\n"
+      code << "                #{data_var}.put(\"#@dname\", #{var_deleted_data});\n"
       code << "            }\n"
     else
       code << "            var #@name = this.#@name;\n"
       code << "            if (#@name == null) {\n"
-      code << "                data.put(\"#@name\", 1);\n"
+      code << "                #{data_var}.put(\"#@dname\", 1);\n"
       code << "            } else {\n"
       code << "                var #{var_deleted_data} = #@name.toDeletedData();\n"
       code << "                if (#{var_deleted_data} != null) {\n"
-      code << "                    data.put(\"#@name\", #{var_deleted_data});\n"
+      code << "                    #{data_var}.put(\"#@dname\", #{var_deleted_data});\n"
       code << "                }\n"
       code << "            }\n"
     end
@@ -2465,8 +2476,8 @@ end
 
 class ObjectFieldConf < ModelFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'object')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'object')
   end
 
   def generic_type
@@ -2501,8 +2512,8 @@ end
 
 class MapFieldConf < ModelFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'map')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'map')
   end
 
   def generic_type
@@ -2582,8 +2593,8 @@ end
 
 class ListFieldConf < ModelFieldConf
   
-  def initialize(name, bname)
-    super(name, bname, 'list')
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'list')
   end
 
   def generic_type
