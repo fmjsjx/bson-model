@@ -1,5 +1,4 @@
-package com.github.fmjsjx.bson.model2.core.model;
-
+package com.github.fmjsjx.bson.model2.generator.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -202,7 +201,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
-    protected void deepCopyFrom(Equipment src) {
+    public void deepCopyFrom(Equipment src) {
         id = src.id;
         refId = src.refId;
         atk = src.atk;

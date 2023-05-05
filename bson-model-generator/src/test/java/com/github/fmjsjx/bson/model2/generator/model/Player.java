@@ -1,4 +1,4 @@
-package com.github.fmjsjx.bson.model2.core.model;
+package com.github.fmjsjx.bson.model2.generator.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Player extends RootModel<Player> {
+
+    public static final int ONLINE = 1;
+    public static final int OFFLINE = 0;
+    public static final String ROLE_GM = "GM";
+    public static final LocalDateTime DOOMSDAY = LocalDateTime.of(2038, 9, 7, 11, 38, 59);
 
     public static final String BNAME_UID = "_id";
     public static final String BNAME_BASIC_INFO = "bi";
@@ -253,12 +258,6 @@ public class Player extends RootModel<Player> {
         if (changedFields.get(7)) {
             return true;
         }
-        if (changedFields.get(8)) {
-            return true;
-        }
-        if (changedFields.get(9)) {
-            return true;
-        }
         return false;
     }
 
@@ -323,6 +322,7 @@ public class Player extends RootModel<Player> {
         updateVersion = 0;
         createTime = null;
         updateTime = null;
+        friends = null;
         resetStates();
         return this;
     }
@@ -335,7 +335,7 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    protected void deepCopyFrom(Player src) {
+    public void deepCopyFrom(Player src) {
         uid = src.uid;
         src.basicInfo.deepCopyTo(basicInfo, false);
         src.wallet.deepCopyTo(wallet, false);
@@ -451,25 +451,25 @@ public class Player extends RootModel<Player> {
         if (changedFields.get(1)) {
             var basicInfoDeletedData = basicInfo.toDeletedData();
             if (basicInfoDeletedData != null) {
-                data.put("basicInfo", 1);
+                data.put("basicInfo", basicInfoDeletedData);
             }
         }
         if (changedFields.get(2)) {
             var walletDeletedData = wallet.toDeletedData();
             if (walletDeletedData != null) {
-                data.put("wallet", 1);
+                data.put("wallet", walletDeletedData);
             }
         }
         if (changedFields.get(3)) {
             var equipmentsDeletedData = equipments.toDeletedData();
             if (equipmentsDeletedData != null) {
-                data.put("equipments", 1);
+                data.put("equipments", equipmentsDeletedData);
             }
         }
         if (changedFields.get(4)) {
             var itemsDeletedData = items.toDeletedData();
             if (itemsDeletedData != null) {
-                data.put("items", 1);
+                data.put("items", itemsDeletedData);
             }
         }
     }

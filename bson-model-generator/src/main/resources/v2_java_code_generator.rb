@@ -181,7 +181,7 @@ class ModelConf
     if fields.empty?
       code << "        return new BsonDocument();\n"
     else
-      code << "        var bson = new BsonDocument();\n"
+      code << "        var #{bson_var} = new BsonDocument();\n"
       fields.map do |field|
         field.generate_append_to_bson_code(bson_var)
       end.select do |c|
@@ -189,17 +189,18 @@ class ModelConf
       end.each do |c|
         code << c
       end
-      code << "        return bson;\n"
+      code << "        return #{bson_var};\n"
     end
     code << "    }\n\n"
   end
 
   def generate_load_code
+    src_var = variable_name('src')
     code = "    @Override\n"
-    code << "    public #@name load(BsonDocument src) {\n"
+    code << "    public #@name load(BsonDocument #{src_var}) {\n"
     code << "        resetStates();\n"
     @fields.map do |field|
-      field.generate_load_code
+      field.generate_load_code(src_var)
     end.select do |c|
       not c.nil?
     end.each do |c|
@@ -428,11 +429,12 @@ class ModelConf
   end
 
   def generate_load_object_node_code
+    src_var = variable_name('src')
     code = "    @Override\n"
-    code << "    protected void loadObjectNode(JsonNode src) {\n"
+    code << "    protected void loadObjectNode(JsonNode #{src_var}) {\n"
     code << "        resetStates();\n"
     @fields.map do |field|
-      field.generate_load_object_node_code
+      field.generate_load_object_node_code(src_var)
     end.select do |c|
       not c.nil?
     end.each do |c|
@@ -937,14 +939,14 @@ class FieldConf
     end
   end
 
-  def generate_load_code
+  def generate_load_code(src_var)
     if virtual? or transient?
       return nil
     end
-    generate_reality_load_code
+    generate_reality_load_code(src_var)
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     raise "unsupported type `#@type`"
   end
 
@@ -1049,15 +1051,15 @@ class FieldConf
     code << "        }\n"
   end
 
-  def generate_load_object_node_code
+  def generate_load_object_node_code(src_var)
     if virtual?
       return nil
     end
-    generate_reality_load_object_node_code
+    generate_reality_load_object_node_code(src_var)
   end
 
-  def generate_reality_load_object_node_code
-    generate_reality_load_code
+  def generate_reality_load_object_node_code(src_var)
+    generate_reality_load_code(src_var)
   end
   
   def generate_append_update_data_code
@@ -1201,15 +1203,15 @@ class IntFieldConf < PrimitiveFieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonInt32(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.intValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.intValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.IntegerValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.IntegerValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1236,15 +1238,15 @@ class LongFieldConf < PrimitiveFieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonInt64(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.longValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.longValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.longValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.longValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.boxedLongValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.boxedLongValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1289,15 +1291,15 @@ class DoubleFieldConf < PrimitiveFieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonDouble(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.doubleValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.doubleValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.doubleValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.doubleValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.boxedDoubleValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.boxedDoubleValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1354,15 +1356,15 @@ class BooleanFieldConf < PrimitiveFieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonBoolean(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.boxedBooleanValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.boxedBooleanValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.boxedBooleanValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.boxedBooleanValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1410,15 +1412,15 @@ class StringFieldConf < FieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonString(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1475,7 +1477,7 @@ class DateTimeFieldConf < FieldConf
     generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonDateTime(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
         or_else_code = case @default.downcase
@@ -1488,12 +1490,12 @@ class DateTimeFieldConf < FieldConf
         else
           "orElseGet(() -> LocalDateTime.parse(#{@default.to_json}))"
         end
-        "        #@name = BsonUtil.dateTimeValue(src, #{bname_const_field_name}).#{or_else_code};\n"
+        "        #@name = BsonUtil.dateTimeValue(#{src_var}, #{bname_const_field_name}).#{or_else_code};\n"
       else
-        "        #@name = BsonUtil.dateTimeValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.dateTimeValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.dateTimeValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.dateTimeValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1526,12 +1528,8 @@ class DateTimeFieldConf < FieldConf
   end
 
   def generate_clean_code
-    if required?
-      if has_default?
-        "        #@name = #{default_value_code};\n"
-      else
-        "        #@name = \"\";\n"
-      end
+    if required? and has_default?
+      "        #@name = #{default_value_code};\n"
     else
       "        #@name = null;\n"
     end
@@ -1585,11 +1583,11 @@ class ObjectIdFieldConf < FieldConf
     generate_append_value_to_bson_code(bson_var, "new BsonObjectId(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
-      "        #@name = BsonUtil.objectIdValue(src, #{bname_const_field_name}).orElseThrow();\n"
+      "        #@name = BsonUtil.objectIdValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
     else
-      "        #@name = BsonUtil.objectIdValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.objectIdValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1676,18 +1674,18 @@ class UUIDFieldConf < FieldConf
     end
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if @legacy
       if required?
-        "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.uuidLegacyValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       else
-        "        #@name = BsonUtil.uuidLegacyValue(src, #{bname_const_field_name}).orElse(null);\n"
+        "        #@name = BsonUtil.uuidLegacyValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
       end
     else
       if required?
-        "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.uuidValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       else
-        "        #@name = BsonUtil.uuidValue(src, #{bname_const_field_name}).orElse(null);\n"
+        "        #@name = BsonUtil.uuidValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
       end
     end
   end
@@ -1728,11 +1726,11 @@ class UUIDFieldConf < FieldConf
     generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonBinary(#@name)))")
   end
 
-  def generate_reality_load_object_node_code
+  def generate_reality_load_object_node_code(src_var)
     if required?
-      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
+      "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
     else
-      "        #@name = BsonUtil.stringValue(src, #{bname_const_field_name}).map(UUID::fromString).orElse(null);\n"
+      "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).map(UUID::fromString).orElse(null);\n"
     end
   end
 
@@ -1806,15 +1804,15 @@ class PrimitiveArrayFieldConf < FieldConf
     generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name)")
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     if required?
       if has_default?
-        "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(src, #{bname_const_field_name}).orElse(#{default_value_code});\n"
+        "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(#{src_var}, #{bname_const_field_name}).orElse(#{default_value_code});\n"
       else
-        "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(src, #{bname_const_field_name}).orElseThrow();\n"
+        "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(src, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.#{@primitive_value_type}ArrayValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
@@ -1962,67 +1960,67 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_reality_load_code
+  def generate_reality_load_code(src_var)
     case @value
     when 'int'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::intValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::intValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::intValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::intValue).orElse(null);\n"
       end
     when 'long'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::longValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::longValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::longValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::longValue).orElse(null);\n"
       end
     when 'double'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::doubleValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::doubleValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonNumber::doubleValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonNumber::doubleValue).orElse(null);\n"
       end
     when 'boolean'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonBoolean::getValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonBoolean::getValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonBoolean::getValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonBoolean::getValue).orElse(null);\n"
       end
     when 'string'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonString::getValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonString::getValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonString::getValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonString::getValue).orElse(null);\n"
       end
     when 'datetime'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonUtil::toLocalDateTime).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonUtil::toLocalDateTime).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonUtil::toLocalDateTime).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonUtil::toLocalDateTime).orElse(null);\n"
       end
     when 'object-id'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonObjectId::getValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonObjectId::getValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, BsonObjectId::getValue).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonObjectId::getValue).orElse(null);\n"
       end
     when 'uuid'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElse(null);\n"
       end
     when 'uuid-legacy'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElse(null);\n"
       end
     when 'object'
       if required?
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(src, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElse(null);\n"
       end
     else
       raise "unsupported value type `#@value` for `std-list`"
@@ -2140,61 +2138,61 @@ class StdListFieldConf < FieldConf
     generate_reality_append_updates_code("updates.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
   end
 
-  def generate_reality_load_object_node_code
+  def generate_reality_load_object_node_code(src_var)
     case @value
     when 'int'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::intValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::intValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::intValue).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::intValue).orElse(null);\n"
       end
     when 'long'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::longValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::longValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::longValue).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::longValue).orElse(null);\n"
       end
     when 'double'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::doubleValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::doubleValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::doubleValue).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::doubleValue).orElse(null);\n"
       end
     when 'boolean'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::booleanValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::booleanValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::booleanValue).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::booleanValue).orElse(null);\n"
       end
     when 'string'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::textValue).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::textValue).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, JsonNode::textValue).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::textValue).orElse(null);\n"
       end
     when 'datetime'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElse(null);\n"
       end
     when 'object-id'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElse(null);\n"
       end
     when 'uuid', 'uuid-legacy'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElse(null);\n"
       end
     when 'object'
       if required?
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new #@model().load(v)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new #@model().load(v)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(src, #{bname_const_field_name}, v -> new #@model().load(v)).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new #@model().load(v)).orElse(null);\n"
       end
     else
       raise "unsupported value type `#@value` for `std-list`"
@@ -2257,11 +2255,11 @@ class ModelFieldConf < FieldConf
     generate_append_value_to_bson_code(bson_var, "#@name.toBson()")
   end
 
-  def generate_load_model_code(factor)
+  def generate_load_model_code(src_var, factor)
     if required?
-      "        BsonUtil.documentValue(src, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
+      "        BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
     else
-      code = "        BsonUtil.documentValue(src, #{bname_const_field_name}).ifPresentOrElse(\n"
+      code = "        BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(\n"
       code << "                v -> {\n"
       code << "                    var #@name = this.#@name;\n"
       code << "                    if (#@name != null) {\n"
@@ -2356,11 +2354,11 @@ class ModelFieldConf < FieldConf
     generate_reality_append_updates_code("#@name.appendUpdates(updates)")
   end
   
-  def generate_load_model_object_node_code(factor)
+  def generate_load_model_object_node_code(src_var, factor)
     if required?
-      "        BsonUtil.objectValue(src, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
+      "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
     else
-      code = "        BsonUtil.objectValue(src, #{bname_const_field_name}).ifPresentOrElse(\n"
+      code = "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(\n"
       code << "                v -> {\n"
       code << "                    var #@name = this.#@name;\n"
       code << "                    if (#@name != null) {\n"
@@ -2491,12 +2489,12 @@ class ObjectFieldConf < ModelFieldConf
     end
   end
 
-  def generate_reality_load_code
-    generate_load_model_code("new #{generic_type}()")
+  def generate_reality_load_code(src_var)
+    generate_load_model_code(src_var, "new #{generic_type}()")
   end
 
-  def generate_reality_load_object_node_code
-    generate_load_model_object_node_code("new #{generic_type}()")
+  def generate_reality_load_object_node_code(src_var)
+    generate_load_model_object_node_code(src_var, "new #{generic_type}()")
   end
 
 end
@@ -2572,12 +2570,12 @@ class MapFieldConf < ModelFieldConf
     end
   end
 
-  def generate_reality_load_code
-    generate_load_model_code(map_init_code)
+  def generate_reality_load_code(src_var)
+    generate_load_model_code(src_var, map_init_code)
   end
 
-  def generate_reality_load_object_node_code
-    generate_load_model_object_node_code(map_init_code)
+  def generate_reality_load_object_node_code(src_var)
+    generate_load_model_object_node_code(src_var, map_init_code)
   end
 
 end
@@ -2608,12 +2606,12 @@ class ListFieldConf < ModelFieldConf
     end
   end
 
-  def generate_reality_load_code
-    generate_load_model_code("new #{generic_type}(#@model::new)")
+  def generate_reality_load_code(src_var)
+    generate_load_model_code(src_var, "new #{generic_type}(#@model::new)")
   end
 
-  def generate_reality_load_object_node_code
-    generate_load_model_object_node_code("new #{generic_type}(#@model::new)")
+  def generate_reality_load_object_node_code(src_var)
+    generate_load_model_object_node_code(src_var, "new #{generic_type}(#@model::new)")
   end
 
 end
