@@ -2146,7 +2146,7 @@ class StdListFieldConf < FieldConf
   end
 
   def generate_append_updates_code(updates_var)
-    generate_reality_append_updates_code("#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})))")
   end
 
   def generate_reality_load_object_node_code(src_var)
