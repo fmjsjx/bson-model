@@ -2426,7 +2426,7 @@ class ModelFieldConf < FieldConf
     end
   end
   
-  def generate_virtual_append_deleted_data_code
+  def generate_virtual_append_deleted_data_code(data_var)
     var_deleted_data = variable_name('DeletedData')
     code = ''
     code << "        if (changedFields.get(#@index)) {\n"
