@@ -11,6 +11,11 @@ class ModelConf
   class << self
     def from(model_cfg)
       cfg = ModelConf.new(model_cfg['name'], model_cfg['type'])
+      if model_cfg.has_key? 'imports'
+        model_cfg['imports'].each do |import_cfg|
+          cfg.append_import(import_cfg)
+        end
+      end
       if model_cfg.has_key? 'fields'
         model_cfg['fields'].each do |field_cfg|
           if field_cfg['type'].index(' const').nil?
@@ -42,16 +47,22 @@ class ModelConf
 
   attr_reader :name,
               :type,
+              :imports,
               :consts,
               :fields
 
   def initialize(name, type)
     @name = name
     @type = type
-    @fields = []
+    @imports = []
     @consts = []
+    @fields = []
     @imports_javas = Set.new
     @imports_others = Set.new
+  end
+
+  def append_import(import)
+    @imports << import
   end
 
   def append_const(const)
@@ -83,6 +94,13 @@ class ModelConf
     if @fields.any? { |field| field.type == 'datetime' }
       @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDateTime'
+    end
+    @imports.each do |import|
+      if import.start_with?('java.')
+        @imports_javas << import
+      else
+        @imports_others << import
+      end
     end
   end
 
@@ -448,7 +466,7 @@ class ModelConf
   def generate_append_update_data_code
     data_var = variable_name('data')
     code = "    @Override\n"
-    code << "    protected void appendUpdateData(Map<Object, Object> #{data_var}) {\n" 
+    code << "    protected void appendUpdateData(Map<Object, Object> #{data_var}) {\n"
     fields = @fields.select { |field| not field.hidden? and not field.loadonly? and not field.transient? }
     unless fields.empty?
       code << "        var changedFields = this.changedFields;\n"
@@ -518,17 +536,17 @@ class ConstConf
       if name.start_with?('BNAME_')
         raise "const field must not be started with 'BNAME_'"
       end
-      type = field_cfg['type'].split(' ')[0]
+      type = field_cfg['type'].split(' ').select { |x| x != 'const' }.join(' ')
       value = field_cfg['value']
       ConstConf.new(name, type, value)
     end
   end
 
-  attr_reader :name, :type, :value
+  attr_reader :name, :type, :type_1, :type_2, :value
 
   def initialize(name, type, value)
     @name = name
-    @type = type
+    @type, @type_1, @type_2 = type.split(' ')
     @value = value
   end
 
@@ -540,6 +558,38 @@ class ConstConf
       "    public static final String #@name = \"#@value\";\n"
     when 'datetime'
       "    public static final LocalDateTime #@name = #@value;\n"
+    when 'std-list'
+      if @type_1.nil?
+        raise "value type must not be nil when type is std-list"
+      end
+      case @type_1
+      when 'int'
+        "    public static final List<Integer> #@name = #@value;\n"
+      when 'long'
+        "    public static final List<Long> #@name = #@value;\n"
+      when 'double'
+        "    public static final List<Double> #@name = #@value;\n"
+      when 'string'
+        "    public static final List<String> #@name = #@value;\n"
+      else
+        raise "unsupported value type #@type_1 for const type std-list"
+      end
+    when 'std-set'
+      if @type_1.nil?
+        raise "value type must not be nil when type is std-set"
+      end
+      case @type_1
+      when 'int'
+        "    public static final Set<Integer> #@name = #@value;\n"
+      when 'long'
+        "    public static final Set<Long> #@name = #@value;\n"
+      when 'double'
+        "    public static final Set<Double> #@name = #@value;\n"
+      when 'string'
+        "    public static final Set<String> #@name = #@value;\n"
+      else
+        raise "unsupported value type #@type_1 for const type std-set"
+      end
     else
       raise "unsupported const type #@type"
     end
@@ -901,7 +951,7 @@ class FieldConf
       code << "        this.#@name = #@name;\n"
     else
       code << generate_reality_setter_code
-    end 
+    end
     code << "    }\n"
   end
 
@@ -1046,7 +1096,7 @@ class FieldConf
   def generate_append_updates_code(updates_var)
     generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), #@name))")
   end
-  
+
   def generate_reality_append_updates_code(updates_var, append_code)
     code = "        if (changedFields.get(#@index)) {\n"
     if required?
@@ -1072,7 +1122,7 @@ class FieldConf
   def generate_reality_load_object_node_code(src_var)
     generate_reality_load_code(src_var)
   end
-  
+
   def generate_append_update_data_code(data_var)
     code = "        if (changedFields.get(#@index)) {\n"
     if virtual?
@@ -1117,7 +1167,7 @@ class FieldConf
       generate_reality_append_deleted_data_code(data_var)
     end
   end
-  
+
   def generate_virtual_append_deleted_data_code(data_var)
     code = ''
     code << "        if (changedFields.get(#@index) && #{getter_name}() == null) {\n"
@@ -1194,7 +1244,7 @@ class PrimitiveFieldConf < FieldConf
 end
 
 class IntFieldConf < PrimitiveFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'int', 'Integer')
   end
@@ -1222,14 +1272,14 @@ class IntFieldConf < PrimitiveFieldConf
         "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
       end
     else
-      "        #@name = BsonUtil.IntegerValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
+      "        #@name = BsonUtil.integerValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
     end
   end
 
 end
 
 class LongFieldConf < PrimitiveFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'long', 'Long')
   end
@@ -1264,7 +1314,7 @@ class LongFieldConf < PrimitiveFieldConf
 end
 
 class DoubleFieldConf < PrimitiveFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'double', 'Double')
   end
@@ -1329,7 +1379,7 @@ class DoubleFieldConf < PrimitiveFieldConf
 end
 
 class BooleanFieldConf < PrimitiveFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'boolean', 'Boolean')
   end
@@ -1338,7 +1388,7 @@ class BooleanFieldConf < PrimitiveFieldConf
     if required?
       "is#{camcel_name}"
     else
-      super.getter_name
+      "get#{camcel_name}"
     end
   end
 
@@ -1394,7 +1444,7 @@ class BooleanFieldConf < PrimitiveFieldConf
 end
 
 class StringFieldConf < FieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'string')
   end
@@ -1454,7 +1504,7 @@ class StringFieldConf < FieldConf
 end
 
 class DateTimeFieldConf < FieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'datetime')
   end
@@ -1577,7 +1627,7 @@ class DateTimeFieldConf < FieldConf
 end
 
 class ObjectIdFieldConf < FieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'object-id')
   end
@@ -1876,7 +1926,7 @@ class PrimitiveArrayFieldConf < FieldConf
 end
 
 class IntArrayFieldConf < PrimitiveArrayFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'int')
   end
@@ -1884,7 +1934,7 @@ class IntArrayFieldConf < PrimitiveArrayFieldConf
 end
 
 class LongArrayFieldConf < PrimitiveArrayFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'long')
   end
@@ -1892,7 +1942,7 @@ class LongArrayFieldConf < PrimitiveArrayFieldConf
 end
 
 class DoubleArrayFieldConf < PrimitiveArrayFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'double')
   end
@@ -1900,7 +1950,7 @@ class DoubleArrayFieldConf < PrimitiveArrayFieldConf
 end
 
 class StdListFieldConf < FieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'std-list')
   end
@@ -1965,7 +2015,7 @@ class StdListFieldConf < FieldConf
     when 'uuid'
       'BsonUtil::toBsonBinary'
     when 'object'
-      raise 'std-list must be either `loadonly` or `transient` when has object values'
+      "#@model::toBson"
     else
       raise "unsupported value type `#@value` for std-list"
     end
@@ -2041,7 +2091,7 @@ class StdListFieldConf < FieldConf
   def generate_reality_append_to_json_node_code(json_node_var)
     array_node_var = variable_name("ArrayNode")
     add_code = case @value
-    when 'int', 'long', 'boolean', 'string'
+    when 'int', 'long', 'double', 'boolean', 'string'
       "#@name.forEach(#{array_node_var}::add);"
     when 'datetime'
       "#@name.stream().mapToInt(DateTimeUtil::toEpochMilli).forEach(#{array_node_var}::add);"
@@ -2237,7 +2287,7 @@ class StdListFieldConf < FieldConf
 end
 
 class ModelFieldConf < FieldConf
-  
+
   def initialize(name, bname, dname, type)
     super(name, bname, dname, type)
   end
@@ -2323,7 +2373,7 @@ class ModelFieldConf < FieldConf
       code << "        }\n"
     end
   end
-  
+
   def generate_reality_any_updated_code
     if required?
       code = "        if (changedFields.get(#@index) && #@name.anyUpdated()) {\n"
@@ -2364,7 +2414,7 @@ class ModelFieldConf < FieldConf
   def generate_append_updates_code(updates_var)
     generate_reality_append_updates_code(updates_var, "#@name.appendUpdates(#{updates_var})")
   end
-  
+
   def generate_load_model_object_node_code(src_var, factor)
     if required?
       "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
@@ -2425,7 +2475,7 @@ class ModelFieldConf < FieldConf
       code << "            }\n"
     end
   end
-  
+
   def generate_virtual_append_deleted_data_code(data_var)
     var_deleted_data = variable_name('DeletedData')
     code = ''
@@ -2475,7 +2525,7 @@ class ModelFieldConf < FieldConf
 end
 
 class ObjectFieldConf < ModelFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'object')
   end
@@ -2511,7 +2561,7 @@ class ObjectFieldConf < ModelFieldConf
 end
 
 class MapFieldConf < ModelFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'map')
   end
@@ -2592,7 +2642,7 @@ class MapFieldConf < ModelFieldConf
 end
 
 class ListFieldConf < ModelFieldConf
-  
+
   def initialize(name, bname, dname)
     super(name, bname, dname, 'list')
   end
