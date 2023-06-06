@@ -31,7 +31,7 @@ public class SingleValueTypes {
     /**
      * Type for {@link String}.
      */
-    public static final SingleValueType<String> STRING = new SimpleSingleValueType<>(String.class, v -> v.asString().toString(), BsonString::new, JsonNode::textValue, TextNode::valueOf);
+    public static final SingleValueType<String> STRING = new SimpleSingleValueType<>(String.class, v -> v.asString().getValue(), BsonString::new, JsonNode::textValue, TextNode::valueOf);
 
     private record SimpleSingleValueType<T>(Class<T> type, Function<BsonValue, T> bsonValueDecoder,
                                             Function<T, BsonValue> bsonValueEncoder,
