@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:3.3.0"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.4.0"))
     // junit-bom
     testImplementation(platform("org.junit:junit-bom:5.9.2"))
     // jackson2-bom
@@ -21,7 +21,7 @@ dependencies {
         implementation("org.slf4j:slf4j-api:1.7.36")
         implementation("ch.qos.logback:logback-classic:1.2.10")
         api("com.jsoniter:jsoniter:0.9.23")
-        val mongodbVersion = "4.9.0"
+        val mongodbVersion = "4.9.1"
         api("org.mongodb:bson:$mongodbVersion")
         api("org.mongodb:mongodb-driver-core:$mongodbVersion")
         api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
