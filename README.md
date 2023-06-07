@@ -26,7 +26,7 @@
       <dependency>
         <groupId>com.github.fmjsjx</groupId>
         <artifactId>bson-model-bom</artifactId>
-        <version>2.0.0</version>
+        <version>2.0.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -58,7 +58,7 @@ repositories {
 
 dependencies {
     // 版本控制
-    implementation platform('com.github.fmjsjx:bson-model-bom:2.0.0')
+    implementation platform('com.github.fmjsjx:bson-model-bom:2.0.1')
     // 核心库
     implementation 'com.github.fmjsjx:bson-model-core'
     // 代码生成器
@@ -73,7 +73,7 @@ repositories {
 
 dependencies {
     // 版本控制
-    implementation(platform("com.github.fmjsjx:bson-model-bom:2.0.0"))
+    implementation(platform("com.github.fmjsjx:bson-model-bom:2.0.1"))
     // 核心库
     implementation("com.github.fmjsjx:bson-model-core")
     // 代码生成器
