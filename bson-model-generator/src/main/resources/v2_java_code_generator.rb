@@ -1113,7 +1113,7 @@ class FieldConf
   end
 
   def generate_load_object_node_code(src_var)
-    if virtual?
+    if virtual? or transient?
       return nil
     end
     generate_reality_load_object_node_code(src_var)
