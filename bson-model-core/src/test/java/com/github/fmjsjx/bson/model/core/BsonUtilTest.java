@@ -1,14 +1,17 @@
 package com.github.fmjsjx.bson.model.core;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.github.fmjsjx.bson.model2.core.SingleValueTypes;
 import org.bson.*;
+import org.bson.types.Decimal128;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -483,9 +486,228 @@ public class BsonUtilTest {
     }
 
     @Test
-    public void toBsonBinaryUuidLegacy() {
+    public void testToBsonBinaryUuidLegacy() {
         var uuid = UUID.randomUUID();
         assertEquals(new BsonBinary(uuid, UuidRepresentation.JAVA_LEGACY), BsonUtil.toBsonBinaryUuidLegacy(uuid));
+    }
+
+    @Test
+    public void testToObjectNode() {
+        var currentTimeMillis = System.currentTimeMillis();
+        var objectId = new ObjectId();
+        var uuid = UUID.randomUUID();
+        var document = new BsonDocument("str", new BsonString("str"))
+                .append("int", new BsonInt32(123))
+                .append("long", new BsonInt64(1234567890123L))
+                .append("double", new BsonDouble(1.2))
+                .append("decimal128", new BsonDecimal128(Decimal128.parse("1234567890.123456789")))
+                .append("boolean", BsonBoolean.FALSE)
+                .append("null", BsonNull.VALUE)
+                .append("date-time", new BsonDateTime(currentTimeMillis))
+                .append("timestamp", new BsonTimestamp((int) (currentTimeMillis / 1000), 0))
+                .append("object-id", new BsonObjectId(objectId))
+                .append("uuid", new BsonBinary(uuid))
+                .append("array", new BsonArray())
+                .append("sub-document", new BsonDocument());
+        var objectNode = BsonUtil.toObjectNode(document);
+        assertNotNull(objectNode);
+        assertEquals(13, objectNode.size());
+        assertEquals("str", objectNode.get("str").textValue());
+        assertEquals(123, objectNode.get("int").intValue());
+        assertEquals(1234567890123L, objectNode.get("long").longValue());
+        assertEquals(1.2, objectNode.get("double").doubleValue());
+        assertEquals(new BigDecimal("1234567890.123456789"), objectNode.get("decimal128").decimalValue());
+        assertFalse(objectNode.get("boolean").booleanValue());
+        assertEquals(NullNode.instance, objectNode.get("null"));
+        assertEquals(currentTimeMillis, objectNode.get("date-time").longValue());
+        assertEquals(currentTimeMillis / 1000 * 1000, objectNode.get("timestamp").longValue());
+        assertEquals(objectId.toHexString(), objectNode.get("object-id").textValue());
+        assertEquals(uuid.toString(), objectNode.get("uuid").textValue());
+        assertNotNull(objectNode.get("array"));
+        assertTrue(objectNode.get("array").isArray());
+        assertEquals(0, objectNode.get("array").size());
+        assertNotNull(objectNode.get("sub-document"));
+        assertTrue(objectNode.get("sub-document").isObject());
+        assertEquals(0, objectNode.get("sub-document").size());
+    }
+
+    @Test
+    public void testToArrayNode() {
+        var currentTimeMillis = System.currentTimeMillis();
+        var objectId = new ObjectId();
+        var uuid = UUID.randomUUID();
+        var array = new BsonArray();
+        array.add(new BsonString("str"));
+        array.add(new BsonInt32(123));
+        array.add(new BsonInt64(1234567890123L));
+        array.add(new BsonDouble(1.2));
+        array.add(new BsonDecimal128(Decimal128.parse("1234567890.123456789")));
+        array.add(BsonBoolean.FALSE);
+        array.add(BsonNull.VALUE);
+        array.add(new BsonDateTime(currentTimeMillis));
+        array.add(new BsonTimestamp((int) (currentTimeMillis / 1000), 0));
+        array.add(new BsonObjectId(objectId));
+        array.add(new BsonBinary(uuid));
+        array.add(new BsonArray());
+        array.add(new BsonDocument());
+        var arranNode = BsonUtil.toArrayNode(array);
+        assertNotNull(arranNode);
+        assertEquals(13, arranNode.size());
+        assertEquals("str", arranNode.get(0).textValue());
+        assertEquals(123, arranNode.get(1).intValue());
+        assertEquals(1234567890123L, arranNode.get(2).longValue());
+        assertEquals(1.2, arranNode.get(3).doubleValue());
+        assertEquals(new BigDecimal("1234567890.123456789"), arranNode.get(4).decimalValue());
+        assertFalse(arranNode.get(5).booleanValue());
+        assertEquals(NullNode.instance, arranNode.get(6));
+        assertEquals(currentTimeMillis, arranNode.get(7).longValue());
+        assertEquals(currentTimeMillis / 1000 * 1000, arranNode.get(8).longValue());
+        assertEquals(objectId.toHexString(), arranNode.get(9).textValue());
+        assertEquals(uuid.toString(), arranNode.get(10).textValue());
+        assertNotNull(arranNode.get(11));
+        assertTrue(arranNode.get(11).isArray());
+        assertEquals(0, arranNode.get(11).size());
+        assertNotNull(arranNode.get(12));
+        assertTrue(arranNode.get(12).isObject());
+        assertEquals(0, arranNode.get(12).size());
+    }
+
+    @Test
+    public void testToMap() {
+        var currentTimeMillis = System.currentTimeMillis();
+        var objectId = new ObjectId();
+        var uuid = UUID.randomUUID();
+        var document = new BsonDocument("str", new BsonString("str"))
+                .append("int", new BsonInt32(123))
+                .append("long", new BsonInt64(1234567890123L))
+                .append("double", new BsonDouble(1.2))
+                .append("decimal128", new BsonDecimal128(Decimal128.parse("1234567890.123456789")))
+                .append("boolean", BsonBoolean.FALSE)
+                .append("null", BsonNull.VALUE)
+                .append("date-time", new BsonDateTime(currentTimeMillis))
+                .append("timestamp", new BsonTimestamp((int) (currentTimeMillis / 1000), 0))
+                .append("object-id", new BsonObjectId(objectId))
+                .append("uuid", new BsonBinary(uuid))
+                .append("array", new BsonArray())
+                .append("sub-document", new BsonDocument());
+        var map = BsonUtil.toMap(document);
+        assertNotNull(map);
+        assertEquals(13, map.size());
+        assertEquals("str", map.get("str"));
+        assertEquals(123, map.get("int"));
+        assertEquals(1234567890123L, map.get("long"));
+        assertEquals(1.2, map.get("double"));
+        assertEquals(new BigDecimal("1234567890.123456789"), map.get("decimal128"));
+        assertEquals(false, map.get("boolean"));
+        assertTrue(map.containsKey("null"));
+        assertNull(map.get("null"));
+        assertEquals(currentTimeMillis, map.get("date-time"));
+        assertEquals(currentTimeMillis / 1000 * 1000, map.get("timestamp"));
+        assertEquals(objectId.toHexString(), map.get("object-id"));
+        assertEquals(uuid.toString(), map.get("uuid"));
+        assertNotNull(map.get("array"));
+        assertTrue(map.get("array") instanceof List<?>);
+        assertEquals(0, ((List<?>) map.get("array")).size());
+        assertNotNull(map.get("sub-document"));
+        assertTrue(map.get("sub-document") instanceof Map<?, ?>);
+        assertEquals(0, ((Map<?, ?>) map.get("sub-document")).size());
+    }
+
+    @Test
+    public void testToList() {
+        var currentTimeMillis = System.currentTimeMillis();
+        var objectId = new ObjectId();
+        var uuid = UUID.randomUUID();
+        var array = new BsonArray();
+        array.add(new BsonString("str"));
+        array.add(new BsonInt32(123));
+        array.add(new BsonInt64(1234567890123L));
+        array.add(new BsonDouble(1.2));
+        array.add(new BsonDecimal128(Decimal128.parse("1234567890.123456789")));
+        array.add(BsonBoolean.FALSE);
+        array.add(BsonNull.VALUE);
+        array.add(new BsonDateTime(currentTimeMillis));
+        array.add(new BsonTimestamp((int) (currentTimeMillis / 1000), 0));
+        array.add(new BsonObjectId(objectId));
+        array.add(new BsonBinary(uuid));
+        array.add(new BsonArray());
+        array.add(new BsonDocument());
+        var list = BsonUtil.toList(array);
+        assertNotNull(list);
+        assertEquals(13, list.size());
+        assertEquals("str", list.get(0));
+        assertEquals(123, list.get(1));
+        assertEquals(1234567890123L, list.get(2));
+        assertEquals(1.2, list.get(3));
+        assertEquals(new BigDecimal("1234567890.123456789"), list.get(4));
+        assertEquals(false, list.get(5));
+        assertNull(list.get(6));
+        assertEquals(currentTimeMillis, list.get(7));
+        assertEquals(currentTimeMillis / 1000 * 1000, list.get(8));
+        assertEquals(objectId.toHexString(), list.get(9));
+        assertEquals(uuid.toString(), list.get(10));
+        assertNotNull(list.get(11));
+        assertTrue(list.get(11) instanceof List<?>);
+        assertEquals(0, ((List<?>) list.get(11)).size());
+        assertNotNull(list.get(12));
+        assertTrue(list.get(12) instanceof Map<?, ?>);
+        assertEquals(0, ((Map<?, ?>) list.get(12)).size());
+    }
+
+    @Test
+    public void testJsonNodeToBsonDocument() {
+        var jsonNode = JsonNodeFactory.instance.objectNode()
+                .put("str", "str")
+                .put("int", 123)
+                .put("long", 1234567890123L)
+                .put("double", new BigDecimal("1.2"))
+                .put("decimal", new BigInteger("12345678901234567890"))
+                .put("boolean", false)
+                .putNull("null");
+        jsonNode.putArray("array");
+        jsonNode.putObject("object");
+        var document = BsonUtil.toBsonDocument(jsonNode);
+        assertEquals(9, document.size());
+        assertEquals("str", document.getString("str").getValue());
+        assertEquals(123, document.getInt32("int").getValue());
+        assertEquals(1234567890123L, document.getInt64("long").getValue());
+        assertEquals(1.2, document.getDouble("double").getValue());
+        assertEquals(
+                new BigDecimal(new BigInteger("12345678901234567890")),
+                document.getDecimal128("decimal").getValue().bigDecimalValue()
+        );
+        assertFalse(document.getBoolean("boolean").getValue());
+        assertEquals(BsonNull.VALUE, document.get("null"));
+        assertEquals(0, document.getArray("array").size());
+        assertEquals(0, document.getDocument("object").size());
+    }
+
+    @Test
+    public void testJsonNodeToBsonArray() {
+        var jsonNode = JsonNodeFactory.instance.arrayNode()
+                .add("str")
+                .add(123)
+                .add(1234567890123L)
+                .add(new BigDecimal("1.2"))
+                .add(new BigInteger("12345678901234567890"))
+                .add(false)
+                .addNull();
+        jsonNode.addArray();
+        jsonNode.addObject();
+        var array = BsonUtil.toBsonArray(jsonNode);
+        assertEquals(9, array.size());
+        assertEquals("str", array.get(0).asString().getValue());
+        assertEquals(123, array.get(1).asInt32().getValue());
+        assertEquals(1234567890123L, array.get(2).asInt64().getValue());
+        assertEquals(1.2, array.get(3).asDouble().getValue());
+        assertEquals(
+                new BigDecimal(new BigInteger("12345678901234567890")),
+                array.get(4).asDecimal128().getValue().bigDecimalValue()
+        );
+        assertFalse(array.get(5).asBoolean().getValue());
+        assertEquals(BsonNull.VALUE, array.get(6));
+        assertEquals(0, array.get(7).asArray().size());
+        assertEquals(0, array.get(8).asDocument().size());
     }
 
 }

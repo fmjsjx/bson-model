@@ -11,6 +11,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.bson.*;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
@@ -2035,6 +2038,265 @@ public class BsonUtil {
      */
     public static final Optional<UUID> uuidLegacyValue(BsonDocument document, String key) {
        return uuidValue(document, key, UuidRepresentation.JAVA_LEGACY);
+    }
+
+    /**
+     * Convert the specified {@link BsonDocument} to {@link ObjectNode}.
+     *
+     * @param document the {@code BsonDocument}
+     * @return an {@code ObjectNode}
+     * @since 2.1
+     */
+    public static final ObjectNode toObjectNode(BsonDocument document) {
+        var objectNode = JsonNodeFactory.instance.objectNode();
+        document.forEach((key, value) -> {
+            if (value instanceof BsonString v) {
+                objectNode.put(key, v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    objectNode.put(key, v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    objectNode.put(key, v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    objectNode.put(key, v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    objectNode.put(key, v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                objectNode.put(key, v.getValue());
+            } else if (value instanceof BsonNull) {
+                objectNode.putNull(key);
+            } else if (value instanceof BsonDateTime v) {
+                objectNode.put(key, v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                objectNode.put(key, v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                objectNode.put(key, v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                objectNode.put(key, v.asUuid().toString());
+            } else if (value instanceof BsonArray array) {
+                objectNode.set(key, toArrayNode(array));
+            } else if (value instanceof BsonDocument v) {
+                objectNode.set(key, toObjectNode(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        });
+        return objectNode;
+    }
+
+    /**
+     * Convert the specified {@link BsonArray} to {@link ArrayNode}.
+     *
+     * @param array the {@code BsonArray}
+     * @return an {@code ArrayNode}
+     * @since 2.1
+     */
+    public static final ArrayNode toArrayNode(BsonArray array) {
+        var arrayNode = JsonNodeFactory.instance.arrayNode(array.size());
+        for (var value : array) {
+            if (value instanceof BsonString v) {
+                arrayNode.add(v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    arrayNode.add(v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    arrayNode.add(v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    arrayNode.add(v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    arrayNode.add(v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                arrayNode.add(v.getValue());
+            } else if (value instanceof BsonNull) {
+                arrayNode.addNull();
+            } else if (value instanceof BsonDateTime v) {
+                arrayNode.add(v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                arrayNode.add(v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                arrayNode.add(v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                arrayNode.add(v.asUuid().toString());
+            } else if (value instanceof BsonArray v) {
+                arrayNode.add(toArrayNode(v));
+            } else if (value instanceof BsonDocument v) {
+                arrayNode.add(toObjectNode(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        }
+        return arrayNode;
+    }
+
+    /**
+     * Convert the specified {@link BsonDocument} to {@link Map} data.
+     *
+     * @param document the {@code BsonDocument}
+     * @return an {@code Map<String, Object>}
+     * @since 2.1
+     */
+    public static final Map<String, Object> toMap(BsonDocument document) {
+        var map = new LinkedHashMap<String, Object>();
+        document.forEach((key, value) -> {
+            if (value instanceof BsonString v) {
+                map.put(key, v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    map.put(key, v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    map.put(key, v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    map.put(key, v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    map.put(key, v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                map.put(key, v.getValue());
+            } else if (value instanceof BsonNull) {
+                map.put(key, null);
+            } else if (value instanceof BsonDateTime v) {
+                map.put(key, v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                map.put(key, v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                map.put(key, v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                map.put(key, v.asUuid().toString());
+            } else if (value instanceof BsonArray array) {
+                map.put(key, toList(array));
+            } else if (value instanceof BsonDocument v) {
+                map.put(key, toMap(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        });
+        return map;
+    }
+
+    /**
+     * Convert the specified {@link BsonArray} to {@link List}.
+     *
+     * @param array the {@code BsonArray}
+     * @return an {@code List<Object>}
+     * @since 2.1
+     */
+    public static final List<Object> toList(BsonArray array) {
+        var list = new ArrayList<>(array.size());
+        for (var value : array) {
+            if (value instanceof BsonString v) {
+                list.add(v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    list.add(v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    list.add(v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    list.add(v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    list.add(v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                list.add(v.getValue());
+            } else if (value instanceof BsonNull) {
+                list.add(null);
+            } else if (value instanceof BsonDateTime v) {
+                list.add(v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                list.add(v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                list.add(v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                list.add(v.asUuid().toString());
+            } else if (value instanceof BsonArray v) {
+                list.add(toList(v));
+            } else if (value instanceof BsonDocument v) {
+                list.add(toMap(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        }
+        return list;
+    }
+
+    /**
+     * Convert the specified {@link JsonNode} to {@link BsonDocument}.
+     *
+     * @param jsonNode the source {@code JsonNode}
+     * @return a {@code BsonDocument}
+     * @since 2.1
+     */
+    public static final BsonDocument toBsonDocument(JsonNode jsonNode) {
+        if (!jsonNode.isObject()) {
+            throw new IllegalArgumentException("the source jsonNode expected <OBJECT> but was <" + jsonNode.getNodeType() + ">");
+        }
+        var document = new BsonDocument();
+        for (var iter = jsonNode.fields(); iter.hasNext();) {
+            var entry = iter.next();
+            var key = entry.getKey();
+            var value = entry.getValue();
+            if (value == null || value.isNull()) {
+                document.append(key, BsonNull.VALUE);
+            } else if (value.isTextual()) {
+                document.append(key, new BsonString(value.textValue()));
+            } else if (value.isNumber()) {
+                if (value.isInt()) {
+                    document.append(key, new BsonInt32(value.intValue()));
+                } else if (value.isLong()) {
+                    document.append(key, new BsonInt64(value.longValue()));
+                } else if (value.isDouble() || value.isBigDecimal()) {
+                    document.append(key, new BsonDouble(value.doubleValue()));
+                } else if (value.isBigInteger()) {
+                    document.append(key, new BsonDecimal128(new Decimal128(value.decimalValue())));
+                }
+            } else if (value.isBoolean()) {
+                document.append(key, BsonBoolean.valueOf(value.booleanValue()));
+            } else if (value.isArray()) {
+                document.append(key, BsonUtil.toBsonArray(value));
+            } else if (value.isObject()) {
+                document.append(key, BsonUtil.toBsonDocument(value));
+            }
+        }
+        return document;
+    }
+
+    /**
+     * Convert the specified {@link JsonNode} to {@link BsonArray}.
+     *
+     * @param jsonNode the source {@code JsonNode}
+     * @return a {@code BsonArray}
+     * @since 2.1
+     */
+    public static final BsonArray toBsonArray(JsonNode jsonNode) {
+        if (!jsonNode.isArray()) {
+            throw new IllegalArgumentException("the source jsonNode expected <ARRAY> but was <" + jsonNode.getNodeType() + ">");
+        }
+        var array = new BsonArray(jsonNode.size());
+        for (var value : jsonNode) {
+            if (value == null || value.isNull()) {
+                array.add(BsonNull.VALUE);
+            } else if (value.isTextual()) {
+                array.add(new BsonString(value.textValue()));
+            } else if (value.isNumber()) {
+                if (value.isInt()) {
+                    array.add(new BsonInt32(value.intValue()));
+                } else if (value.isLong()) {
+                    array.add(new BsonInt64(value.longValue()));
+                } else if (value.isDouble() || value.isBigDecimal()) {
+                    array.add(new BsonDouble(value.doubleValue()));
+                } else if (value.isBigInteger()) {
+                    array.add(new BsonDecimal128(new Decimal128(value.decimalValue())));
+                }
+            } else if (value.isBoolean()) {
+                array.add(BsonBoolean.valueOf(value.booleanValue()));
+            } else if (value.isArray()) {
+                array.add(BsonUtil.toBsonArray(value));
+            } else if (value.isObject()) {
+                array.add(BsonUtil.toBsonDocument(value));
+            }
+        }
+        return array;
     }
 
     private BsonUtil() {

@@ -121,6 +121,8 @@ models:
   - name: hp h
     type: int required
     default: 0
+  - name: extension ex
+    type: bson-document
 - name: Room
   type: root
   fields:

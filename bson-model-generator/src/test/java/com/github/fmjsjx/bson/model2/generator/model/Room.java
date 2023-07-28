@@ -103,6 +103,8 @@ public class Room extends RootModel<Room> {
                 }
             }
             this.players = playersCopy;
+        } else {
+            this.players = null;
         }
     }
 

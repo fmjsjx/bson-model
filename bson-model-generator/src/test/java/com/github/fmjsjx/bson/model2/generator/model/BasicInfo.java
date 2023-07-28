@@ -273,6 +273,12 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         var gis = src.gis;
         if (gis != null) {
             this.gis = gis.deepCopy().parent(this).key(BNAME_GIS).index(4);
+        } else {
+            gis = this.gis;
+            if (gis != null) {
+                gis.unbind();
+                this.gis = null;
+            }
         }
     }
 
