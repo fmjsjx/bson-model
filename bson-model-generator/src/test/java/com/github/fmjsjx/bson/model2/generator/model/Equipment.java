@@ -17,12 +17,14 @@ public class Equipment extends ObjectModel<Equipment> {
     public static final String BNAME_ATK = "a";
     public static final String BNAME_DEF = "d";
     public static final String BNAME_HP = "h";
+    public static final String BNAME_EXTENSION = "ex";
 
     private String id = "";
     private int refId;
     private int atk;
     private int def;
     private int hp;
+    private BsonDocument extension;
 
     public String getId() {
         return id;
@@ -80,6 +82,17 @@ public class Equipment extends ObjectModel<Equipment> {
         }
     }
 
+    public BsonDocument getExtension() {
+        return extension;
+    }
+
+    public void setExtension(BsonDocument extension) {
+        if (!Objects.equals(extension, this.extension)) {
+            this.extension = extension;
+            fieldChanged(5);
+        }
+    }
+
     public boolean idChanged() {
         return changedFields.get(0);
     }
@@ -100,6 +113,10 @@ public class Equipment extends ObjectModel<Equipment> {
         return changedFields.get(4);
     }
 
+    public boolean extensionChanged() {
+        return changedFields.get(5);
+    }
+
     @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
@@ -108,6 +125,10 @@ public class Equipment extends ObjectModel<Equipment> {
         bson.append(BNAME_ATK, new BsonInt32(atk));
         bson.append(BNAME_DEF, new BsonInt32(def));
         bson.append(BNAME_HP, new BsonInt32(hp));
+        var extension = this.extension;
+        if (extension != null) {
+            bson.append(BNAME_EXTENSION, extension);
+        }
         return bson;
     }
 
@@ -119,6 +140,7 @@ public class Equipment extends ObjectModel<Equipment> {
         atk = BsonUtil.intValue(src, BNAME_ATK).orElse(0);
         def = BsonUtil.intValue(src, BNAME_DEF).orElse(0);
         hp = BsonUtil.intValue(src, BNAME_HP).orElse(0);
+        extension = BsonUtil.documentValue(src, BNAME_EXTENSION).orElse(null);
         return this;
     }
 
@@ -130,6 +152,10 @@ public class Equipment extends ObjectModel<Equipment> {
         jsonNode.put(BNAME_ATK, atk);
         jsonNode.put(BNAME_DEF, def);
         jsonNode.put(BNAME_HP, hp);
+        var extension = this.extension;
+        if (extension != null) {
+            jsonNode.set(BNAME_EXTENSION, BsonUtil.toObjectNode(extension));
+        }
         return jsonNode;
     }
 
@@ -141,6 +167,10 @@ public class Equipment extends ObjectModel<Equipment> {
         data.put("atk", atk);
         data.put("def", def);
         data.put("hp", hp);
+        var extension = this.extension;
+        if (extension != null) {
+            data.put("extension", BsonUtil.toMap(extension));
+        }
         return data;
     }
 
@@ -165,6 +195,9 @@ public class Equipment extends ObjectModel<Equipment> {
         if (changedFields.get(4)) {
             return true;
         }
+        if (changedFields.get(5) && extension != null) {
+            return true;
+        }
         return false;
     }
 
@@ -174,11 +207,26 @@ public class Equipment extends ObjectModel<Equipment> {
 
     @Override
     protected int deletedSize() {
-        return 0;
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return 0;
+        }
+        var n = 0;
+        if (changedFields.get(5) && extension == null) {
+            n++;
+        }
+        return n;
     }
 
     @Override
     public boolean anyDeleted() {
+        var changedFields = this.changedFields;
+        if (changedFields.isEmpty()) {
+            return false;
+        }
+        if (changedFields.get(5) && extension == null) {
+            return true;
+        }
         return false;
     }
 
@@ -189,6 +237,7 @@ public class Equipment extends ObjectModel<Equipment> {
         atk = 0;
         def = 0;
         hp = 0;
+        extension = null;
         resetStates();
         return this;
     }
@@ -207,6 +256,12 @@ public class Equipment extends ObjectModel<Equipment> {
         atk = src.atk;
         def = src.def;
         hp = src.hp;
+        var extension = src.extension;
+        if (extension != null) {
+            this.extension = extension.clone();
+        } else {
+            this.extension = null;
+        }
     }
 
     @Override
@@ -230,6 +285,14 @@ public class Equipment extends ObjectModel<Equipment> {
         if (changedFields.get(4)) {
             updates.add(Updates.set(path().resolve(BNAME_HP).value(), hp));
         }
+        if (changedFields.get(5)) {
+            var extension = this.extension;
+            if (extension == null) {
+                updates.add(Updates.unset(path().resolve(BNAME_EXTENSION).value()));
+            } else {
+                updates.add(Updates.set(path().resolve(BNAME_EXTENSION).value(), extension));
+            }
+        }
     }
 
     @Override
@@ -240,6 +303,7 @@ public class Equipment extends ObjectModel<Equipment> {
         atk = BsonUtil.intValue(src, BNAME_ATK).orElse(0);
         def = BsonUtil.intValue(src, BNAME_DEF).orElse(0);
         hp = BsonUtil.intValue(src, BNAME_HP).orElse(0);
+        extension = BsonUtil.objectValue(src, BNAME_EXTENSION).map(BsonUtil::toBsonDocument).orElse(null);
     }
 
     @Override
@@ -263,15 +327,20 @@ public class Equipment extends ObjectModel<Equipment> {
         if (changedFields.get(4)) {
             data.put("hp", hp);
         }
-    }
-
-    @Override
-    public Object toDeletedData() {
-        return null;
+        if (changedFields.get(5)) {
+            var extension = this.extension;
+            if (extension != null) {
+                data.put("extension", BsonUtil.toMap(extension));
+            }
+        }
     }
 
     @Override
     protected void appendDeletedData(Map<Object, Object> data) {
+        var changedFields = this.changedFields;
+        if (changedFields.get(5) && extension == null) {
+            data.put("extension", 1);
+        }
     }
 
     @Override
@@ -281,6 +350,7 @@ public class Equipment extends ObjectModel<Equipment> {
                 ", atk=" + atk +
                 ", def=" + def +
                 ", hp=" + hp +
+                ", extension=" + extension +
                 ")";
     }
 

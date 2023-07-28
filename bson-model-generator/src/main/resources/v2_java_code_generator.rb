@@ -642,6 +642,8 @@ class FieldConf
         MapFieldConf.new(name, bname, dname)
       when 'list'
         ListFieldConf.new(name, bname, dname)
+      when 'bson-document'
+        BsonDocumentFieldConf.new(name, bname, dname)
       else
         raise "unsupported field type `#{type}`"
       end
@@ -1040,7 +1042,7 @@ class FieldConf
     if virtual?
       generate_virtual_put_to_data_code(data_var)
     else
-      generate_visiable_put_to_data_code(data_var)
+      generate_visible_put_to_data_code(data_var)
     end
   end
 
@@ -1056,7 +1058,7 @@ class FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name);\n"
     else
@@ -1576,7 +1578,7 @@ class DateTimeFieldConf < FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
@@ -1668,7 +1670,7 @@ class ObjectIdFieldConf < FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name.toHexString());\n"
     else
@@ -1767,7 +1769,7 @@ class UUIDFieldConf < FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name.toString());\n"
     else
@@ -2147,7 +2149,7 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name#{data_value_convert_code});\n"
     else
@@ -2174,6 +2176,8 @@ class StdListFieldConf < FieldConf
       code << "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            this.#@name = new ArrayList<>(#{src_var}.#@name);\n"
+      code << "        } else {\n"
+      code << "            this.#@name = null;\n"
       code << "        }\n"
     when 'object'
       var_copy = variable_name('Copy')
@@ -2189,6 +2193,8 @@ class StdListFieldConf < FieldConf
       code << "                }\n"
       code << "            }\n"
       code << "            this.#@name = #{var_copy};\n"
+      code << "        } else {\n"
+      code << "            this.#@name = null;\n"
       code << "        }\n"
     else
       raise "unsupport value type `@value` for std-list"
@@ -2362,7 +2368,7 @@ class ModelFieldConf < FieldConf
     end
   end
 
-  def generate_visiable_put_to_data_code(data_var)
+  def generate_visible_put_to_data_code(data_var)
     if required?
       "        #{data_var}.put(\"#@dname\", #@name.toData());\n"
     else
@@ -2407,6 +2413,12 @@ class ModelFieldConf < FieldConf
       code = "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            this.#@name = #@name.deepCopy().parent(this).key(#{bname_const_field_name}).index(#@index);\n"
+      code << "        } else {\n"
+      code << "            #@name = this.#@name;\n"
+      code << "            if (#@name != null) {\n"
+      code << "                #@name.unbind();\n"
+      code << "                this.#@name = null;\n"
+      code << "            }\n"
       code << "        }\n"
     end
   end
@@ -2676,6 +2688,119 @@ class ListFieldConf < ModelFieldConf
   end
 
 end
+
+class BsonDocumentFieldConf < FieldConf
+
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'bson-document')
+  end
+
+  def generic_type
+    'BsonDocument'
+  end
+
+  def generate_reality_declare_code
+    "    private #{generic_type} #@name;\n"
+  end
+
+  def generate_append_to_bson_code(bson_var)
+    generate_append_value_to_bson_code(bson_var, @name)
+  end
+
+  def generate_reality_load_code(src_var)
+    if required?
+      "        #@name = BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).orElse(null);\n"
+    end
+  end
+
+  def generate_reality_load_object_node_code(src_var)
+    if required?
+      "        #@name = BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).map(BsonUtil::toBsonDocument).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).map(BsonUtil::toBsonDocument).orElse(null);\n"
+    end
+  end
+
+  def generate_reality_append_to_json_node_code(json_node_var)
+    if required?
+      "        #{json_node_var}.set(#{bname_const_field_name}, BsonUtil.toObjectNode(#@name));\n"
+    else
+      code = "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{json_node_var}.set(#{bname_const_field_name}, BsonUtil.toObjectNode(#@name));\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_virtual_put_to_data_code(data_var)
+    if required?
+      "        #{data_var}.put(\"#@dname\", BsonUtil.toMap(#{getter_name}()));\n"
+    else
+      code = ''
+      code << "        var #@name = #{getter_name}();\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_visible_put_to_data_code(data_var)
+    if required?
+      "        #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+    else
+      code = ''
+      code << "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_clean_code
+    "        #@name = null;\n"
+  end
+
+  def generate_deep_copy_from_code(src_var)
+    if required?
+      "        #@name = #{src_var}.#@name.clone();\n"
+    else
+      code = "        var #@name = #{src_var}.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            this.#@name = #@name.clone();\n"
+      code << "        } else {\n"
+      code << "            this.#@name = null;\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_virtual_append_value_to_update_data_code(data_var)
+    if required?
+      "            #{data_var}.put(\"#@dname\", BsonUtil.toMap(#{getter_name}()));\n"
+    else
+      code = ''
+      code << "            var #@name = #{getter_name}();\n"
+      code << "            if (#@name != null) {\n"
+      code << "                #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+      code << "            }\n"
+    end
+  end
+
+  def generate_reality_append_value_to_update_data_code(data_var)
+    if required?
+      "            #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+    else
+      code = ''
+      code << "            var #@name = this.#@name;\n"
+      code << "            if (#@name != null) {\n"
+      code << "                #{data_var}.put(\"#@dname\", BsonUtil.toMap(#@name));\n"
+      code << "            }\n"
+    end
+  end
+
+end
+
 
 cfg = YAML.load_file(ARGV[0])
 

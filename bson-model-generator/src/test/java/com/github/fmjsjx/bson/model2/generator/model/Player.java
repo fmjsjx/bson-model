@@ -355,6 +355,8 @@ public class Player extends RootModel<Player> {
                 }
             }
             this.friends = friendsCopy;
+        } else {
+            this.friends = null;
         }
     }
 

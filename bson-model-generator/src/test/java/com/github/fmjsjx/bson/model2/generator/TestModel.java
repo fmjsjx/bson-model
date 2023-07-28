@@ -40,6 +40,7 @@ public class TestModel {
         e.setId(UUID.randomUUID().toString());
         e.setRefId(1);
         e.setAtk(10);
+        e.setExtension(new BsonDocument("key1", new BsonString("value1")));
         return e;
     }
 
@@ -68,6 +69,7 @@ public class TestModel {
                                         .append("a", new BsonInt32(10))
                                         .append("d", new BsonInt32(0))
                                         .append("h", new BsonInt32(0))
+                                        .append("ex", new BsonDocument("key1", new BsonString("value1")))
                         )
                 ).append("i",
                         new BsonDocument("1001", new BsonInt32(3))
@@ -78,7 +80,7 @@ public class TestModel {
         assertEquals(bson.toBsonDocument().toJson(), player.toBson().toBsonDocument().toJson());
 
         var json = """
-                {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
+                {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
         json = json.replace("${equipment.id}", equipment.getId());
         assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(player.toData()));
@@ -105,12 +107,22 @@ public class TestModel {
                                 .append("a", new BsonInt32(10))
                                 .append("d", new BsonInt32(0))
                                 .append("h", new BsonInt32(0))
+                                .append("ex", new BsonDocument("key1", new BsonString("value1")))
                 ),
                 updates.get(6));
         assertEquals(Updates.set("i.1001", new BsonInt32(3)), updates.get(7));
         assertEquals(Updates.set("i.2001", new BsonInt32(1)), updates.get(8));
         assertEquals(Updates.set("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(9));
         assertEquals(Updates.set("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(10));
+
+        player.reset();
+        equipment.setAtk(12);
+        equipment.setExtension(equipment.getExtension().clone().append("stars", new BsonInt32(1)));
+        updates = player.toUpdates();
+        assertEquals(2, updates.size());
+        assertEquals(Updates.set("e." + equipment.getId() + ".a", 12), updates.get(0));
+        assertEquals(Updates.set("e." + equipment.getId() + ".ex", new BsonDocument("key1", new BsonString("value1")).append("stars", new BsonInt32(1))), updates.get(1));
+        player.reset();
 
         player.fullyUpdate(true);
         updates = player.toUpdates();
@@ -131,9 +143,10 @@ public class TestModel {
                                 equipment.getId(),
                                 new BsonDocument("i", new BsonString(equipment.getId()))
                                         .append("ri", new BsonInt32(1))
-                                        .append("a", new BsonInt32(10))
+                                        .append("a", new BsonInt32(12))
                                         .append("d", new BsonInt32(0))
                                         .append("h", new BsonInt32(0))
+                                        .append("ex", new BsonDocument("key1", new BsonString("value1")).append("stars", new BsonInt32(1)))
                         )
                 ).append("i",
                         new BsonDocument("1001", new BsonInt32(3))
@@ -186,6 +199,7 @@ public class TestModel {
                                         .append("a", new BsonInt32(10))
                                         .append("d", new BsonInt32(0))
                                         .append("h", new BsonInt32(0))
+                                        .append("ex", new BsonDocument("key1", new BsonString("value1")))
                         )
                 ).append("i",
                         new BsonDocument("1001", new BsonInt32(3))
@@ -195,7 +209,7 @@ public class TestModel {
                 .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
         assertEquals(bson.toBsonDocument().toJson(), copy.toBson().toBsonDocument().toJson());
         var json = """
-                {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
+                {"uid":1,"basicInfo":{"name":"test","avatar":"","lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832}},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
         json = json.replace("${equipment.id}", equipment.getId());
         assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(copy.toData()));
