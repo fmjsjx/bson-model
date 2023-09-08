@@ -13,6 +13,7 @@ import org.bson.conversions.Bson;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -145,18 +146,18 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
     }
 
     @Override
-    protected Object toSubUpdateData() {
+    public Map<Object, Object> toUpdateData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
             return null;
         }
-        var data = new LinkedHashMap<Integer, Object>(Math.max(8, changedIndexes.size() << 1));
+        var data = new LinkedHashMap<>(Math.max(8, changedIndexes.size() << 1));
         changedIndexes.intStream().mapToObj(list::get).filter(Objects::nonNull).forEach(v -> data.put(v.index, v.toUpdateData()));
         return data.isEmpty() ? null : data;
     }
 
     @Override
-    public Object toData() {
+    public List<Object> toData() {
         var list = this.list;
         if (list.isEmpty()) {
             return List.of();
@@ -196,6 +197,48 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
             }
         }
         return updates.size() - original;
+    }
+
+    @Override
+    protected int deletedSize() {
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return 0;
+        }
+        var list = this.list;
+        return (int) changedIndexes.intStream().mapToObj(list::get).filter(v -> v == null || v.anyDeleted()).count();
+    }
+
+    @Override
+    public boolean anyDeleted() {
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return false;
+        }
+        var list = this.list;
+        return changedIndexes.intStream().mapToObj(list::get).anyMatch(v -> v == null || v.anyDeleted());
+    }
+
+    @Override
+    public Map<Object, Object> toDeletedData() {
+        var changedIndexes = this.changedIndexes;
+        if (changedIndexes.isEmpty()) {
+            return null;
+        }
+        var data = new LinkedHashMap<>(Math.max(8, changedIndexes.size() << 1));
+        var list = this.list;
+        changedIndexes.intStream().forEach(index -> {
+            var v = list.get(index);
+            if (v == null) {
+                data.put(index, 1);
+            } else if (v.anyDeleted()) {
+                var vd = v.toDeletedData();
+                if (vd != null) {
+                    data.put(index, vd);
+                }
+            }
+        });
+        return data.isEmpty() ? null : data;
     }
 
     @Override

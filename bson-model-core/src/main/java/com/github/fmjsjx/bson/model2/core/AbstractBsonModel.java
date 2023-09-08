@@ -201,21 +201,6 @@ public abstract class AbstractBsonModel<T extends BsonValue, Self extends Abstra
         return fullyUpdate;
     }
 
-    @Override
-    public Object toUpdateData() {
-        if (isFullyUpdate()) {
-            return toData();
-        }
-        return toSubUpdateData();
-    }
-
-    /**
-     * Creates and returns a new sub update object for this model.
-     *
-     * @return a new sub update object for this model
-     */
-    protected abstract Object toSubUpdateData();
-
     /**
      * Clean this model.
      *

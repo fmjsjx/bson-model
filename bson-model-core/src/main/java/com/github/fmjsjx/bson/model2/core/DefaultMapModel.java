@@ -191,7 +191,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var map = this.map;
         if (map.isEmpty()) {
             return Map.of();
@@ -208,7 +208,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toSubUpdateData() {
+    public Map<Object, Object> toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return null;
@@ -225,7 +225,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return null;

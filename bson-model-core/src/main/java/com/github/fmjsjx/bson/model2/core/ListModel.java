@@ -168,6 +168,9 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
     }
 
     @Override
+    public abstract List<Object> toData();
+
+    @Override
     public boolean anyUpdated() {
         if (isFullyUpdate()) {
             return true;
@@ -201,7 +204,7 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
     }
 
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         var changedIndexes = this.changedIndexes;
         if (changedIndexes.isEmpty()) {
             return null;
