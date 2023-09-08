@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:3.5.0"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.6.0-RC2"))
     // junit-bom
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     // jackson2-bom
@@ -19,7 +19,7 @@ dependencies {
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.7")
-        implementation("ch.qos.logback:logback-classic:1.4.8")
+        implementation("ch.qos.logback:logback-classic:1.4.11")
         api("com.jsoniter:jsoniter:0.9.23")
         val mongodbVersion = "4.10.2"
         api("org.mongodb:bson:$mongodbVersion")
@@ -27,7 +27,7 @@ dependencies {
         api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
         api("org.mongodb:mongodb-driver-reactivestreams:$mongodbVersion")
         api("org.mongodb:mongodb-driver-legacy:$mongodbVersion")
-        val jrubyVersion = "9.4.2.0"
+        val jrubyVersion = "9.4.3.0"
         implementation("org.jruby:jruby-complete:$jrubyVersion")
         implementation("org.jruby:jruby:$jrubyVersion")
         implementation("org.jruby:jruby-core:$jrubyVersion")
