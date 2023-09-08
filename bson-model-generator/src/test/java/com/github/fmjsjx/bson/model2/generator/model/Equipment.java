@@ -160,7 +160,7 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("id", id);
         data.put("refId", refId);

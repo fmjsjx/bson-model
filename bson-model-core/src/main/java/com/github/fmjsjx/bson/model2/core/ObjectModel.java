@@ -111,7 +111,17 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
     protected abstract void loadObjectNode(JsonNode src);
 
     @Override
-    protected Object toSubUpdateData() {
+    public abstract Map<Object, Object> toData();
+
+    @Override
+    public Map<Object, Object> toUpdateData() {
+        if (isFullyUpdate()) {
+            return toData();
+        }
+        return toSubUpdateData();
+    }
+
+    protected Map<Object, Object> toSubUpdateData() {
         if (changedFields.isEmpty()) {
             return null;
         }
@@ -128,7 +138,7 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
     protected abstract void appendUpdateData(Map<Object, Object> data);
 
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         if (changedFields.isEmpty()) {
             return null;
         }

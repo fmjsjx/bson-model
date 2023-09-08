@@ -116,7 +116,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var map = this.map;
         if (map.isEmpty()) {
             return Map.of();
@@ -178,7 +178,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toSubUpdateData() {
+    public Map<Object, Object> toSubUpdateData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return null;
@@ -196,7 +196,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         var changedKeys = this.changedKeys;
         if (changedKeys.isEmpty()) {
             return Map.of();

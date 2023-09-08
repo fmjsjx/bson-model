@@ -212,7 +212,7 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("uid", id);
         data.put("basicInfo", basicInfo.toData());

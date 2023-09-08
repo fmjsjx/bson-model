@@ -160,7 +160,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("name", name);
         var avatar = this.avatar;

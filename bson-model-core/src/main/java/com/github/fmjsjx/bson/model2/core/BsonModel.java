@@ -5,6 +5,7 @@ import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * The top interface for BSON model.
@@ -101,7 +102,7 @@ public interface BsonModel<T extends BsonValue> {
      *
      * @return a new update data object for this model
      */
-    Object toUpdateData();
+    Map<Object, Object> toUpdateData();
 
     /**
      * Returns {@code true} if any value of this model has been deleted in context, {@code false} otherwise.
@@ -115,7 +116,7 @@ public interface BsonModel<T extends BsonValue> {
      *
      * @return a new deleted data object for this model
      */
-    Object toDeletedData();
+    Map<Object, Object> toDeletedData();
 
     /**
      * Deep copy.

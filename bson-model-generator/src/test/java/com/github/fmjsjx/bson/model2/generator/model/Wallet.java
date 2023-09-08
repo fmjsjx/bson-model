@@ -138,7 +138,7 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("coinTotal", coinTotal);
         data.put("coin", getCoin());
@@ -257,7 +257,7 @@ public class Wallet extends ObjectModel<Wallet> {
     }
 
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         return null;
     }
 

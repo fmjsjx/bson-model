@@ -93,6 +93,9 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
     }
 
     @Override
+    public abstract Map<Object, Object> toData();
+
+    @Override
     public boolean anyUpdated() {
         if (isFullyUpdate()) {
             return true;
@@ -109,6 +112,16 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
         }
         return false;
     }
+
+    @Override
+    public Map<Object, Object> toUpdateData() {
+        if (isFullyUpdate()) {
+            return toData();
+        }
+        return toSubUpdateData();
+    }
+
+    protected abstract Map<Object, Object> toSubUpdateData();
 
     @Override
     public boolean anyDeleted() {

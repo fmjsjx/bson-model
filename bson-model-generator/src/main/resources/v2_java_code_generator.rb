@@ -256,7 +256,7 @@ class ModelConf
   def generate_to_data_code
     data_var = variable_name('data')
     code = "    @Override\n"
-    code << "    public Object toData() {\n"
+    code << "    public Map<Object, Object> toData() {\n"
     code << "        var #{data_var} = new LinkedHashMap<>();\n"
     @fields.map do |field|
       field.generate_put_to_data_code(data_var)
@@ -486,7 +486,7 @@ class ModelConf
 
   def generate_to_deleted_data_return_null_code
     code = "    @Override\n"
-    code << "    public Object toDeletedData() {\n"
+    code << "    public Map<Object, Object> toDeletedData() {\n"
     code << "        return null;\n"
     code << "    }\n\n"
   end
