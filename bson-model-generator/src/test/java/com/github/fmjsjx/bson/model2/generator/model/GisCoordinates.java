@@ -99,7 +99,7 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("longitude", longitude);
         data.put("latitude", latitude);

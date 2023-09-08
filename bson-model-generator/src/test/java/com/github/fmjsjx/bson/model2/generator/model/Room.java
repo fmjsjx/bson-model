@@ -48,7 +48,7 @@ public class Room extends RootModel<Room> {
     }
 
     @Override
-    public Object toData() {
+    public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         var players = this.players;
         if (players != null) {
@@ -123,7 +123,7 @@ public class Room extends RootModel<Room> {
     }
 
     @Override
-    public Object toDeletedData() {
+    public Map<Object, Object> toDeletedData() {
         return null;
     }
 
