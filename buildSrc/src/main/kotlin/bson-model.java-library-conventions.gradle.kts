@@ -11,23 +11,23 @@ repositories {
 
 dependencies {
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:3.6.0"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.8.1"))
     // junit-bom
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
     // jackson2-bom
-    api(platform("com.fasterxml.jackson:jackson-bom:2.15.2"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.17.1"))
 
     constraints {
-        implementation("org.slf4j:slf4j-api:2.0.7")
-        implementation("ch.qos.logback:logback-classic:1.4.11")
+        implementation("org.slf4j:slf4j-api:2.0.13")
+        implementation("ch.qos.logback:logback-classic:1.5.6")
         api("com.jsoniter:jsoniter:0.9.23")
-        val mongodbVersion = "4.10.2"
+        val mongodbVersion = "5.1.0"
         api("org.mongodb:bson:$mongodbVersion")
         api("org.mongodb:mongodb-driver-core:$mongodbVersion")
         api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
         api("org.mongodb:mongodb-driver-reactivestreams:$mongodbVersion")
         api("org.mongodb:mongodb-driver-legacy:$mongodbVersion")
-        val jrubyVersion = "9.4.3.0"
+        val jrubyVersion = "9.4.7.0"
         implementation("org.jruby:jruby-complete:$jrubyVersion")
         implementation("org.jruby:jruby:$jrubyVersion")
         implementation("org.jruby:jruby-core:$jrubyVersion")
@@ -35,7 +35,7 @@ dependencies {
         implementation("org.yaml:snakeyaml:2.0")
     }
     // log4j2
-    implementation(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.23.1"))
 
 }
 
