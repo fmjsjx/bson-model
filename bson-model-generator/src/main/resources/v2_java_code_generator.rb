@@ -95,6 +95,11 @@ class ModelConf
       @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDateTime'
     end
+    #  Fix issue "Missing import part for ObjectId"
+    #  see: https://github.com/fmjsjx/bson-model/issues/72
+    if @fields.any? { |field| field.type == 'object-id' }
+      @imports_others << 'org.bson.types.ObjectId'
+    end
     @imports.each do |import|
       if import.start_with?('java.')
         @imports_javas << import
