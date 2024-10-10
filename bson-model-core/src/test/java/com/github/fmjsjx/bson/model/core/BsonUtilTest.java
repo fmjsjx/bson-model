@@ -606,10 +606,10 @@ public class BsonUtilTest {
         assertEquals(objectId.toHexString(), map.get("object-id"));
         assertEquals(uuid.toString(), map.get("uuid"));
         assertNotNull(map.get("array"));
-        assertTrue(map.get("array") instanceof List<?>);
+        assertInstanceOf(List.class, map.get("array"));
         assertEquals(0, ((List<?>) map.get("array")).size());
         assertNotNull(map.get("sub-document"));
-        assertTrue(map.get("sub-document") instanceof Map<?, ?>);
+        assertInstanceOf(Map.class, map.get("sub-document"));
         assertEquals(0, ((Map<?, ?>) map.get("sub-document")).size());
     }
 
@@ -647,10 +647,10 @@ public class BsonUtilTest {
         assertEquals(objectId.toHexString(), list.get(9));
         assertEquals(uuid.toString(), list.get(10));
         assertNotNull(list.get(11));
-        assertTrue(list.get(11) instanceof List<?>);
+        assertInstanceOf(List.class, list.get(11));
         assertEquals(0, ((List<?>) list.get(11)).size());
         assertNotNull(list.get(12));
-        assertTrue(list.get(12) instanceof Map<?, ?>);
+        assertInstanceOf(Map.class, list.get(12));
         assertEquals(0, ((Map<?, ?>) list.get(12)).size());
     }
 
