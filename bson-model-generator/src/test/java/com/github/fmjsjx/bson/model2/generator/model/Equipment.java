@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.generator.model;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -160,6 +161,21 @@ public class Equipment extends ObjectModel<Equipment> {
     }
 
     @Override
+    public JSONObject toFastjson2Node() {
+        var jsonObject = new JSONObject();
+        jsonObject.put(BNAME_ID, id);
+        jsonObject.put(BNAME_REF_ID, refId);
+        jsonObject.put(BNAME_ATK, atk);
+        jsonObject.put(BNAME_DEF, def);
+        jsonObject.put(BNAME_HP, hp);
+        var extension = this.extension;
+        if (extension != null) {
+            jsonObject.put(BNAME_EXTENSION, BsonUtil.toJSONObject(extension));
+        }
+        return jsonObject;
+    }
+
+    @Override
     public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("id", id);
@@ -297,6 +313,17 @@ public class Equipment extends ObjectModel<Equipment> {
 
     @Override
     protected void loadObjectNode(JsonNode src) {
+        resetStates();
+        id = BsonUtil.stringValue(src, BNAME_ID).orElse("");
+        refId = BsonUtil.intValue(src, BNAME_REF_ID).orElse(0);
+        atk = BsonUtil.intValue(src, BNAME_ATK).orElse(0);
+        def = BsonUtil.intValue(src, BNAME_DEF).orElse(0);
+        hp = BsonUtil.intValue(src, BNAME_HP).orElse(0);
+        extension = BsonUtil.objectValue(src, BNAME_EXTENSION).map(BsonUtil::toBsonDocument).orElse(null);
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
         resetStates();
         id = BsonUtil.stringValue(src, BNAME_ID).orElse("");
         refId = BsonUtil.intValue(src, BNAME_REF_ID).orElse(0);

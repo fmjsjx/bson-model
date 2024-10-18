@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonDocument;
@@ -109,6 +110,37 @@ public abstract class ObjectModel<Self extends ObjectModel<Self>> extends Abstra
      * @param src the source data object {@code JsonNode}
      */
     protected abstract void loadObjectNode(JsonNode src);
+
+    /**
+     * Convert this model to a {@link JSONObject}.
+     *
+     * @return a {@code JSONObject}
+     * @since 2.2
+     */
+    @Override
+    public JSONObject toFastjson2Node() {
+        throw new UnsupportedOperationException("fastjson2 not supported");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self loadFastjson2Node(Object src) {
+        if (src instanceof JSONObject jsonObject) {
+            loadJSONObject(jsonObject);
+            return (Self) this;
+        }
+        throw new IllegalArgumentException("src expected be an JSONObject but was " + src.getClass().getSimpleName());
+    }
+
+    /**
+     * Load data from the source {@link JSONObject} data.
+     *
+     * @param src the source data {@code JSONObject}
+     * @since 2.2
+     */
+    protected void loadJSONObject(JSONObject src) {
+        throw new UnsupportedOperationException("fastjson2 not supported");
+    }
 
     @Override
     public abstract Map<Object, Object> toData();

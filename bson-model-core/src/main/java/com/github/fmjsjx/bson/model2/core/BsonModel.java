@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -60,6 +62,27 @@ public interface BsonModel<T extends BsonValue> {
      * @return this model
      */
     BsonModel<?> load(JsonNode src);
+
+    /**
+     * Convert this model to a {@link JSONObject} or a {@link JSONArray}.
+     *
+     * @return a {@code JSONObject} or a {@code JSONArray}
+     * @since 2.2
+     */
+    default Object toFastjson2Node() {
+        throw new UnsupportedOperationException("fastjson2 not supported");
+    }
+
+    /**
+     * Load data from the source that is a {@link JSONObject} or a {@link JSONArray}.
+     *
+     * @param src the source data that is a {@code JSONObject} or a {@code JSONArray}
+     * @return this model
+     * @since 2.2
+     */
+    default BsonModel<?> loadFastjson2Node(Object src) {
+        throw new UnsupportedOperationException("fastjson2 not supported");
+    }
 
     /**
      * Appends the updates of this model into the given list.

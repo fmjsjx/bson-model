@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.generator.model;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -157,6 +158,22 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
             jsonNode.set(BNAME_GIS, gis.toJsonNode());
         }
         return jsonNode;
+    }
+
+    @Override
+    public JSONObject toFastjson2Node() {
+        var jsonObject = new JSONObject();
+        jsonObject.put(BNAME_NAME, name);
+        var avatar = this.avatar;
+        if (avatar != null) {
+            jsonObject.put(BNAME_AVATAR, avatar);
+        }
+        jsonObject.put(BNAME_LAST_LOGIN_TIME, DateTimeUtil.toEpochMilli(lastLoginTime));
+        var gis = this.gis;
+        if (gis != null) {
+            jsonObject.put(BNAME_GIS, gis.toJsonNode());
+        }
+        return jsonObject;
     }
 
     @Override
@@ -325,6 +342,30 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                         gis.unbind();
                     }
                     this.gis = new GisCoordinates().load(v).parent(this).key(BNAME_GIS).index(4);
+                },
+                () -> {
+                    var gis = this.gis;
+                    if (gis != null) {
+                        gis.unbind();
+                        this.gis = null;
+                    }
+                }
+        );
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
+        resetStates();
+        name = BsonUtil.stringValue(src, BNAME_NAME).orElse("");
+        avatar = BsonUtil.stringValue(src, BNAME_AVATAR).orElse(null);
+        lastLoginTime = BsonUtil.dateTimeValue(src, BNAME_LAST_LOGIN_TIME).orElseGet(LocalDateTime::now);
+        BsonUtil.objectValue(src, BNAME_GIS).ifPresentOrElse(
+                v -> {
+                    var gis = this.gis;
+                    if (gis != null) {
+                        gis.unbind();
+                    }
+                    this.gis = new GisCoordinates().loadFastjson2Node(v).parent(this).key(BNAME_GIS).index(4);
                 },
                 () -> {
                     var gis = this.gis;

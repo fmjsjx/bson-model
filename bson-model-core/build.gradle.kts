@@ -3,12 +3,6 @@ plugins {
     id("bson-model.publish-conventions")
 }
 
-java {
-    registerFeature("mongodbSupport") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
 dependencies {
 
     implementation("org.slf4j:slf4j-api")
@@ -16,17 +10,18 @@ dependencies {
     api("com.github.fmjsjx:libcommon-collection")
     api("com.github.fmjsjx:libcommon-util")
     api("com.github.fmjsjx:libcommon-json-jackson2")
+    api("com.github.fmjsjx:libcommon-json-fastjson2")
     api("com.github.fmjsjx:libcommon-json-jsoniter")
 
     api("org.mongodb:bson")
-    api("org.mongodb:mongodb-driver-core")
-    "mongodbSupportApi"("org.mongodb:mongodb-driver-sync")
-    "mongodbSupportApi"("org.mongodb:mongodb-driver-reactivestreams")
+    compileOnly("org.mongodb:mongodb-driver-core")
+    compileOnly("org.mongodb:mongodb-driver-sync")
+    compileOnly("org.mongodb:mongodb-driver-reactivestreams")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testImplementation("org.apache.logging.log4j:log4j-slf4j-impl")
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl")
 
 }
 

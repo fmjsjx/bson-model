@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -172,6 +173,32 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
             var value = valueType.parse(entry.getValue());
             if (value != null) {
                 map.put(parseKey(entry.getKey()), value);
+            }
+        }
+    }
+
+    @Override
+    public JSONObject toFastjson2Node() {
+        var map = this.map;
+        var valueType = this.valueType;
+        var jsonObject = new JSONObject();
+        if (!map.isEmpty()) {
+            for (var e: map.entrySet()) {
+                jsonObject.put(e.getKey().toString(), valueType.toData(e.getValue()));
+            }
+        }
+        return jsonObject;
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
+        clean();
+        var map = this.map;
+        var valueType = this.valueType;
+        for (var e: src.entrySet()) {
+            var value = valueType.parseData(e.getValue());
+            if (value != null) {
+                map.put(parseKey(e.getKey()), value);
             }
         }
     }

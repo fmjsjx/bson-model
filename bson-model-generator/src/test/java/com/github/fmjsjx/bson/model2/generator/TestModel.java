@@ -1,8 +1,10 @@
 package com.github.fmjsjx.bson.model2.generator;
 
+import com.alibaba.fastjson2.JSONWriter;
 import com.github.fmjsjx.bson.model2.generator.model.Equipment;
 import com.github.fmjsjx.bson.model2.generator.model.GisCoordinates;
 import com.github.fmjsjx.bson.model2.generator.model.Player;
+import com.github.fmjsjx.libcommon.json.Fastjson2Library;
 import com.github.fmjsjx.libcommon.json.Jackson2Library;
 import com.github.fmjsjx.libcommon.util.DateTimeUtil;
 import com.mongodb.client.model.Updates;
@@ -84,6 +86,16 @@ public class TestModel {
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
         json = json.replace("${equipment.id}", equipment.getId());
         assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(player.toData()));
+
+        var storeJson = """
+                {"_id":1,"bi":{"n":"test","a":"","llt":${now},"g":{"lo":121.569894,"la":31.251832}},"w":{"ct":100,"cu":0,"d":0,"ad":0},"e":{"${equipment.id}":{"i":"${equipment.id}","ri":1,"a":10,"d":0,"h":0,"ex":{"key1":"value1"}}},"i":{"1001":3,"2001":1},"_uv":0,"_ct":${now},"_ut":${now}}""";
+        storeJson = storeJson.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
+        storeJson = storeJson.replace("${equipment.id}", equipment.getId());
+        assertEquals(storeJson, Jackson2Library.defaultInstance().dumpsToString(player.toJsonNode()));
+        assertEquals(storeJson, player.toFastjson2Node().toJSONString(JSONWriter.Feature.WriteMapNullValue));
+
+        assertEquals(bson.toBsonDocument().toJson(), new Player().load(Jackson2Library.getInstance().loads(storeJson)).toBson().toBsonDocument().toJson());
+        assertEquals(bson.toBsonDocument().toJson(), new Player().loadFastjson2Node(Fastjson2Library.getInstance().loads(storeJson)).toBson().toBsonDocument().toJson());
     }
 
     @Test
