@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.fmjsjx.libcommon.collection.IntHashSet;
@@ -66,6 +67,33 @@ public abstract class ListModel<E, Self extends ListModel<E, Self>>
      * @param src the source data {@code ArrayNode}
      */
     protected abstract void loadArrayNode(ArrayNode src);
+
+    /**
+     * Convert this model to a {@link JSONArray}.
+     *
+     * @return a {@code JSONArray}
+     * @since 2.2
+     */
+    @Override
+    public abstract JSONArray toFastjson2Node();
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self loadFastjson2Node(Object src) {
+        if (src instanceof JSONArray jsonArray) {
+            loadJSONArray(jsonArray);
+            return (Self) this;
+        }
+        throw new IllegalArgumentException("src expected be an JSONArray but was " + src.getClass().getSimpleName());
+    }
+
+    /**
+     * Load data from the source {@link JSONArray} data.
+     *
+     * @param src the source data {@code JSONArray}
+     * @since 2.2
+     */
+    protected abstract void loadJSONArray(JSONArray src);
 
     /**
      * Returns the values of this model.

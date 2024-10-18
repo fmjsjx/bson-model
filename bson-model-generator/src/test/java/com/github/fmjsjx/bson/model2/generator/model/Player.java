@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.generator.model;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -212,6 +214,26 @@ public class Player extends RootModel<Player> {
     }
 
     @Override
+    public JSONObject toFastjson2Node() {
+        var jsonObject = new JSONObject();
+        jsonObject.put(BNAME_ID, id);
+        jsonObject.put(BNAME_BASIC_INFO, basicInfo.toFastjson2Node());
+        jsonObject.put(BNAME_WALLET, wallet.toFastjson2Node());
+        jsonObject.put(BNAME_EQUIPMENTS, equipments.toFastjson2Node());
+        jsonObject.put(BNAME_ITEMS, items.toFastjson2Node());
+        jsonObject.put(BNAME_UPDATE_VERSION, updateVersion);
+        jsonObject.put(BNAME_CREATE_TIME, DateTimeUtil.toEpochMilli(createTime));
+        jsonObject.put(BNAME_UPDATE_TIME, DateTimeUtil.toEpochMilli(updateTime));
+        var friends = this.friends;
+        if (friends != null) {
+            var friendsJsonArray = new JSONArray(friends.size());
+            friends.stream().map(Player::toFastjson2Node).forEach(friendsJsonArray::add);
+            jsonObject.put(BNAME_FRIENDS, friendsJsonArray);
+        }
+        return jsonObject;
+    }
+
+    @Override
     public Map<Object, Object> toData() {
         var data = new LinkedHashMap<>();
         data.put("uid", id);
@@ -404,6 +426,20 @@ public class Player extends RootModel<Player> {
         createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
         updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
         friends = BsonUtil.listValue(src, BNAME_FRIENDS, v -> new Player().load(v)).orElse(null);
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
+        resetStates();
+        id = BsonUtil.intValue(src, BNAME_ID).orElseThrow();
+        BsonUtil.objectValue(src, BNAME_BASIC_INFO).ifPresentOrElse(basicInfo::loadFastjson2Node, basicInfo::clean);
+        BsonUtil.objectValue(src, BNAME_WALLET).ifPresentOrElse(wallet::loadFastjson2Node, wallet::clean);
+        BsonUtil.objectValue(src, BNAME_EQUIPMENTS).ifPresentOrElse(equipments::loadFastjson2Node, equipments::clean);
+        BsonUtil.objectValue(src, BNAME_ITEMS).ifPresentOrElse(items::loadFastjson2Node, items::clean);
+        updateVersion = BsonUtil.intValue(src, BNAME_UPDATE_VERSION).orElse(0);
+        createTime = BsonUtil.dateTimeValue(src, BNAME_CREATE_TIME).orElseThrow();
+        updateTime = BsonUtil.dateTimeValue(src, BNAME_UPDATE_TIME).orElseThrow();
+        friends = BsonUtil.listValue(src, BNAME_FRIENDS, v -> new Player().loadFastjson2Node(v)).orElse(null);
     }
 
     @Override

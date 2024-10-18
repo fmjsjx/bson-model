@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.generator.model;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -96,6 +97,18 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
             jsonNode.put(BNAME_HEIGHT, height);
         }
         return jsonNode;
+    }
+
+    @Override
+    public JSONObject toFastjson2Node() {
+        var jsonObject = new JSONObject();
+        jsonObject.put(BNAME_LONGITUDE, longitude);
+        jsonObject.put(BNAME_LATITUDE, latitude);
+        var height = this.height;
+        if (height != null) {
+            jsonObject.put(BNAME_HEIGHT, height);
+        }
+        return jsonObject;
     }
 
     @Override
@@ -204,6 +217,14 @@ public class GisCoordinates extends ObjectModel<GisCoordinates> {
 
     @Override
     protected void loadObjectNode(JsonNode src) {
+        resetStates();
+        longitude = BsonUtil.doubleValue(src, BNAME_LONGITUDE).orElseThrow();
+        latitude = BsonUtil.doubleValue(src, BNAME_LATITUDE).orElseThrow();
+        height = BsonUtil.boxedDoubleValue(src, BNAME_HEIGHT).orElse(null);
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
         resetStates();
         longitude = BsonUtil.doubleValue(src, BNAME_LONGITUDE).orElseThrow();
         latitude = BsonUtil.doubleValue(src, BNAME_LATITUDE).orElseThrow();

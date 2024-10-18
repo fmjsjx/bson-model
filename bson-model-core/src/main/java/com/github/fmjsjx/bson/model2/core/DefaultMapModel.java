@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -123,6 +124,31 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
             var key = parseKey(entry.getKey());
             var value = valueFactory.get();
             value.load(entry.getValue());
+            map.put(key, value.parent(this).key(key));
+        }
+    }
+
+    @Override
+    public JSONObject toFastjson2Node() {
+        var map = this.map;
+        var jsonObject = new JSONObject();
+        if (!map.isEmpty()) {
+            for (var e : map.entrySet()) {
+                jsonObject.put(e.getKey().toString(), e.getValue().toFastjson2Node());
+            }
+        }
+        return jsonObject;
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
+        clean();
+        var valueFactory = this.valueFactory;
+        var map = this.map;
+        for (var e : src.entrySet()) {
+            var key = parseKey(e.getKey());
+            var value = valueFactory.get();
+            value.loadFastjson2Node(e.getValue());
             map.put(key, value.parent(this).key(key));
         }
     }

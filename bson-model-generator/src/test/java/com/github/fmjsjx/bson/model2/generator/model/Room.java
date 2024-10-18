@@ -1,5 +1,7 @@
 package com.github.fmjsjx.bson.model2.generator.model;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.github.fmjsjx.bson.model.core.BsonUtil;
@@ -45,6 +47,18 @@ public class Room extends RootModel<Room> {
             jsonNode.set(BNAME_PLAYERS, playersArrayNode);
         }
         return jsonNode;
+    }
+
+    @Override
+    public JSONObject toFastjson2Node() {
+        var jsonObject = new JSONObject();
+        var players = this.players;
+        if (players != null) {
+            var playersJsonArray = new JSONArray(players.size());
+            players.stream().map(Player::toFastjson2Node).forEach(playersJsonArray::add);
+            jsonObject.put(BNAME_PLAYERS, playersJsonArray);
+        }
+        return jsonObject;
     }
 
     @Override
@@ -116,6 +130,12 @@ public class Room extends RootModel<Room> {
     protected void loadObjectNode(JsonNode src) {
         resetStates();
         players = BsonUtil.listValue(src, BNAME_PLAYERS, v -> new Player().load(v)).orElse(null);
+    }
+
+    @Override
+    protected void loadJSONObject(JSONObject src) {
+        resetStates();
+        players = BsonUtil.listValue(src, BNAME_PLAYERS, v -> new Player().loadFastjson2Node(v)).orElse(null);
     }
 
     @Override

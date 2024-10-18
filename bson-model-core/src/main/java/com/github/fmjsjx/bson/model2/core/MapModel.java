@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.client.model.Updates;
@@ -86,6 +87,33 @@ public abstract class MapModel<K, V, Self extends MapModel<K, V, Self>>
     protected K parseKey(String key) {
         return keyParser.apply(key);
     }
+
+    /**
+     * Convert this model to a {@link JSONObject}.
+     *
+     * @return a {@code JSONObject}
+     * @since 2.2
+     */
+    @Override
+    public abstract JSONObject toFastjson2Node();
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Self loadFastjson2Node(Object src) {
+        if (src instanceof JSONObject jsonObject) {
+            loadJSONObject(jsonObject);
+            return (Self) this;
+        }
+        throw new IllegalArgumentException("src expected be an JSONObject but was " + src.getClass().getSimpleName());
+    }
+
+    /**
+     * Load data from the source {@link JSONObject} data.
+     *
+     * @param src the source data {@code JSONObject}
+     * @since 2.2
+     */
+    protected abstract void loadJSONObject(JSONObject src);
 
     @Override
     public boolean anyChanged() {

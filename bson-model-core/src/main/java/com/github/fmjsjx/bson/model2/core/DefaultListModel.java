@@ -1,5 +1,6 @@
 package com.github.fmjsjx.bson.model2.core;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -98,6 +99,40 @@ public final class DefaultListModel<E extends AbstractBsonModel<BsonDocument, E>
             if (v != null && !v.isNull()) {
                 var value = valueFactory.get();
                 value.load(v);
+                list.add(value.parent(this).index(i));
+            } else {
+                list.add(null);
+            }
+        }
+    }
+
+    @Override
+    public JSONArray toFastjson2Node() {
+        var list = this.list;
+        var jsonArray = new JSONArray(list.size());
+        if (!list.isEmpty()) {
+            for (var v : list) {
+                if (v == null) {
+                    jsonArray.add(null);
+                } else {
+                    jsonArray.add(v.toFastjson2Node());
+                }
+            }
+        }
+        return jsonArray;
+    }
+
+    @Override
+    protected void loadJSONArray(JSONArray src) {
+        clean();
+        var valueFactory = this.valueFactory;
+        var list = this.list;
+        var len = src.size();
+        for (var i = 0; i < len; i++) {
+            var v = src.get(i);
+            if (v != null) {
+                var value = valueFactory.get();
+                value.loadFastjson2Node(v);
                 list.add(value.parent(this).index(i));
             } else {
                 list.add(null);

@@ -1,6 +1,8 @@
 package com.github.fmjsjx.bson.model.core;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -11,6 +13,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -1356,7 +1360,7 @@ public class BsonUtil {
     }
 
     /**
-     * Gets the array value in an {@link JsonNode}.
+     * Gets the string value in an {@link JsonNode}.
      *
      * @param node the source {@link JsonNode}
      * @param key  the key
@@ -2031,13 +2035,13 @@ public class BsonUtil {
     /**
      * Gets the {@link UUID} value in a document.
      *
-     * @param document           the source document
-     * @param key                the key
+     * @param document the source document
+     * @param key      the key
      * @return an {@code Optional<UUID>}
      * @since 2.0
      */
     public static final Optional<UUID> uuidLegacyValue(BsonDocument document, String key) {
-       return uuidValue(document, key, UuidRepresentation.JAVA_LEGACY);
+        return uuidValue(document, key, UuidRepresentation.JAVA_LEGACY);
     }
 
     /**
@@ -2232,7 +2236,7 @@ public class BsonUtil {
             throw new IllegalArgumentException("the source jsonNode expected <OBJECT> but was <" + jsonNode.getNodeType() + ">");
         }
         var document = new BsonDocument();
-        for (var iter = jsonNode.fields(); iter.hasNext();) {
+        for (var iter = jsonNode.fields(); iter.hasNext(); ) {
             var entry = iter.next();
             var key = entry.getKey();
             var value = entry.getValue();
@@ -2253,9 +2257,9 @@ public class BsonUtil {
             } else if (value.isBoolean()) {
                 document.append(key, BsonBoolean.valueOf(value.booleanValue()));
             } else if (value.isArray()) {
-                document.append(key, BsonUtil.toBsonArray(value));
+                document.append(key, toBsonArray(value));
             } else if (value.isObject()) {
-                document.append(key, BsonUtil.toBsonDocument(value));
+                document.append(key, toBsonDocument(value));
             }
         }
         return document;
@@ -2291,12 +2295,556 @@ public class BsonUtil {
             } else if (value.isBoolean()) {
                 array.add(BsonBoolean.valueOf(value.booleanValue()));
             } else if (value.isArray()) {
-                array.add(BsonUtil.toBsonArray(value));
+                array.add(toBsonArray(value));
             } else if (value.isObject()) {
-                array.add(BsonUtil.toBsonDocument(value));
+                array.add(toBsonDocument(value));
             }
         }
         return array;
+    }
+
+    /**
+     * Gets the object value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<JSONObject>}
+     * @since 2.2
+     */
+    public static final Optional<JSONObject> objectValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONObject v) {
+            return Optional.of(v);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONObject (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code boolean} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<Boolean>}
+     * @since 2.2
+     */
+    public static final Optional<Boolean> booleanValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Boolean v) {
+            return Optional.of(v);
+        }
+        throw new ClassCastException(String.format("The value is not a Boolean (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the array value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<JSONArray>}
+     * @since 2.2
+     */
+    public static final Optional<JSONArray> arrayValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONArray v) {
+            return Optional.of(v);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONArray (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the string value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<String>}
+     * @since 2.2
+     */
+    public static final Optional<String> stringValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof String v) {
+            return Optional.of(v);
+        }
+        throw new ClassCastException(String.format("The value is not a String (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code int} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code OptionalInt}
+     * @since 2.2
+     */
+    public static final OptionalInt intValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return OptionalInt.empty();
+        }
+        if (value instanceof Number v) {
+            return OptionalInt.of(v.intValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code long} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code OptionalLong}
+     * @since 2.2
+     */
+    public static final OptionalLong longValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return OptionalLong.empty();
+        }
+        if (value instanceof Number v) {
+            return OptionalLong.of(v.longValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code double} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code OptionalDouble}
+     * @since 2.2
+     */
+    public static final OptionalDouble doubleValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return OptionalDouble.empty();
+        }
+        if (value instanceof Number v) {
+            return OptionalDouble.of(v.doubleValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code LocalDateTime} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<LocalDateTime>}
+     * @since 2.2
+     */
+    public static final Optional<LocalDateTime> dateTimeValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Number v) {
+            return Optional.of(DateTimeUtil.ofEpochMilli(v.longValue()));
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code ZonedDateTime} value in a {@link JSONObject}.
+     *
+     * @param zone       the zone to combine with, not null
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<ZonedDateTime>}
+     * @since 2.2
+     */
+    public static final Optional<ZonedDateTime> dateTimeValue(ZoneId zone, JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Number v) {
+            return Optional.of(DateTimeUtil.ofEpochMilli(v.longValue(), zone));
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code ObjectId} value in an {@link JSONObject} with key
+     * {@code "_id"}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @return an {@code Optional<ObjectId>}
+     * @since 2.2
+     */
+    public static final Optional<ObjectId> objectIdValue(JSONObject jsonObject) {
+        return objectIdValue(jsonObject, "_id");
+    }
+
+    /**
+     * Gets the {@code ObjectId} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<ObjectId>}
+     * @since 2.2
+     */
+    public static final Optional<ObjectId> objectIdValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof String v) {
+            return Optional.of(new ObjectId(v));
+        }
+        throw new ClassCastException(String.format("The value is not a String (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code Integer} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<Integer>}
+     * @since 2.2
+     */
+    public static final Optional<Integer> integerValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Number v) {
+            return Optional.of(v.intValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code Long} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<Long>}
+     * @since 2.2
+     */
+    public static final Optional<Long> boxedLongValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Number v) {
+            return Optional.of(v.longValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code Double} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<Double>}
+     * @since 2.2
+     */
+    public static final Optional<Double> boxedDoubleValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Number v) {
+            return Optional.of(v.doubleValue());
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code Boolean} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<Boolean>}
+     * @since 2.2
+     */
+    public static final Optional<Boolean> boxedBooleanValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof Boolean v) {
+            return Optional.of(v);
+        }
+        throw new ClassCastException(String.format("The value is not a Number (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code int array} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<int[]>}
+     * @since 2.2
+     */
+    public static final Optional<int[]> intArrayValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONArray v) {
+            var values = new int[v.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = v.getIntValue(i);
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONArray (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code long array} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<long[]>}
+     * @since 2.2
+     */
+    public static final Optional<long[]> longArrayValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONArray v) {
+            var values = new long[v.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = v.getLongValue(i);
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONArray (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the {@code double array} value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @return an {@code Optional<double[]>}
+     * @since 2.2
+     */
+    public static final Optional<double[]> doubleArrayValue(JSONObject jsonObject, String key) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONArray v) {
+            var values = new double[v.size()];
+            for (var i = 0; i < values.length; i++) {
+                values[i] = v.getDoubleValue(i);
+            }
+            return Optional.of(values);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONArray (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Gets the list value in a {@link JSONObject}.
+     *
+     * @param jsonObject the source {@link JSONObject}
+     * @param key        the key
+     * @param mapper     the mapper
+     * @return an {@code Optional<double[]>}
+     * @since 2.2
+     */
+    public static final <T> Optional<List<T>> listValue(JSONObject jsonObject, String key, Function<Object, T> mapper) {
+        var value = jsonObject.get(key);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (value instanceof JSONArray values) {
+            var list = new ArrayList<T>(values.size());
+            for (var v : values) {
+                if (v == null) {
+                    list.add(null);
+                } else {
+                    list.add(mapper.apply(v));
+                }
+            }
+            return Optional.of(list);
+        }
+        throw new ClassCastException(String.format("The value is not a JSONArray (%s)", value.getClass().getSimpleName()));
+    }
+
+    /**
+     * Convert the specified {@link JSONObject} to {@link BsonDocument}.
+     *
+     * @param jsonObject the source {@code JSONObject}
+     * @return a {@code BsonDocument}
+     * @since 2.2
+     */
+    public static final BsonDocument toBsonDocument(JSONObject jsonObject) {
+        var document = new BsonDocument();
+        for (var entry : jsonObject.entrySet()) {
+            var key = entry.getKey();
+            var value = entry.getValue();
+            if (value == null) {
+                document.append(key, BsonNull.VALUE);
+            } else if (value instanceof String v) {
+                document.append(key, new BsonString(v));
+            } else if (value instanceof Number) {
+                if (value instanceof Integer v) {
+                    document.append(key, new BsonInt32(v));
+                } else if (value instanceof Long v) {
+                    document.append(key, new BsonInt64(v));
+                } else if (value instanceof Double v) {
+                    document.append(key, new BsonDouble(v));
+                } else if (value instanceof BigDecimal v) {
+                    document.append(key, new BsonDouble(v.doubleValue()));
+                } else if (value instanceof BigInteger v) {
+                    document.append(key, new BsonDecimal128(new Decimal128(new BigDecimal(v))));
+                }
+            } else if (value instanceof Boolean v) {
+                document.append(key, BsonBoolean.valueOf(v));
+            } else if (value instanceof JSONArray v) {
+                document.append(key, toBsonArray(v));
+            } else if (value instanceof JSONObject v) {
+                document.append(key, toBsonDocument(v));
+            }
+        }
+        return document;
+    }
+
+    /**
+     * Convert the specified {@link JSONArray} to {@link BsonArray}.
+     *
+     * @param jsonArray the source {@code JSONArray}
+     * @return a {@code BsonArray}
+     * @since 2.2
+     */
+    public static final BsonArray toBsonArray(JSONArray jsonArray) {
+        var array = new BsonArray(jsonArray.size());
+        for (var value : jsonArray) {
+            if (value == null) {
+                array.add(BsonNull.VALUE);
+            } else if (value instanceof String v) {
+                array.add(new BsonString(v));
+            } else if (value instanceof Number) {
+                if (value instanceof Integer v) {
+                    array.add(new BsonInt32(v));
+                } else if (value instanceof Long v) {
+                    array.add(new BsonInt64(v));
+                } else if (value instanceof Double v) {
+                    array.add(new BsonDouble(v));
+                } else if (value instanceof BigDecimal v) {
+                    array.add(new BsonDouble(v.doubleValue()));
+                } else if (value instanceof BigInteger v) {
+                    array.add(new BsonDecimal128(new Decimal128(new BigDecimal(v))));
+                }
+            } else if (value instanceof Boolean v) {
+                array.add(BsonBoolean.valueOf(v));
+            } else if (value instanceof JSONArray v) {
+                array.add(toBsonArray(v));
+            } else if (value instanceof JSONObject v) {
+                array.add(toBsonDocument(v));
+            }
+        }
+        return array;
+    }
+
+    /**
+     * Convert the specified {@link BsonDocument} to {@link JSONObject}.
+     *
+     * @param document the {@code BsonDocument}
+     * @return an {@code JSONObject}
+     * @since 2.2
+     */
+    public static final JSONObject toJSONObject(BsonDocument document) {
+        var jsonObject = new JSONObject();
+        for (var entry : document.entrySet()) {
+            var key = entry.getKey();
+            var value = entry.getValue();
+            if (value instanceof BsonString v) {
+                jsonObject.put(key, v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    jsonObject.put(key, v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    jsonObject.put(key, v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    jsonObject.put(key, v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    jsonObject.put(key, v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                jsonObject.put(key, v.getValue());
+            } else if (value instanceof BsonNull) {
+                jsonObject.put(key, null);
+            } else if (value instanceof BsonDateTime v) {
+                jsonObject.put(key, v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                jsonObject.put(key, v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                jsonObject.put(key, v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                jsonObject.put(key, v.asUuid().toString());
+            } else if (value instanceof BsonArray array) {
+                jsonObject.put(key, toJSONArray(array));
+            } else if (value instanceof BsonDocument v) {
+                jsonObject.put(key, toJSONObject(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        }
+        return jsonObject;
+    }
+
+    /**
+     * Convert the specified {@link BsonArray} to {@link JSONArray}.
+     *
+     * @param array the {@code BsonArray}
+     * @return an {@code JSONArray}
+     * @since 2.2
+     */
+    public static final JSONArray toJSONArray(BsonArray array) {
+        var jsonArray = new JSONArray(array.size());
+        for (var value : array) {
+            if (value instanceof BsonString v) {
+                jsonArray.add(v.getValue());
+            } else if (value instanceof BsonNumber) {
+                if (value instanceof BsonInt32 v) {
+                    jsonArray.add(v.getValue());
+                } else if (value instanceof BsonInt64 v) {
+                    jsonArray.add(v.getValue());
+                } else if (value instanceof BsonDouble v) {
+                    jsonArray.add(v.getValue());
+                } else if (value instanceof BsonDecimal128 v) {
+                    jsonArray.add(v.getValue().bigDecimalValue());
+                }
+            } else if (value instanceof BsonBoolean v) {
+                jsonArray.add(v.getValue());
+            } else if (value instanceof BsonNull) {
+                jsonArray.add(null);
+            } else if (value instanceof BsonDateTime v) {
+                jsonArray.add(v.getValue());
+            } else if (value instanceof BsonTimestamp v) {
+                jsonArray.add(v.getTime() * 1000L);
+            } else if (value instanceof BsonObjectId v) {
+                jsonArray.add(v.getValue().toHexString());
+            } else if (value instanceof BsonBinary v) {
+                // only support standard UUID
+                jsonArray.add(v.asUuid().toString());
+            } else if (value instanceof BsonArray v) {
+                jsonArray.add(toJSONArray(v));
+            } else if (value instanceof BsonDocument v) {
+                jsonArray.add(toJSONObject(v));
+            }
+            // ignore other BSON type (e.g. symbol)
+        }
+        return jsonArray;
     }
 
     private BsonUtil() {

@@ -63,4 +63,13 @@ public interface SingleValueType<T> {
         return value;
     }
 
+    /**
+     * Parse the value to the model type.
+     *
+     * @param value the JSON value
+     * @return the value in model type
+     * @since 2.2
+     */
+    T parseData(Object value);
+
 }
