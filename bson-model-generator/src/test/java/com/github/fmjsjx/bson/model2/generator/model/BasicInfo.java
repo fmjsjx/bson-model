@@ -10,6 +10,7 @@ import com.mongodb.client.model.Updates;
 import org.bson.*;
 import org.bson.conversions.Bson;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -19,11 +20,13 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
     public static final String BNAME_AVATAR = "a";
     public static final String BNAME_LAST_LOGIN_TIME = "llt";
     public static final String BNAME_GIS = "g";
+    public static final String BNAME_BIRTHDAY = "b";
 
     private String name = "";
     private String avatar;
     private LocalDateTime lastLoginTime = LocalDateTime.now();
     private GisCoordinates gis;
+    private LocalDate birthday;
 
     public String getName() {
         return name;
@@ -83,6 +86,17 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         }
     }
 
+    public LocalDate getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(LocalDate birthday) {
+        if (!Objects.equals(birthday, this.birthday)) {
+            this.birthday = birthday;
+            fieldChanged(5);
+        }
+    }
+
     public boolean nameChanged() {
         return changedFields.get(0);
     }
@@ -103,6 +117,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         return changedFields.get(4);
     }
 
+    public boolean birthdayChanged() {
+        return changedFields.get(5);
+    }
+
     @Override
     public BsonDocument toBson() {
         var bson = new BsonDocument();
@@ -115,6 +133,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         var gis = this.gis;
         if (gis != null) {
             bson.append(BNAME_GIS, gis.toBson());
+        }
+        var birthday = this.birthday;
+        if (birthday != null) {
+            bson.append(BNAME_BIRTHDAY, new BsonInt32(DateTimeUtil.toNumber(birthday)));
         }
         return bson;
     }
@@ -141,6 +163,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     }
                 }
         );
+        birthday = BsonUtil.intValue(src, BNAME_BIRTHDAY).stream().mapToObj(DateTimeUtil::toDate).findFirst().orElse(null);
         return this;
     }
 
@@ -156,6 +179,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         var gis = this.gis;
         if (gis != null) {
             jsonNode.set(BNAME_GIS, gis.toJsonNode());
+        }
+        var birthday = this.birthday;
+        if (birthday != null) {
+            jsonNode.put(BNAME_BIRTHDAY, DateTimeUtil.toNumber(birthday));
         }
         return jsonNode;
     }
@@ -173,6 +200,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         if (gis != null) {
             jsonObject.put(BNAME_GIS, gis.toFastjson2Node());
         }
+        var birthday = this.birthday;
+        if (birthday != null) {
+            jsonObject.put(BNAME_BIRTHDAY, DateTimeUtil.toNumber(birthday));
+        }
         return jsonObject;
     }
 
@@ -188,6 +219,10 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         var gis = this.gis;
         if (gis != null) {
             data.put("gis", gis.toData());
+        }
+        var birthday = this.birthday;
+        if (birthday != null) {
+            data.put("birthday", birthday.toString());
         }
         return data;
     }
@@ -212,6 +247,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
             if (gis != null && gis.anyUpdated()) {
                 return true;
             }
+        }
+        if (changedFields.get(5) && birthday != null) {
+            return true;
         }
         return false;
     }
@@ -240,6 +278,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 n++;
             }
         }
+        if (changedFields.get(5) && birthday == null) {
+            n++;
+        }
         return n;
     }
 
@@ -258,6 +299,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 return true;
             }
         }
+        if (changedFields.get(5) && birthday == null) {
+            return true;
+        }
         return false;
     }
 
@@ -271,6 +315,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
             gis.clean().unbind();
             this.gis = null;
         }
+        birthday = null;
         resetStates();
         return this;
     }
@@ -297,6 +342,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 this.gis = null;
             }
         }
+        birthday = src.birthday;
     }
 
     @Override
@@ -327,6 +373,14 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 gis.appendUpdates(updates);
             }
         }
+        if (changedFields.get(5)) {
+            var birthday = this.birthday;
+            if (birthday == null) {
+                updates.add(Updates.unset(path().resolve(BNAME_BIRTHDAY).value()));
+            } else {
+                updates.add(Updates.set(path().resolve(BNAME_BIRTHDAY).value(), DateTimeUtil.toNumber(birthday)));
+            }
+        }
     }
 
     @Override
@@ -351,6 +405,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     }
                 }
         );
+        birthday = BsonUtil.intValue(src, BNAME_BIRTHDAY).stream().mapToObj(DateTimeUtil::toDate).findFirst().orElse(null);
     }
 
     @Override
@@ -375,6 +430,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                     }
                 }
         );
+        birthday = BsonUtil.intValue(src, BNAME_BIRTHDAY).stream().mapToObj(DateTimeUtil::toDate).findFirst().orElse(null);
     }
 
     @Override
@@ -404,6 +460,12 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 }
             }
         }
+        if (changedFields.get(5)) {
+            var birthday = this.birthday;
+            if (birthday != null) {
+                data.put("birthday", birthday.toString());
+            }
+        }
     }
 
     @Override
@@ -423,6 +485,9 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 }
             }
         }
+        if (changedFields.get(5) && birthday == null) {
+            data.put("birthday", 1);
+        }
     }
 
     @Override
@@ -431,6 +496,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
                 ", avatar=" + avatar +
                 ", lastLoginTime=" + lastLoginTime +
                 ", gis=" + gis +
+                ", birthday=" + birthday +
                 ")";
     }
 
