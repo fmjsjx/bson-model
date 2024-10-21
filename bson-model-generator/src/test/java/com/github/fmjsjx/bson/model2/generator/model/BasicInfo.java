@@ -171,7 +171,7 @@ public class BasicInfo extends ObjectModel<BasicInfo> {
         jsonObject.put(BNAME_LAST_LOGIN_TIME, DateTimeUtil.toEpochMilli(lastLoginTime));
         var gis = this.gis;
         if (gis != null) {
-            jsonObject.put(BNAME_GIS, gis.toJsonNode());
+            jsonObject.put(BNAME_GIS, gis.toFastjson2Node());
         }
         return jsonObject;
     }

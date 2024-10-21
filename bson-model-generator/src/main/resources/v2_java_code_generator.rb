@@ -77,7 +77,8 @@ class ModelConf
     @imports_javas.clear
     @imports_others.clear
     @imports_javas << 'java.util.*'
-    @imports_others += ['com.fasterxml.jackson.databind.JsonNode',
+    @imports_others += ['com.alibaba.fastjson2.JSONObject',
+                        'com.fasterxml.jackson.databind.JsonNode',
                         'com.fasterxml.jackson.databind.node.JsonNodeFactory',
                         'com.github.fmjsjx.bson.model2.core.*',
                         'org.bson.*',
@@ -99,6 +100,10 @@ class ModelConf
     #  see: https://github.com/fmjsjx/bson-model/issues/72
     if @fields.any? { |field| field.type == 'object-id' }
       @imports_others << 'org.bson.types.ObjectId'
+    end
+    # Check if should import com.alibaba.fastjson2.JSONArray
+    if @fields.any? { |field| ['int-array', 'long-array', 'double-array', 'std-list'].member?(field.type) }
+      @imports_others << 'com.alibaba.fastjson2.JSONArray'
     end
     @imports.each do |import|
       if import.start_with?('java.')
@@ -138,6 +143,7 @@ class ModelConf
     code << generate_to_bson_code
     code << generate_load_code
     code << generate_to_json_node_code
+    code << generate_to_fastjson2_node_code
     code << generate_to_data_code
     code << generate_any_updated_code
     code << generate_reset_children_code
@@ -148,6 +154,7 @@ class ModelConf
     code << generate_deep_copy_from_code
     code << generate_append_field_updates_code
     code << generate_load_object_node_code
+    code << generate_load_json_object_code
     code << generate_append_update_data_code
     unless @fields.select { |field| not field.hidden? and not field.loadonly? and not field.transient? }
                   .any? { |field| not field.required? or not field.single_value? }
@@ -256,6 +263,22 @@ class ModelConf
       variable_name = "#{var_name}#{i += 1}"
     end
     variable_name
+  end
+
+  def generate_to_fastjson2_node_code
+    node_var = variable_name('jsonObject')
+    code = "    @Override\n"
+    code << "    public JSONObject toFastjson2Node() {\n"
+    code << "        var #{node_var} = new JSONObject();\n"
+    @fields.map do |field|
+      field.generate_append_to_fastjson2_node_code(node_var)
+    end.select do |c|
+      not c.nil?
+    end.each do |c|
+      code << c
+    end
+    code << "        return #{node_var};\n"
+    code << "    }\n\n"
   end
 
   def generate_to_data_code
@@ -410,12 +433,12 @@ class ModelConf
   end
 
   def generate_deep_copy_code
-    var_copy = variable_name('copy')
+    copy_var = variable_name('copy')
     code = "    @Override\n"
     code << "    public #@name deepCopy() {\n"
-    code << "        var #{var_copy} = new #@name();\n"
-    code << "        deepCopyTo(#{var_copy}, false);\n"
-    code << "        return #{var_copy};\n"
+    code << "        var #{copy_var} = new #@name();\n"
+    code << "        deepCopyTo(#{copy_var}, false);\n"
+    code << "        return #{copy_var};\n"
     code << "    }\n\n"
   end
 
@@ -460,6 +483,21 @@ class ModelConf
     code << "        resetStates();\n"
     @fields.map do |field|
       field.generate_load_object_node_code(src_var)
+    end.select do |c|
+      not c.nil?
+    end.each do |c|
+      code << c
+    end
+    code << "    }\n\n"
+  end
+
+  def generate_load_json_object_code
+    src_var = variable_name('src')
+    code = "    @Override\n"
+    code << "    protected void loadJSONObject(JSONObject #{src_var}) {\n"
+    code << "        resetStates();\n"
+    @fields.map do |field|
+      field.generate_load_json_object_code(src_var)
     end.select do |c|
       not c.nil?
     end.each do |c|
@@ -522,9 +560,9 @@ class ModelConf
     when 0
       code << "        return \"#@name()\";\n"
     else
-      code << "        return \"#@name(\" + \"#{fields[0].name}=\" + #{fields[0].name} +\n"
+      code << "        return \"#@name(\" + \"#{fields[0].name}=\" + #{fields[0].generate_to_string_code} +\n"
       fields[1..].each do |field|
-        code << "                \", #{field.name}=\" + #{field.name} +\n"
+        code << "                \", #{field.name}=\" + #{field.generate_to_string_code} +\n"
       end
       code << "                \")\";\n"
     end
@@ -871,6 +909,10 @@ class FieldConf
     raise "default value is unsupported for `#@type`"
   end
 
+  def variable_name_global(var_name)
+    @parent_model.variable_name(var_name)
+  end
+
   def variable_name(suffix)
     if @parent_model.nil?
       @name + suffix
@@ -992,17 +1034,17 @@ class FieldConf
     code << "    }\n\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bsovar_n)
     raise "unsupported type `#@type`"
   end
 
-  def generate_append_value_to_bson_code(bson_var, bson_value_factory)
+  def generate_append_value_to_bson_code(bsovar_n, bson_value_factory)
     if required?
-      "        #{bson_var}.append(#{bname_const_field_name}, #{bson_value_factory});\n"
+      "        #{bsovar_n}.append(#{bname_const_field_name}, #{bson_value_factory});\n"
     else
       code = "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
-      code << "            #{bson_var}.append(#{bname_const_field_name}, #{bson_value_factory});\n"
+      code << "            #{bsovar_n}.append(#{bname_const_field_name}, #{bson_value_factory});\n"
       code << "        }\n"
     end
   end
@@ -1036,6 +1078,28 @@ class FieldConf
       code = "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            #{json_node_var}.put(#{bname_const_field_name}, #{value_factory});\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_append_to_fastjson2_node_code(node_var)
+    if virtual? or transient?
+      return nil
+    end
+    generate_reality_append_to_fastjson2_node_code(node_var)
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    raise "unsupported type `#@type`"
+  end
+
+  def generate_put_value_to_fastjson2_node_code(node_var, value_factory)
+    if required?
+      "        #{node_var}.put(#{bname_const_field_name}, #{value_factory});\n"
+    else
+      code = "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{node_var}.put(#{bname_const_field_name}, #{value_factory});\n"
       code << "        }\n"
     end
   end
@@ -1130,6 +1194,17 @@ class FieldConf
     generate_reality_load_code(src_var)
   end
 
+  def generate_load_json_object_code(src_var)
+    if virtual? or transient?
+      return nil
+    end
+    generate_reality_load_json_object_code(src_var)
+  end
+
+  def generate_reality_load_json_object_code(src_var)
+    generate_reality_load_code(src_var)
+  end
+
   def generate_append_update_data_code(data_var)
     code = "        if (changedFields.get(#@index)) {\n"
     if virtual?
@@ -1189,6 +1264,10 @@ class FieldConf
     code << "        }\n"
   end
 
+  def generate_to_string_code
+    @name
+  end
+
 end
 
 class PrimitiveFieldConf < FieldConf
@@ -1235,6 +1314,10 @@ class PrimitiveFieldConf < FieldConf
   def generate_reality_append_to_json_node_code(json_node_var)
     generate_put_value_to_json_node_code(json_node_var, @name)
   end
+  
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, @name)
+  end
 
   def generate_clean_code
     if required?
@@ -1267,8 +1350,8 @@ class IntFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonInt32(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonInt32(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1302,8 +1385,8 @@ class LongFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonInt64(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonInt64(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1355,8 +1438,8 @@ class DoubleFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonDouble(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonDouble(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1420,8 +1503,8 @@ class BooleanFieldConf < PrimitiveFieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonBoolean(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonBoolean(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1476,8 +1559,8 @@ class StringFieldConf < FieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonString(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonString(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1494,6 +1577,10 @@ class StringFieldConf < FieldConf
 
   def generate_reality_append_to_json_node_code(json_node_var)
     generate_put_value_to_json_node_code(json_node_var, @name)
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, @name)
   end
 
   def generate_clean_code
@@ -1541,8 +1628,8 @@ class DateTimeFieldConf < FieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonDateTime(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonDateTime(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1569,6 +1656,10 @@ class DateTimeFieldConf < FieldConf
 
   def generate_reality_append_to_json_node_code(json_node_var)
     generate_put_value_to_json_node_code(json_node_var, "DateTimeUtil.toEpochMilli(#@name)")
+  end
+  
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, "DateTimeUtil.toEpochMilli(#@name)")
   end
 
   def generate_virtual_put_to_data_code(data_var)
@@ -1647,8 +1738,8 @@ class ObjectIdFieldConf < FieldConf
     "    private #{generic_type} #@name;\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "new BsonObjectId(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "new BsonObjectId(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1661,6 +1752,10 @@ class ObjectIdFieldConf < FieldConf
 
   def generate_reality_append_to_json_node_code(json_node_var)
     generate_put_value_to_json_node_code(json_node_var, "#@name.toHexString()")
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, "#@name.toHexString()")
   end
 
   def generate_virtual_put_to_data_code(data_var)
@@ -1734,11 +1829,11 @@ class UUIDFieldConf < FieldConf
     "    private #{generic_type} #@name;\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
+  def generate_append_to_bson_code(bsovar_n)
     if @legacy
-      generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinaryUuidLegacy(#@name)")
+      generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonBinaryUuidLegacy(#@name)")
     else
-      generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonBinary(#@name)")
+      generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonBinary(#@name)")
     end
   end
 
@@ -1760,6 +1855,10 @@ class UUIDFieldConf < FieldConf
 
   def generate_reality_append_to_json_node_code(json_node_var)
     generate_put_value_to_json_node_code(json_node_var, "#@name.toString()")
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, "#@name.toString()")
   end
 
   def generate_virtual_put_to_data_code(data_var)
@@ -1795,6 +1894,14 @@ class UUIDFieldConf < FieldConf
   end
 
   def generate_reality_load_object_node_code(src_var)
+    if required?
+      "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).map(UUID::fromString).orElse(null);\n"
+    end
+  end
+
+  def generate_reality_load_json_object_code(src_var)
     if required?
       "        #@name = BsonUtil.stringValue(#{src_var}, #{bname_const_field_name}).map(UUID::fromString).orElseThrow();\n"
     else
@@ -1868,8 +1975,8 @@ class PrimitiveArrayFieldConf < FieldConf
     code << "        }\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name)")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonArray(#@name)")
   end
 
   def generate_reality_load_code(src_var)
@@ -1885,21 +1992,43 @@ class PrimitiveArrayFieldConf < FieldConf
   end
 
   def generate_reality_append_to_json_node_code(json_node_var)
-    array_node_var = variable_name("ArrayNode")
+    var_array_node = variable_name("ArrayNode")
+    v_var = variable_name_global('v')
     code = "        var #@name = this.#@name;\n"
     if required?
-      code << "        var #{array_node_var} = jsonNode.arrayNode(#@name.length);\n"
-      code << "        for (var i = 0; i < #@name.length; i++) {\n"
-      code << "            #{array_node_var}.add(#@name[i]);\n"
+      code << "        var #{var_array_node} = jsonNode.arrayNode(#@name.length);\n"
+      code << "        for (var #{v_var} : #@name) {\n"
+      code << "            #{var_array_node}.add(#{v_var});\n"
       code << "        }\n"
-      code << "        #{json_node_var}.set(#{bname_const_field_name}, #{array_node_var});\n"
+      code << "        #{json_node_var}.set(#{bname_const_field_name}, #{var_array_node});\n"
     else
       code << "        if (#@name != null) {\n"
-      code << "            var #{array_node_var} = jsonNode.arrayNode(#@name.length);\n"
-      code << "            for (var i = 0; i < #@name.length; i++) {\n"
-      code << "                #{array_node_var}.add(#@name[i]);\n"
+      code << "            var #{var_array_node} = jsonNode.arrayNode(#@name.length);\n"
+      code << "            for (var #{v_var} : #@name) {\n"
+      code << "                #{var_array_node}.add(#{v_var});\n"
       code << "            }\n"
-      code << "            #{json_node_var}.set(#{bname_const_field_name}, #{array_node_var});\n"
+      code << "            #{json_node_var}.set(#{bname_const_field_name}, #{var_array_node});\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    var_json_array = variable_name("JsonArray")
+    v_var = variable_name_global('v')
+    code = "        var #@name = this.#@name;\n"
+    if required?
+      code << "        var #{var_json_array} = new JSONArray(#@name.length);\n"
+      code << "        for (var #{v_var} : #@name) {\n"
+      code << "            #{var_json_array}.add(#{v_var});\n"
+      code << "        }\n"
+      code << "        #{node_var}.put(#{bname_const_field_name}, #{var_json_array});\n"
+    else
+      code << "        if (#@name != null) {\n"
+      code << "            var #{var_json_array} = new JSONArray(#@name.length);\n"
+      code << "            for (var #{v_var} : #@name) {\n"
+      code << "                #{var_json_array}.add(#{v_var});\n"
+      code << "            }\n"
+      code << "            #{node_var}.put(#{bname_const_field_name}, #{var_json_array});\n"
       code << "        }\n"
     end
   end
@@ -1928,6 +2057,10 @@ class PrimitiveArrayFieldConf < FieldConf
 
   def generate_append_updates_code(updates_var)
     generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), BsonUtil.toBsonArray(#@name)))")
+  end
+  
+  def generate_to_string_code
+    "Arrays.toString(#@name)"
   end
 
 end
@@ -1999,8 +2132,8 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})")
   end
 
   def to_array_mapper_code
@@ -2029,6 +2162,7 @@ class StdListFieldConf < FieldConf
   end
 
   def generate_reality_load_code(src_var)
+    v_var = variable_name_global('v')
     case @value
     when 'int'
       if required?
@@ -2074,21 +2208,21 @@ class StdListFieldConf < FieldConf
       end
     when 'uuid'
       if required?
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary #{v_var}) -> #{v_var}.asUuid(UuidRepresentation.STANDARD)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.STANDARD)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary #{v_var}) -> #{v_var}.asUuid(UuidRepresentation.STANDARD)).orElse(null);\n"
       end
     when 'uuid-legacy'
       if required?
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary #{v_var}) -> #{v_var}.asUuid(UuidRepresentation.UUID_LEGACY)).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary v) -> v.asUuid(UuidRepresentation.UUID_LEGACY)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonBinary #{v_var}) -> #{v_var}.asUuid(UuidRepresentation.UUID_LEGACY)).orElse(null);\n"
       end
     when 'object'
       if required?
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument #{v_var}) -> new #@model().load(#{v_var})).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument v) -> new #@model().load(v)).orElse(null);\n"
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonDocument #{v_var}) -> new #@model().load(#{v_var})).orElse(null);\n"
       end
     else
       raise "unsupported value type `#@value` for `std-list`"
@@ -2096,31 +2230,61 @@ class StdListFieldConf < FieldConf
   end
 
   def generate_reality_append_to_json_node_code(json_node_var)
-    array_node_var = variable_name("ArrayNode")
+    var_array_node = variable_name("ArrayNode")
     add_code = case @value
     when 'int', 'long', 'double', 'boolean', 'string'
-      "#@name.forEach(#{array_node_var}::add);"
+      "#@name.forEach(#{var_array_node}::add);"
     when 'datetime'
-      "#@name.stream().mapToInt(DateTimeUtil::toEpochMilli).forEach(#{array_node_var}::add);"
+      "#@name.stream().map(DateTimeUtil::toEpochMilli).forEach(#{var_array_node}::add);"
     when 'object-id'
-      "#@name.stream().map(ObjectId::toHexString).forEach(#{array_node_var}::add);"
+      "#@name.stream().map(ObjectId::toHexString).forEach(#{var_array_node}::add);"
     when 'uuid', 'uuid-legacy'
-      "#@name.stream().map(UUID::toString).forEach(#{array_node_var}::add);"
+      "#@name.stream().map(UUID::toString).forEach(#{var_array_node}::add);"
     when 'object'
-      "#@name.stream().map(#@model::toJsonNode).forEach(#{array_node_var}::add);"
+      "#@name.stream().map(#@model::toJsonNode).forEach(#{var_array_node}::add);"
     else
       raise "unsupported value type `#@value` for std-list"
     end
     code = "        var #@name = this.#@name;\n"
     if required?
-      code << "        var #{array_node_var} = jsonNode.arrayNode(#@name.size());\n"
+      code << "        var #{var_array_node} = jsonNode.arrayNode(#@name.size());\n"
       code << "        #{add_code}\n"
-      code << "        #{json_node_var}.set(#{bname_const_field_name}, #{array_node_var});\n"
+      code << "        #{json_node_var}.set(#{bname_const_field_name}, #{var_array_node});\n"
     else
       code << "        if (#@name != null) {\n"
-      code << "            var #{array_node_var} = jsonNode.arrayNode(#@name.size());\n"
+      code << "            var #{var_array_node} = jsonNode.arrayNode(#@name.size());\n"
       code << "            #{add_code}\n"
-      code << "            #{json_node_var}.set(#{bname_const_field_name}, #{array_node_var});\n"
+      code << "            #{json_node_var}.set(#{bname_const_field_name}, #{var_array_node});\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    var_json_array = variable_name("JsonArray")
+    add_code = case @value
+    when 'int', 'long', 'double', 'boolean', 'string'
+      "#{var_json_array}.addAll(#@name);"
+    when 'datetime'
+      "#@name.stream().map(DateTimeUtil::toEpochMilli).forEach(#{var_json_array}::add);"
+    when 'object-id'
+      "#@name.stream().map(ObjectId::toHexString).forEach(#{var_json_array}::add);"
+    when 'uuid', 'uuid-legacy'
+      "#@name.stream().map(UUID::toString).forEach(#{var_json_array}::add);"
+    when 'object'
+      "#@name.stream().map(#@model::toFastjson2Node).forEach(#{var_json_array}::add);"
+    else
+      raise "unsupported value type `#@value` for std-list"
+    end
+    code = "        var #@name = this.#@name;\n"
+    if required?
+      code << "        var #{var_json_array} = new JSONArray(#@name.size());\n"
+      code << "        #{add_code}\n"
+      code << "        #{node_var}.put(#{bname_const_field_name}, #{var_json_array});\n"
+    else
+      code << "        if (#@name != null) {\n"
+      code << "            var #{var_json_array} = new JSONArray(#@name.size());\n"
+      code << "            #{add_code}\n"
+      code << "            #{node_var}.put(#{bname_const_field_name}, #{var_json_array});\n"
       code << "        }\n"
     end
   end
@@ -2211,6 +2375,7 @@ class StdListFieldConf < FieldConf
   end
 
   def generate_reality_load_object_node_code(src_var)
+    v_var = variable_name_global('v')
     case @value
     when 'int'
       if required?
@@ -2244,27 +2409,99 @@ class StdListFieldConf < FieldConf
       end
     when 'datetime'
       if required?
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.ofEpochMilli(#{v_var}.longValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> DateTimeUtil.ofEpochMilli(v.longValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.ofEpochMilli(#{v_var}.longValue())).orElse(null);\n"
       end
     when 'object-id'
       if required?
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new ObjectId(#{v_var}.textValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new ObjectId(v.textValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new ObjectId(#{v_var}.textValue())).orElse(null);\n"
       end
     when 'uuid', 'uuid-legacy'
       if required?
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> UUID.fromString(#{v_var}.textValue())).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> UUID.fromString(v.textValue())).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> UUID.fromString(#{v_var}.textValue())).orElse(null);\n"
       end
     when 'object'
       if required?
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new #@model().load(v)).orElseGet(List::of);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new #@model().load(#{v_var})).orElseGet(List::of);\n"
       else
-        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, v -> new #@model().load(v)).orElse(null);\n"
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new #@model().load(#{v_var})).orElse(null);\n"
+      end
+    else
+      raise "unsupported value type `#@value` for `std-list`"
+    end
+  end
+
+  def generate_reality_load_json_object_code(src_var)
+    v_var = variable_name_global('v')
+    case @value
+    when 'int'
+      n_var = variable_name_global('n')
+      parse_int_code = "#{v_var} -> #{v_var} instanceof Number #{n_var} ? #{n_var}.intValue() : 0"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_int_code}).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_int_code}).orElse(null);\n"
+      end
+    when 'long'
+      n_var = variable_name_global('n')
+      parse_long_code = "#{v_var} -> #{v_var} instanceof Number #{n_var} ? #{n_var}.longValue() : 0L"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_long_code}).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_long_code}).orElse(null);\n"
+      end
+    when 'double'
+      n_var = variable_name_global('n')
+      parse_double_code = "#{v_var} -> #{v_var} instanceof Number #{n_var} ? #{n_var}.doubleValue() : 0.0"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_double_code}).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_double_code}).orElse(null);\n"
+      end
+    when 'boolean'
+      b_var = variable_name_global('b')
+      parse_boolean_code = "#{v_var} -> #{v_var} instanceof Boolean #{b_var} ? #{b_var} : Boolean.parseBoolean(#{v_var}.toString())"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_boolean_code}).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{parse_boolean_code}).orElse(null);\n"
+      end
+    when 'string'
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, Object::toString).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, Object::toString).orElse(null);\n"
+      end
+    when 'datetime'
+      n_var = variable_name_global('n')
+      parse_long_code = "#{v_var} instanceof Number #{n_var} ? #{n_var}.longValue() : 0L"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.ofEpochMilli(#{parse_long_code})).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.ofEpochMilli(#{parse_long_code})).orElse(null);\n"
+      end
+    when 'object-id'
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new ObjectId(#{v_var}.toString())).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new ObjectId(#{v_var}.toString())).orElse(null);\n"
+      end
+    when 'uuid', 'uuid-legacy'
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> UUID.fromString(#{v_var}.toString())).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> UUID.fromString(#{v_var}.toString())).orElse(null);\n"
+      end
+    when 'object'
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new #@model().loadFastjson2Node(#{v_var})).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> new #@model().loadFastjson2Node(#{v_var})).orElse(null);\n"
       end
     else
       raise "unsupported value type `#@value` for `std-list`"
@@ -2323,21 +2560,22 @@ class ModelFieldConf < FieldConf
     code << "        }\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, "#@name.toBson()")
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, "#@name.toBson()")
   end
 
   def generate_load_model_code(src_var, factor)
     if required?
       "        BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
     else
+      v_var = variable_name_global('v')
       code = "        BsonUtil.documentValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(\n"
-      code << "                v -> {\n"
+      code << "                #{v_var} -> {\n"
       code << "                    var #@name = this.#@name;\n"
       code << "                    if (#@name != null) {\n"
       code << "                        #@name.unbind();\n"
       code << "                    }\n"
-      code << "                    this.#@name = #{factor}.load(v).parent(this).key(#{bname_const_field_name}).index(#@index);\n"
+      code << "                    this.#@name = #{factor}.load(#{v_var}).parent(this).key(#{bname_const_field_name}).index(#@index);\n"
       code << "                },\n"
       code << "                () -> {\n"
       code << "                    var #@name = this.#@name;\n"
@@ -2357,6 +2595,17 @@ class ModelFieldConf < FieldConf
       code = "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            #{json_node_var}.set(#{bname_const_field_name}, #@name.toJsonNode());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    if required?
+      "        #{node_var}.put(#{bname_const_field_name}, #@name.toFastjson2Node());\n"
+    else
+      code = "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{node_var}.put(#{bname_const_field_name}, #@name.toFastjson2Node());\n"
       code << "        }\n"
     end
   end
@@ -2436,13 +2685,38 @@ class ModelFieldConf < FieldConf
     if required?
       "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::load, #@name::clean);\n"
     else
+      v_var = variable_name_global('v')
       code = "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(\n"
-      code << "                v -> {\n"
+      code << "                #{v_var} -> {\n"
       code << "                    var #@name = this.#@name;\n"
       code << "                    if (#@name != null) {\n"
       code << "                        #@name.unbind();\n"
       code << "                    }\n"
-      code << "                    this.#@name = #{factor}.load(v).parent(this).key(#{bname_const_field_name}).index(#@index);\n"
+      code << "                    this.#@name = #{factor}.load(#{v_var}).parent(this).key(#{bname_const_field_name}).index(#@index);\n"
+      code << "                },\n"
+      code << "                () -> {\n"
+      code << "                    var #@name = this.#@name;\n"
+      code << "                    if (#@name != null) {\n"
+      code << "                        #@name.unbind();\n"
+      code << "                        this.#@name = null;\n"
+      code << "                    }\n"
+      code << "                }\n"
+      code << "        );\n"
+    end
+  end
+
+  def generate_load_model_json_object_code(src_var, factor)
+    if required?
+      "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(#@name::loadFastjson2Node, #@name::clean);\n"
+    else
+      v_var = variable_name_global('v')
+      code = "        BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).ifPresentOrElse(\n"
+      code << "                #{v_var} -> {\n"
+      code << "                    var #@name = this.#@name;\n"
+      code << "                    if (#@name != null) {\n"
+      code << "                        #@name.unbind();\n"
+      code << "                    }\n"
+      code << "                    this.#@name = #{factor}.loadFastjson2Node(#{v_var}).parent(this).key(#{bname_const_field_name}).index(#@index);\n"
       code << "                },\n"
       code << "                () -> {\n"
       code << "                    var #@name = this.#@name;\n"
@@ -2575,6 +2849,10 @@ class ObjectFieldConf < ModelFieldConf
     generate_load_model_object_node_code(src_var, "new #{generic_type}()")
   end
 
+  def generate_reality_load_json_object_code(src_var)
+    generate_load_model_json_object_code(src_var, "new #{generic_type}()")
+  end
+
 end
 
 class MapFieldConf < ModelFieldConf
@@ -2656,6 +2934,10 @@ class MapFieldConf < ModelFieldConf
     generate_load_model_object_node_code(src_var, map_init_code)
   end
 
+  def generate_reality_load_json_object_code(src_var)
+    generate_load_model_json_object_code(src_var, map_init_code)
+  end
+
 end
 
 class ListFieldConf < ModelFieldConf
@@ -2692,6 +2974,10 @@ class ListFieldConf < ModelFieldConf
     generate_load_model_object_node_code(src_var, "new #{generic_type}(#@model::new)")
   end
 
+  def generate_reality_load_json_object_code(src_var)
+    generate_load_model_json_object_code(src_var, "new #{generic_type}(#@model::new)")
+  end
+
 end
 
 class BsonDocumentFieldConf < FieldConf
@@ -2708,8 +2994,8 @@ class BsonDocumentFieldConf < FieldConf
     "    private #{generic_type} #@name;\n"
   end
 
-  def generate_append_to_bson_code(bson_var)
-    generate_append_value_to_bson_code(bson_var, @name)
+  def generate_append_to_bson_code(bsovar_n)
+    generate_append_value_to_bson_code(bsovar_n, @name)
   end
 
   def generate_reality_load_code(src_var)
@@ -2728,6 +3014,14 @@ class BsonDocumentFieldConf < FieldConf
     end
   end
 
+  def generate_reality_load_json_object_code(src_var)
+    if required?
+      "        #@name = BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).map(BsonUtil::toBsonDocument).orElseThrow();\n"
+    else
+      "        #@name = BsonUtil.objectValue(#{src_var}, #{bname_const_field_name}).map(BsonUtil::toBsonDocument).orElse(null);\n"
+    end
+  end
+
   def generate_reality_append_to_json_node_code(json_node_var)
     if required?
       "        #{json_node_var}.set(#{bname_const_field_name}, BsonUtil.toObjectNode(#@name));\n"
@@ -2735,6 +3029,17 @@ class BsonDocumentFieldConf < FieldConf
       code = "        var #@name = this.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            #{json_node_var}.set(#{bname_const_field_name}, BsonUtil.toObjectNode(#@name));\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    if required?
+      "        #{node_var}.put(#{bname_const_field_name}, BsonUtil.toJSONObject(#@name));\n"
+    else
+      code = "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{node_var}.put(#{bname_const_field_name}, BsonUtil.toJSONObject(#@name));\n"
       code << "        }\n"
     end
   end
