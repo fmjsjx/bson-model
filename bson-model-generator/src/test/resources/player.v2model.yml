@@ -73,6 +73,8 @@ models:
   - name: gis g
     type: object
     model: GisCoordinates
+  - name: birthday b
+    type: date
 - name: GisCoordinates
   type: object
   fields:

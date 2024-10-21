@@ -92,9 +92,16 @@ class ModelConf
     if @consts.any? { |const| const.type == 'datetime' }
       @imports_javas << 'java.time.LocalDateTime'
     end
+    if @consts.any? { |const| const.type == 'date' }
+      @imports_javas << 'java.time.LocalDate'
+    end
     if @fields.any? { |field| field.type == 'datetime' }
       @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDateTime'
+    end
+    if @fields.any? { |field| field.type == 'date' }
+      @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
+      @imports_javas << 'java.time.LocalDate'
     end
     #  Fix issue "Missing import part for ObjectId"
     #  see: https://github.com/fmjsjx/bson-model/issues/72
@@ -599,6 +606,8 @@ class ConstConf
       "    public static final #@type #@name = #@value;\n"
     when 'string'
       "    public static final String #@name = \"#@value\";\n"
+    when 'date'
+      "    public static final LocalDate #@name = #@value;\n"
     when 'datetime'
       "    public static final LocalDateTime #@name = #@value;\n"
     when 'std-list'
@@ -663,6 +672,8 @@ class FieldConf
         BooleanFieldConf.new(name, bname, dname)
       when 'string'
         StringFieldConf.new(name, bname, dname)
+      when 'date'
+        DateFieldConf.new(name, bname, dname)
       when 'datetime'
         DateTimeFieldConf.new(name, bname, dname)
       when 'object-id'
@@ -1597,6 +1608,141 @@ class StringFieldConf < FieldConf
 
 end
 
+class DateFieldConf < FieldConf
+
+  def initialize(name, bname, dname)
+    super(name, bname, dname, 'date')
+  end
+
+  def generic_type
+    'LocalDate'
+  end
+
+  def required_default_value_code
+    case @default.downcase
+    when 'min'
+      'LocalDate.MIN'
+    when 'max'
+      'LocalDate.MAX'
+    when 'now'
+      'LocalDate.now()'
+    else
+      if @parent_model.consts.any? { |const| const.name == @default }
+        @default
+      else
+        "LocalDate.parse(#{@default.to_json})"
+      end
+    end
+  end
+
+  def generate_reality_declare_code
+    if required? and has_default?
+      "    private #{generic_type} #@name = #{default_value_code};\n"
+    else
+      "    private #{generic_type} #@name;\n"
+    end
+  end
+
+  def generate_append_to_bson_code(bson_var)
+    generate_append_value_to_bson_code(bson_var, "new BsonInt32(DateTimeUtil.toNumber(#@name))")
+  end
+
+  def generate_reality_load_code(src_var)
+    if required?
+      if has_default?
+        or_else_code = case @default.downcase
+        when 'min'
+          'orElse(LocalDate.MIN)'
+        when 'max'
+          'orElse(LocalDate.MAX)'
+        when 'now'
+          'orElseGet(LocalDate::now)'
+        else
+          if @parent_model.consts.any? { |const| const.name == @default }
+            "orElse(#@default)"
+          else
+            "orElseGet(() -> LocalDate.parse(#{@default.to_json}))"
+          end
+        end
+        "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).stream().mapToObj(DateTimeUtil::toDate).findFirst().#{or_else_code};\n"
+      else
+        "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).stream().mapToObj(DateTimeUtil::toDate).findFirst().orElseThrow();\n"
+      end
+    else
+      "        #@name = BsonUtil.intValue(#{src_var}, #{bname_const_field_name}).stream().mapToObj(DateTimeUtil::toDate).findFirst().orElse(null);\n"
+    end
+  end
+
+  def generate_reality_append_to_json_node_code(json_node_var)
+    generate_put_value_to_json_node_code(json_node_var, "DateTimeUtil.toNumber(#@name)")
+  end
+  
+  def generate_reality_append_to_fastjson2_node_code(node_var)
+    generate_put_value_to_fastjson2_node_code(node_var, "DateTimeUtil.toNumber(#@name)")
+  end
+
+  def generate_virtual_put_to_data_code(data_var)
+    if required?
+      "        #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "        var #@name = #{getter_name}();\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_visible_put_to_data_code(data_var)
+    if required?
+      "        #{data_var}.put(\"#@dname\", #@name.toString());\n"
+    else
+      code = ''
+      code << "        var #@name = this.#@name;\n"
+      code << "        if (#@name != null) {\n"
+      code << "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
+      code << "        }\n"
+    end
+  end
+
+  def generate_clean_code
+    if required? and has_default?
+      "        #@name = #{default_value_code};\n"
+    else
+      "        #@name = null;\n"
+    end
+  end
+
+  def generate_append_updates_code(updates_var)
+    generate_reality_append_updates_code(updates_var, "#{updates_var}.add(Updates.set(path().resolve(#{bname_const_field_name}).value(), DateTimeUtil.toNumber(#@name)))")
+  end
+
+  def generate_virtual_append_value_to_update_data_code(data_var)
+    if required?
+      "            #{data_var}.put(\"#@dname\", #{getter_name}().toString());\n"
+    else
+      code = ''
+      code << "            var #@name = #{getter_name}();\n"
+      code << "            if (#@name != null) {\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+  def generate_reality_append_value_to_update_data_code(data_var)
+    if required?
+      "            #{data_var}.put(\"#@dname\", #@name.toString());\n"
+    else
+      code = ''
+      code << "            var #@name = this.#@name;\n"
+      code << "            if (#@name != null) {\n"
+      code << "                #{data_var}.put(\"#@dname\", #@name.toString());\n"
+      code << "            }\n"
+    end
+  end
+
+end
+
 class DateTimeFieldConf < FieldConf
 
   def initialize(name, bname, dname)
@@ -1616,7 +1762,11 @@ class DateTimeFieldConf < FieldConf
     when 'now'
       'LocalDateTime.now()'
     else
-      "LocalDateTime.parse(#{@default.to_json})"
+      if @parent_model.consts.any? { |const| const.name == @default }
+        @default
+      else
+        "LocalDateTime.parse(#{@default.to_json})"
+      end
     end
   end
 
@@ -1643,7 +1793,11 @@ class DateTimeFieldConf < FieldConf
         when 'now'
           'orElseGet(LocalDateTime::now)'
         else
-          "orElseGet(() -> LocalDateTime.parse(#{@default.to_json}))"
+          if @parent_model.consts.any? { |const| const.name == @default }
+            "orElse(#@default)"
+          else
+            "orElseGet(() -> LocalDateTime.parse(#{@default.to_json}))"
+          end
         end
         "        #@name = BsonUtil.dateTimeValue(#{src_var}, #{bname_const_field_name}).#{or_else_code};\n"
       else
