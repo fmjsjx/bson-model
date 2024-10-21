@@ -95,11 +95,11 @@ class ModelConf
     if @consts.any? { |const| const.type == 'date' }
       @imports_javas << 'java.time.LocalDate'
     end
-    if @fields.any? { |field| field.type == 'datetime' }
+    if @fields.any? { |field| field.type == 'datetime' or (field.type == 'std-list' and field.value == 'datetime') }
       @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDateTime'
     end
-    if @fields.any? { |field| field.type == 'date' }
+    if @fields.any? { |field| field.type == 'date' or (field.type == 'std-list' and field.value == 'date') }
       @imports_others << 'com.github.fmjsjx.libcommon.util.DateTimeUtil'
       @imports_javas << 'java.time.LocalDate'
     end
@@ -761,6 +761,7 @@ class FieldConf
     @bname = bname
     @dname = dname
     @type = type
+    @value = nil
     @required = false
     @virtual = false
     @loadonly = false
@@ -2261,6 +2262,8 @@ class StdListFieldConf < FieldConf
       'String'
     when 'uuid', 'uuid-legacy'
       'UUID'
+    when 'date'
+      'LocalDate'
     when 'datetime'
       'LocalDateTime'
     when 'object-id'
@@ -2286,8 +2289,8 @@ class StdListFieldConf < FieldConf
     end
   end
 
-  def generate_append_to_bson_code(bsovar_n)
-    generate_append_value_to_bson_code(bsovar_n, "BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})")
+  def generate_append_to_bson_code(bson_var)
+    generate_append_value_to_bson_code(bson_var, "BsonUtil.toBsonArray(#@name, #{to_array_mapper_code})")
   end
 
   def to_array_mapper_code
@@ -2302,6 +2305,9 @@ class StdListFieldConf < FieldConf
       'BsonBoolean::new'
     when 'string'
       'BsonString::new'
+    when 'date'
+      v_var = variable_name_global('v')
+      "#{v_var} -> new BsonInt32(DateTimeUtil.toNumber(#{v_var}))"
     when 'datetime'
       'BsonUtil::toBsonDateTime'
     when 'object-id'
@@ -2348,6 +2354,12 @@ class StdListFieldConf < FieldConf
       else
         "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonString::getValue).orElse(null);\n"
       end
+    when 'date'
+      if required?
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonNumber #{v_var}) -> DateTimeUtil.toDate(#{v_var}.intValue())).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, (BsonNumber #{v_var}) -> DateTimeUtil.toDate(#{v_var}.intValue())).orElse(null);\n"
+      end
     when 'datetime'
       if required?
         "        #@name = BsonUtil.arrayValue(#{src_var}, #{bname_const_field_name}, BsonUtil::toLocalDateTime).orElseGet(List::of);\n"
@@ -2388,6 +2400,8 @@ class StdListFieldConf < FieldConf
     add_code = case @value
     when 'int', 'long', 'double', 'boolean', 'string'
       "#@name.forEach(#{var_array_node}::add);"
+    when 'date'
+      "#@name.stream().map(DateTimeUtil::toNumber).forEach(#{var_array_node}::add);"
     when 'datetime'
       "#@name.stream().map(DateTimeUtil::toEpochMilli).forEach(#{var_array_node}::add);"
     when 'object-id'
@@ -2418,6 +2432,8 @@ class StdListFieldConf < FieldConf
     add_code = case @value
     when 'int', 'long', 'double', 'boolean', 'string'
       "#{var_json_array}.addAll(#@name);"
+    when 'date'
+      "#@name.stream().map(DateTimeUtil::toNumber).forEach(#{var_json_array}::add);"
     when 'datetime'
       "#@name.stream().map(DateTimeUtil::toEpochMilli).forEach(#{var_json_array}::add);"
     when 'object-id'
@@ -2449,6 +2465,8 @@ class StdListFieldConf < FieldConf
       ".stream().map(#@model::toData).toList()"
     when 'int', 'long', 'double', 'boolean', 'string'
       ''
+    when 'date'
+      '.stream().map(LocalDate::toString).toList()'
     when 'datetime'
       '.stream().map(LocalDateTime::toString).toList()'
     when 'object-id'
@@ -2495,7 +2513,7 @@ class StdListFieldConf < FieldConf
   def generate_deep_copy_from_code(src_var)
     code = ''
     case @value
-    when 'int', 'long', 'double', 'boolean', 'string', 'datetime', 'object-id', 'uuid', 'uuid-legacy'
+    when 'int', 'long', 'double', 'boolean', 'string', 'date', 'datetime', 'object-id', 'uuid', 'uuid-legacy'
       code << "        var #@name = #{src_var}.#@name;\n"
       code << "        if (#@name != null) {\n"
       code << "            this.#@name = new ArrayList<>(#{src_var}.#@name);\n"
@@ -2560,6 +2578,12 @@ class StdListFieldConf < FieldConf
         "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::textValue).orElseGet(List::of);\n"
       else
         "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, JsonNode::textValue).orElse(null);\n"
+      end
+    when 'date'
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.toDate(Math.max(#{v_var}.intValue(), 101))).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.toDate(Math.max(#{v_var}.intValue(), 101))).orElse(null);\n"
       end
     when 'datetime'
       if required?
@@ -2630,6 +2654,14 @@ class StdListFieldConf < FieldConf
         "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, Object::toString).orElseGet(List::of);\n"
       else
         "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, Object::toString).orElse(null);\n"
+      end
+    when 'date'
+      n_var = variable_name_global('n')
+      parse_int_code = "#{v_var} instanceof Number #{n_var} ? #{n_var}.intValue() : 101"
+      if required?
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.toDate(#{parse_int_code})).orElseGet(List::of);\n"
+      else
+        "        #@name = BsonUtil.listValue(#{src_var}, #{bname_const_field_name}, #{v_var} -> DateTimeUtil.toDate(#{parse_int_code})).orElse(null);\n"
       end
     when 'datetime'
       n_var = variable_name_global('n')
