@@ -65,6 +65,9 @@ models:
   - name: lastLoginTime llt
     type: datetime required hidden
     default: now
+  - name: loginDays ld
+    type: std-list
+    value: date
   - name: lastLoginAt
     type: long required virtual
     sources:
