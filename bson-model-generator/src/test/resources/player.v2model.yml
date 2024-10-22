@@ -73,11 +73,16 @@ models:
     sources:
     - lastLoginTime
     lambda: DateTimeUtil.toEpochMilli(lastLoginTime)
+  - name: workTimes wt
+    type: std-list
+    value: time
   - name: gis g
     type: object
     model: GisCoordinates
   - name: birthday b
     type: date
+  - name: birthtime bt
+    type: time
 - name: GisCoordinates
   type: object
   fields:
