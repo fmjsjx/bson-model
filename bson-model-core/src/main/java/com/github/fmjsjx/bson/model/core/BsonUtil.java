@@ -1091,7 +1091,7 @@ public class BsonUtil {
      * system default time-zone.
      *
      * @param value the {@code BsonValue}
-     * @return a {@code OffsetDateTime}
+     * @return an {@code OffsetDateTime}
      */
     public static final OffsetDateTime toOffsetDateTime(BsonValue value) {
         return toOffsetDateTime(value, ZoneId.systemDefault());
@@ -2138,7 +2138,7 @@ public class BsonUtil {
      * Convert the specified {@link BsonDocument} to {@link Map} data.
      *
      * @param document the {@code BsonDocument}
-     * @return an {@code Map<String, Object>}
+     * @return a {@code Map<String, Object>}
      * @since 2.1
      */
     public static final Map<String, Object> toMap(BsonDocument document) {
@@ -2183,7 +2183,7 @@ public class BsonUtil {
      * Convert the specified {@link BsonArray} to {@link List}.
      *
      * @param array the {@code BsonArray}
-     * @return an {@code List<Object>}
+     * @return a {@code List<Object>}
      * @since 2.1
      */
     public static final List<Object> toList(BsonArray array) {
@@ -2657,7 +2657,8 @@ public class BsonUtil {
      * @param jsonObject the source {@link JSONObject}
      * @param key        the key
      * @param mapper     the mapper
-     * @return an {@code Optional<double[]>}
+     * @param <T>        the type of the return element
+     * @return an {@code Optional<List<T>>}
      * @since 2.2
      */
     public static final <T> Optional<List<T>> listValue(JSONObject jsonObject, String key, Function<Object, T> mapper) {
@@ -2759,7 +2760,7 @@ public class BsonUtil {
      * Convert the specified {@link BsonDocument} to {@link JSONObject}.
      *
      * @param document the {@code BsonDocument}
-     * @return an {@code JSONObject}
+     * @return a {@code JSONObject}
      * @since 2.2
      */
     public static final JSONObject toJSONObject(BsonDocument document) {
@@ -2806,7 +2807,7 @@ public class BsonUtil {
      * Convert the specified {@link BsonArray} to {@link JSONArray}.
      *
      * @param array the {@code BsonArray}
-     * @return an {@code JSONArray}
+     * @return a {@code JSONArray}
      * @since 2.2
      */
     public static final JSONArray toJSONArray(BsonArray array) {
