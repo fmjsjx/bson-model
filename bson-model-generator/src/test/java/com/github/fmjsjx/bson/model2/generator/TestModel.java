@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -29,10 +30,12 @@ public class TestModel {
         player.getBasicInfo().setAvatar("");
         player.getBasicInfo().setLastLoginTime(now);
         player.getBasicInfo().setLoginDays(List.of(now.toLocalDate().minusDays(1), now.toLocalDate()));
+        player.getBasicInfo().setWorkTimes(List.of(LocalTime.of(8, 0), LocalTime.of(20, 0)));
         player.getBasicInfo().setGis(new GisCoordinates());
         player.getBasicInfo().getGis().setLongitude(121.569894);
         player.getBasicInfo().getGis().setLatitude(31.251832);
         player.getBasicInfo().setBirthday(LocalDate.of(2000, 1, 23));
+        player.getBasicInfo().setBirthtime(LocalTime.of(17, 18));
         player.getWallet().setCoinTotal(100);
         player.getItems().put(1001, 3);
         player.getItems().put(2001, 1);
@@ -62,8 +65,10 @@ public class TestModel {
                                 .append("a", new BsonString(""))
                                 .append("llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime())))
                                 .append("ld", new BsonArray(List.of(new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))), new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate())))))
+                                .append("wt", new BsonArray(List.of(new BsonInt32(8_00_00), new BsonInt32(20_00_00))))
                                 .append("g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832)))
                                 .append("b", new BsonInt32(2000_01_23))
+                                .append("bt", new BsonInt32(17_18_00))
                 ).append("w",
                         new BsonDocument("ct", new BsonInt64(100))
                                 .append("cu", new BsonInt64(0))
@@ -88,7 +93,7 @@ public class TestModel {
         assertEquals(bson.toBsonDocument().toJson(), player.toBson().toBsonDocument().toJson());
 
         var json = """
-                {"uid":1,"basicInfo":{"name":"test","avatar":"","loginDays":["${yesterday}","${today}"],"lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832},"birthday":"2000-01-23"},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
+                {"uid":1,"basicInfo":{"name":"test","avatar":"","loginDays":["${yesterday}","${today}"],"lastLoginAt":${now},"workTimes":["08:00","20:00"],"gis":{"longitude":121.569894,"latitude":31.251832},"birthday":"2000-01-23","birthtime":"17:18"},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${yesterday}", player.getCreateTime().toLocalDate().minusDays(1).toString());
         json = json.replace("${today}", player.getCreateTime().toLocalDate().toString());
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
@@ -96,7 +101,7 @@ public class TestModel {
         assertEquals(json, Jackson2Library.defaultInstance().dumpsToString(player.toData()));
 
         var storeJson = """
-                {"_id":1,"bi":{"n":"test","a":"","llt":${now},"ld":[${yesterday},${today}],"g":{"lo":121.569894,"la":31.251832},"b":20000123},"w":{"ct":100,"cu":0,"d":0,"ad":0},"e":{"${equipment.id}":{"i":"${equipment.id}","ri":1,"a":10,"d":0,"h":0,"ex":{"key1":"value1"}}},"i":{"1001":3,"2001":1},"_uv":0,"_ct":${now},"_ut":${now}}""";
+                {"_id":1,"bi":{"n":"test","a":"","llt":${now},"ld":[${yesterday},${today}],"wt":[80000,200000],"g":{"lo":121.569894,"la":31.251832},"b":20000123,"bt":171800},"w":{"ct":100,"cu":0,"d":0,"ad":0},"e":{"${equipment.id}":{"i":"${equipment.id}","ri":1,"a":10,"d":0,"h":0,"ex":{"key1":"value1"}}},"i":{"1001":3,"2001":1},"_uv":0,"_ct":${now},"_ut":${now}}""";
         storeJson = storeJson.replace("${yesterday}", String.valueOf(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))));
         storeJson = storeJson.replace("${today}", String.valueOf(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate())));
         storeJson = storeJson.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
@@ -114,15 +119,18 @@ public class TestModel {
         var equipment = testEquipment1();
         player.getEquipments().put(equipment.getId(), equipment);
         var updates = player.toUpdates();
-        assertEquals(13, updates.size());
-        assertEquals(Updates.set("_id", 1), updates.get(0));
-        assertEquals(Updates.set("bi.n", "test"), updates.get(1));
-        assertEquals(Updates.set("bi.a", ""), updates.get(2));
-        assertEquals(Updates.set("bi.llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(3));
-        assertEquals(Updates.set("bi.ld", new BsonArray(List.of(new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))), new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate()))))), updates.get(4));
-        assertEquals(Updates.set("bi.g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832))), updates.get(5));
-        assertEquals(Updates.set("bi.b", 2000_01_23), updates.get(6));
-        assertEquals(Updates.set("w.ct", 100L), updates.get(7));
+        assertEquals(15, updates.size());
+        var i = 0;
+        assertEquals(Updates.set("_id", 1), updates.get(i++));
+        assertEquals(Updates.set("bi.n", "test"), updates.get(i++));
+        assertEquals(Updates.set("bi.a", ""), updates.get(i++));
+        assertEquals(Updates.set("bi.llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(i++));
+        assertEquals(Updates.set("bi.ld", new BsonArray(List.of(new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))), new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate()))))), updates.get(i++));
+        assertEquals(Updates.set("bi.wt", new BsonArray(List.of(new BsonInt32(8_00_00), new BsonInt32(20_00_00)))), updates.get(i++));
+        assertEquals(Updates.set("bi.g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832))), updates.get(i++));
+        assertEquals(Updates.set("bi.b", 2000_01_23), updates.get(i++));
+        assertEquals(Updates.set("bi.bt", 17_18_00), updates.get(i++));
+        assertEquals(Updates.set("w.ct", 100L), updates.get(i++));
         assertEquals(
                 Updates.set(
                         "e." + equipment.getId(),
@@ -133,11 +141,11 @@ public class TestModel {
                                 .append("h", new BsonInt32(0))
                                 .append("ex", new BsonDocument("key1", new BsonString("value1")))
                 ),
-                updates.get(8));
-        assertEquals(Updates.set("i.1001", new BsonInt32(3)), updates.get(9));
-        assertEquals(Updates.set("i.2001", new BsonInt32(1)), updates.get(10));
-        assertEquals(Updates.set("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(11));
-        assertEquals(Updates.set("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(12));
+                updates.get(i++));
+        assertEquals(Updates.set("i.1001", new BsonInt32(3)), updates.get(i++));
+        assertEquals(Updates.set("i.2001", new BsonInt32(1)), updates.get(i++));
+        assertEquals(Updates.set("_ct", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(i++));
+        assertEquals(Updates.set("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime()))), updates.get(i));
 
         player.reset();
         equipment.setAtk(12);
@@ -157,8 +165,10 @@ public class TestModel {
                                 .append("a", new BsonString(""))
                                 .append("llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime())))
                                 .append("ld", new BsonArray(List.of(new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))), new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate())))))
+                                .append("wt", new BsonArray(List.of(new BsonInt32(8_00_00), new BsonInt32(20_00_00))))
                                 .append("g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832)))
                                 .append("b", new BsonInt32(2000_01_23))
+                                .append("bt", new BsonInt32(17_18_00))
                 ).append("w",
                         new BsonDocument("ct", new BsonInt64(100))
                                 .append("cu", new BsonInt64(0))
@@ -212,8 +222,10 @@ public class TestModel {
                                 .append("a", new BsonString(""))
                                 .append("llt", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getCreateTime())))
                                 .append("ld", new BsonArray(List.of(new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate().minusDays(1))), new BsonInt32(DateTimeUtil.toNumber(player.getCreateTime().toLocalDate())))))
+                                .append("wt", new BsonArray(List.of(new BsonInt32(8_00_00), new BsonInt32(20_00_00))))
                                 .append("g", new BsonDocument("lo", new BsonDouble(121.569894)).append("la", new BsonDouble(31.251832)))
                                 .append("b", new BsonInt32(2000_01_23))
+                                .append("bt", new BsonInt32(17_18_00))
                 ).append("w",
                         new BsonDocument("ct", new BsonInt64(100))
                                 .append("cu", new BsonInt64(0))
@@ -237,7 +249,7 @@ public class TestModel {
                 .append("_ut", new BsonDateTime(DateTimeUtil.toEpochMilli(player.getUpdateTime())));
         assertEquals(bson.toBsonDocument().toJson(), copy.toBson().toBsonDocument().toJson());
         var json = """
-                {"uid":1,"basicInfo":{"name":"test","avatar":"","loginDays":["${yesterday}","${today}"],"lastLoginAt":${now},"gis":{"longitude":121.569894,"latitude":31.251832},"birthday":"2000-01-23"},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
+                {"uid":1,"basicInfo":{"name":"test","avatar":"","loginDays":["${yesterday}","${today}"],"lastLoginAt":${now},"workTimes":["08:00","20:00"],"gis":{"longitude":121.569894,"latitude":31.251832},"birthday":"2000-01-23","birthtime":"17:18"},"wallet":{"coinTotal":100,"coin":100,"diamond":0,"ad":0},"equipments":{"${equipment.id}":{"id":"${equipment.id}","refId":1,"atk":10,"def":0,"hp":0,"extension":{"key1":"value1"}}},"items":{"1001":3,"2001":1},"createdAt":${now},"updatedAt":${now}}""";
         json = json.replace("${yesterday}", player.getCreateTime().toLocalDate().minusDays(1).toString());
         json = json.replace("${today}", player.getCreateTime().toLocalDate().toString());
         json = json.replace("${now}", String.valueOf(DateTimeUtil.toEpochMilli(player.getCreateTime())));
@@ -255,10 +267,11 @@ public class TestModel {
 
         player.getBasicInfo().setBirthday(null);
         player.getBasicInfo().getGis().setHeight(null);
+        player.getBasicInfo().setBirthtime(null);
         player.getEquipments().remove(equipment.getId());
         assertEquals(
                 """
-                        {"basicInfo":{"gis":{"height":1},"birthday":1},"equipments":{"${equipment.id}":1}}""".replace("${equipment.id}", equipment.getId()),
+                        {"basicInfo":{"gis":{"height":1},"birthday":1,"birthtime":1},"equipments":{"${equipment.id}":1}}""".replace("${equipment.id}", equipment.getId()),
                 Jackson2Library.defaultInstance().dumpsToString(player.toDeletedData())
         );
     }
