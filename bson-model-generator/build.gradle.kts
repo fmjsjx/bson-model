@@ -3,16 +3,10 @@ plugins {
     id("bson-model.publish-conventions")
 }
 
-java {
-    registerFeature("generatorSupport") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
 dependencies {
     
     api(project(":bson-model-core"))
-    "generatorSupportImplementation"("org.jruby:jruby")
+    compileOnly("org.jruby:jruby")
 
     testImplementation("org.mongodb:mongodb-driver-core")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
