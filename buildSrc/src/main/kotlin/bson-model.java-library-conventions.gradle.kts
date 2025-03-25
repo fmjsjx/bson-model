@@ -11,17 +11,17 @@ repositories {
 
 dependencies {
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:3.11.0"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.12.0"))
     // junit-bom
-    testImplementation(platform("org.junit:junit-bom:5.12.0"))
+    testImplementation(platform("org.junit:junit-bom:5.12.1"))
     // jackson2-bom
-    api(platform("com.fasterxml.jackson:jackson-bom:2.18.2"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.18.3"))
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.17")
-        implementation("ch.qos.logback:logback-classic:1.5.17")
+        implementation("ch.qos.logback:logback-classic:1.5.18")
         api("com.jsoniter:jsoniter:0.9.23")
-        val mongodbVersion = "5.3.1"
+        val mongodbVersion = "5.4.0"
         api("org.mongodb:bson:$mongodbVersion")
         api("org.mongodb:mongodb-driver-core:$mongodbVersion")
         api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
