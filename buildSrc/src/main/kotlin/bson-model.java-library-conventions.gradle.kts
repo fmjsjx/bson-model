@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     // libcommon-bom
-    api(platform("com.github.fmjsjx:libcommon-bom:3.12.0"))
+    api(platform("com.github.fmjsjx:libcommon-bom:3.17.0"))
     // junit-bom
     testImplementation(platform("org.junit:junit-bom:5.12.1"))
     // jackson2-bom
