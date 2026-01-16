@@ -23,7 +23,7 @@ dependencies {
         implementation("org.slf4j:slf4j-api:2.0.17")
         implementation("ch.qos.logback:logback-classic:1.5.24")
         api("com.jsoniter:jsoniter:0.9.23")
-        val jrubyVersion = "9.4.12.0"
+        val jrubyVersion = "9.4.14.0"
         implementation("org.jruby:jruby-complete:$jrubyVersion")
         implementation("org.jruby:jruby:$jrubyVersion")
         implementation("org.jruby:jruby-core:$jrubyVersion")
