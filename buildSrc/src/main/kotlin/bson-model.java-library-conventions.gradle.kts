@@ -19,7 +19,7 @@ dependencies {
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.17")
-        implementation("ch.qos.logback:logback-classic:1.5.18")
+        implementation("ch.qos.logback:logback-classic:1.5.24")
         api("com.jsoniter:jsoniter:0.9.23")
         val mongodbVersion = "5.4.0"
         api("org.mongodb:bson:$mongodbVersion")
