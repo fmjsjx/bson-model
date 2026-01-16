@@ -153,8 +153,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
     public void load(JsonNode src) {
         clear0();
         if (src.isObject()) {
-            for (var iter = src.fields(); iter.hasNext();) {
-                var entry = iter.next();
+            for (var entry : src.properties()) {
                 var k = entry.getKey();
                 var v = entry.getValue();
                 if (v.isObject()) {
@@ -244,7 +243,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
         if (updatedKeys.isEmpty()) {
             return Map.of();
         }
-        var update = new LinkedHashMap<Object, Object>();
+        var update = new LinkedHashMap<>();
         for (var key : updatedKeys) {
             var value = map.get(key);
             update.put(key, value.toUpdate());
@@ -266,7 +265,7 @@ public final class DefaultMapModel<K, V extends DefaultMapValueModel<K, V>, P ex
     
     @Override
     public Map<Object, Object> toDelete() {
-        var delete = new LinkedHashMap<Object, Object>();
+        var delete = new LinkedHashMap<>();
         for (var key : updatedKeys) {
             var value = map.get(key);
             var valueDelete = value.toDelete();

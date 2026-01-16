@@ -2236,8 +2236,7 @@ public class BsonUtil {
             throw new IllegalArgumentException("the source jsonNode expected <OBJECT> but was <" + jsonNode.getNodeType() + ">");
         }
         var document = new BsonDocument();
-        for (var iter = jsonNode.fields(); iter.hasNext(); ) {
-            var entry = iter.next();
+        for (var entry : jsonNode.properties()) {
             var key = entry.getKey();
             var value = entry.getValue();
             if (value == null || value.isNull()) {

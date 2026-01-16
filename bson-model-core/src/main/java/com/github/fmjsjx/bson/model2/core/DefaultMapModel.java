@@ -119,8 +119,7 @@ public final class DefaultMapModel<K, V extends AbstractBsonModel<BsonDocument, 
         clean();
         var valueFactory = this.valueFactory;
         var map = this.map;
-        for (var iter = src.fields(); iter.hasNext(); ) {
-            var entry = iter.next();
+        for (var entry : src.properties()) {
             var key = parseKey(entry.getKey());
             var value = valueFactory.get();
             value.load(entry.getValue());

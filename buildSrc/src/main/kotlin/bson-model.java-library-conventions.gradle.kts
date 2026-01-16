@@ -15,7 +15,7 @@ dependencies {
     // junit-bom
     testImplementation(platform("org.junit:junit-bom:6.0.1"))
     // jackson2-bom
-    api(platform("com.fasterxml.jackson:jackson-bom:2.18.3"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.20.1"))
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.17")
