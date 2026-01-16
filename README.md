@@ -2,7 +2,9 @@
 
 A data object model framework based on `BSON/MongoDB`.
 
-> Since version 2.x, all modules are compiled based on JDK-17.
+> **Note! Version 2.3.x is the last minor version to be released. No new features will be added to this project in the future.**
+
+> *Since version 2.x, all modules are compiled based on JDK-17.*
 
 ## Features
 
