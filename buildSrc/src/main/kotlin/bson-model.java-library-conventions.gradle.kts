@@ -13,7 +13,7 @@ dependencies {
     // libcommon-bom
     api(platform("com.github.fmjsjx:libcommon-bom:3.17.0"))
     // junit-bom
-    testImplementation(platform("org.junit:junit-bom:5.12.1"))
+    testImplementation(platform("org.junit:junit-bom:6.0.1"))
     // jackson2-bom
     api(platform("com.fasterxml.jackson:jackson-bom:2.18.3"))
 
