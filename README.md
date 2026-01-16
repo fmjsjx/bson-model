@@ -26,7 +26,7 @@ All releases will be released to the [Maven central repository](https://repo1.ma
       <dependency>
         <groupId>com.github.fmjsjx</groupId>
         <artifactId>bson-model-bom</artifactId>
-        <version>2.2.3</version>
+        <version>2.3.0-RC-SNAPSHOT</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -58,7 +58,7 @@ repositories {
 
 dependencies {
     // Choose Version
-    implementation platform('com.github.fmjsjx:bson-model-bom:2.2.3')
+    implementation platform('com.github.fmjsjx:bson-model-bom:2.3.0-RC-SNAPSHOT')
     // Core Library
     implementation 'com.github.fmjsjx:bson-model-core'
     // Code Generator
@@ -73,7 +73,7 @@ repositories {
 
 dependencies {
     // Choose Version
-    implementation(platform("com.github.fmjsjx:bson-model-bom:2.2.3"))
+    implementation(platform("com.github.fmjsjx:bson-model-bom:2.3.0-RC-SNAPSHOT"))
     // Core Library
     implementation("com.github.fmjsjx:bson-model-core")
     // Code Generator
