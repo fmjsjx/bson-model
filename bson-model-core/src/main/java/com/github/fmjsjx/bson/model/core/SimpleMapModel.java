@@ -119,7 +119,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
                 map.put(parseKey(k), valueType.parse(v));
             } catch (Exception e) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Loading data failed on {}: {}", xpath().resolve(k), v);
+                    logger.warn("Loading BsonDocument failed on {}: {}", xpath().resolve(k), v);
                 }
                 // skip unsupported type values
             }
@@ -134,7 +134,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
                 map.put(parseKey(k), valueType.cast(v));
             } catch (Exception e) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Loading data failed on {}: {}", xpath().resolve(k), v);
+                    logger.warn("Loading Document failed on {}: {}", xpath().resolve(k), v);
                 }
                 // skip unsupported type values
             }
@@ -150,7 +150,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
                     map.put(parseKey(k), valueType.parse(v));
                 } catch (Exception e) {
                     if (logger.isWarnEnabled()) {
-                        logger.warn("Loading data failed on {}: {}", xpath().resolve(k), v);
+                        logger.warn("Loading jsoniter Any failed on {}: {}", xpath().resolve(k), v);
                     }
                     // skip unsupported type values
                 }
@@ -162,15 +162,14 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
     public void load(JsonNode src) {
         map.clear();
         if (src.isObject()) {
-            for (var iter = src.fields(); iter.hasNext();) {
-                var entry = iter.next();
+            for (var entry : src.properties()) {
                 var k = entry.getKey();
                 var v = entry.getValue();
                 try {
                     map.put(parseKey(k), valueType.parse(v));
                 } catch (Exception e) {
                     if (logger.isWarnEnabled()) {
-                        logger.warn("Loading data failed on {}: {}", xpath().resolve(k), v);
+                        logger.warn("Loading JsonNode failed on {}: {}", xpath().resolve(k), v);
                     }
                     // skip unsupported type values
                 }
@@ -242,7 +241,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
         if (updatedKeys.isEmpty()) {
             return Map.of();
         }
-        var update = new LinkedHashMap<Object, Object>();
+        var update = new LinkedHashMap<>();
         for (var key : updatedKeys) {
             var value = map.get(key);
             update.put(key, value);
@@ -256,7 +255,7 @@ public final class SimpleMapModel<K, V, P extends BsonModel> extends MapModel<K,
         if (removedKeys.isEmpty()) {
             return Map.of();
         }
-        var delete = new LinkedHashMap<Object, Object>();
+        var delete = new LinkedHashMap<>();
         for (var key : removedKeys) {
             delete.put(key, 1);
         }

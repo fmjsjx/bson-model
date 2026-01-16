@@ -219,10 +219,9 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         if (updateIndexes.isEmpty()) {
             return Map.of();
         }
-        var update = new LinkedHashMap<Object, Object>();
-        updateIndexes.intStream().sorted().mapToObj(list::get).filter(Objects::nonNull).forEach(v -> {
-            update.put(v.index(), v.toUpdate());
-        });
+        var update = new LinkedHashMap<>();
+        updateIndexes.intStream().sorted().mapToObj(list::get).filter(Objects::nonNull)
+                .forEach(v -> update.put(v.index(), v.toUpdate()));
         return update;
     }
 
@@ -251,9 +250,9 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         var list = new ArrayList<E>(len);
         for (int index = 0; index < len; index++) {
             var obj = src.get(index);
-            if (obj != null && obj instanceof Document) {
+            if (obj instanceof Document document) {
                 var value = generateValueModel(index);
-                value.load((Document) obj);
+                value.load(document);
                 list.add(value);
             } else {
                 list.add(null);
@@ -336,7 +335,7 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         if (updateIndexes.isEmpty()) {
             return Map.of();
         }
-        var delete = new LinkedHashMap<Object, Object>();
+        var delete = new LinkedHashMap<>();
         updateIndexes.intStream().sorted().forEach(index -> {
             if (list.get(index) == null) {
                 delete.put(index, 1);
@@ -418,7 +417,7 @@ public final class DefaultListModel<E extends DefaultListValueModel<E>, P extend
         if (list == null) {
             if (value != null) {
                 fullyUpdate = true;
-                this.list = list = new ArrayList<E>(index + 1);
+                this.list = list = new ArrayList<>(index + 1);
                 list.set(index, bindValue(index, value));
             }
             return Optional.empty();

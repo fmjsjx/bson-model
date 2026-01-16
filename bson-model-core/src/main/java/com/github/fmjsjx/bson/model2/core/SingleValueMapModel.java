@@ -168,8 +168,7 @@ public final class SingleValueMapModel<K, V> extends MapModel<K, V, SingleValueM
         clean();
         var map = this.map;
         var valueType = this.valueType;
-        for (var iter = src.fields(); iter.hasNext(); ) {
-            var entry = iter.next();
+        for (var entry : src.properties()) {
             var value = valueType.parse(entry.getValue());
             if (value != null) {
                 map.put(parseKey(entry.getKey()), value);
