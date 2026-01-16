@@ -16,17 +16,13 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.1"))
     // jackson2-bom
     api(platform("com.fasterxml.jackson:jackson-bom:2.20.1"))
+    // mongodb-driver-bom
+    api(platform("org.mongodb:mongodb-driver-bom:5.6.2"))
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.17")
         implementation("ch.qos.logback:logback-classic:1.5.24")
         api("com.jsoniter:jsoniter:0.9.23")
-        val mongodbVersion = "5.4.0"
-        api("org.mongodb:bson:$mongodbVersion")
-        api("org.mongodb:mongodb-driver-core:$mongodbVersion")
-        api("org.mongodb:mongodb-driver-sync:$mongodbVersion")
-        api("org.mongodb:mongodb-driver-reactivestreams:$mongodbVersion")
-        api("org.mongodb:mongodb-driver-legacy:$mongodbVersion")
         val jrubyVersion = "9.4.12.0"
         implementation("org.jruby:jruby-complete:$jrubyVersion")
         implementation("org.jruby:jruby:$jrubyVersion")
