@@ -18,6 +18,8 @@ dependencies {
     api(platform("com.fasterxml.jackson:jackson-bom:2.20.1"))
     // mongodb-driver-bom
     api(platform("org.mongodb:mongodb-driver-bom:5.6.2"))
+    // log4j2
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.25.3"))
 
     constraints {
         implementation("org.slf4j:slf4j-api:2.0.17")
@@ -30,8 +32,6 @@ dependencies {
         implementation("org.jruby:jruby-stdlib:$jrubyVersion")
         implementation("org.yaml:snakeyaml:2.4")
     }
-    // log4j2
-    implementation(platform("org.apache.logging.log4j:log4j-bom:2.24.3"))
 
 }
 
